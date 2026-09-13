@@ -11,7 +11,7 @@ service.
 
 ## What the build creates
 
-The `knowledge/` directory contains four JSON files:
+The `knowledge/` directory contains a manifest and three JSON artifacts:
 
 | File | Purpose |
 | --- | --- |
@@ -19,6 +19,13 @@ The `knowledge/` directory contains four JSON files:
 | `pages.json` | Complete plain-text pages with source paths and canonical URLs. |
 | `chunks.json` | Sections split at semantic headings with stable IDs and exact citation URLs. |
 | `index.json` | A deterministic lexical index for local search. |
+
+Artifacts larger than 20 MiB are stored as deterministic `.json.gz` files.
+Read their actual filenames from `manifest.json`; M-Press decompresses them
+automatically when loading the knowledge base. Compressed bundles use schema 2
+and require M-Press v1.0.12 or later. Smaller bundles retain schema 1 and their
+original filenames. The digest covers the uncompressed JSON in both formats.
+This keeps large multilingual exports within typical static hosting file limits.
 
 Long sections are split at word boundaries. Every part retains its page,
 heading path, language, version, tags, source file, and citation. M-Press also

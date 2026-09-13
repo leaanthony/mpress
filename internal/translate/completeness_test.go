@@ -545,3 +545,33 @@ func TestUnchangedProseDoesNotCountProtectedImagePaths(t *testing.T) {
 		t.Fatalf("proper-name label should request review, not count URL prose: %s, %v", severity, found)
 	}
 }
+
+func TestMPDReuseAllowsNewLineLeadingMentionEscapes(t *testing.T) {
+	source, err := ExtractMPD("source.mpd", []byte("Thanks to \\@[Lea](https://example.com/lea) and @wails.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// Reuse the same prose within a single paragraph; Apply adds the escape.
+	value := source.Segments[0].Text
+	value = strings.ReplaceAll(value, "Thanks to", "Merci à")
+	value = strings.ReplaceAll(value, " and @wails.", ".\n@wails est aussi remercié.")
+	output, err := Apply(source, map[string]string{source.Segments[0].ID: value})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Validate(source, output); err != nil {
+		t.Fatalf("valid added escape rejected: %v\n%s", err, output)
+	}
+	target, err := ExtractMPD("target.mpd", output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := prepareExistingSegment(source.Segments[0], target.Segments[0]); err != nil {
+		t.Fatal(err)
+	}
+	// Extra inline escapes are not introduced by the writer and remain invalid.
+	bad := strings.Replace(string(output), "\n\\@wails", " et \\@wails", 1)
+	if err := Validate(source, []byte(bad)); err == nil {
+		t.Fatal("accepted unrelated extra inline escape")
+	}
+}

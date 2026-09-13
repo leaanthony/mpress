@@ -458,8 +458,8 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 			return result, err
 		}
 		if opts.LinkCollector != nil {
-			for _, name := range []string{knowledge.ManifestFile, knowledge.PagesFile, knowledge.ChunksFile, knowledge.IndexFile} {
-				opts.LinkCollector.AddFile(filepath.ToSlash(filepath.Join(knowledge.Directory, name)))
+			if err := opts.LinkCollector.IndexDirectory(knowledge.Directory); err != nil {
+				return result, err
 			}
 		}
 	}

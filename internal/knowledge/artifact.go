@@ -22,7 +22,7 @@ import (
 )
 
 const (
-	Schema        = 1
+	Schema        = 2
 	Directory     = "knowledge"
 	ManifestFile  = "manifest.json"
 	PagesFile     = "pages.json"
@@ -109,6 +109,10 @@ type Posting struct {
 
 // Generate writes the complete portable knowledge bundle beneath output.
 func Generate(output string, cfg config.Config, pagesByLanguage map[string][]*content.Page) error {
+	return generate(output, cfg, pagesByLanguage, 20<<20)
+}
+
+func generate(output string, cfg config.Config, pagesByLanguage map[string][]*content.Page, compressionThreshold int) error {
 	version := strings.TrimSpace(cfg.Version.Current)
 	if version == "" {
 		version = "current"
@@ -158,12 +162,16 @@ func Generate(output string, cfg config.Config, pagesByLanguage map[string][]*co
 	for i := range pages {
 		summaries[i] = pages[i].PageSummary
 	}
+	files, artifacts, schema, err := encodeArtifacts(pagesData, chunksData, indexData, compressionThreshold)
+	if err != nil {
+		return err
+	}
 	manifest := Manifest{
-		Schema: Schema, Title: cfg.Site.Title, Description: cfg.Site.Description,
+		Schema: schema, Title: cfg.Site.Title, Description: cfg.Site.Description,
 		BaseURL: strings.TrimRight(cfg.Site.BaseURL, "/"), DefaultLanguage: cfg.Site.DefaultLanguage,
 		Languages: append([]string(nil), cfg.Site.Languages...), CurrentVersion: version,
 		Digest: hex.EncodeToString(digestHash.Sum(nil)), Pages: summaries,
-		Artifacts: Artifacts{Pages: PagesFile, Chunks: ChunksFile, Index: IndexFile},
+		Artifacts: artifacts,
 	}
 	manifestData, err := marshalArtifact(manifest)
 	if err != nil {
@@ -173,14 +181,13 @@ func Generate(output string, cfg config.Config, pagesByLanguage map[string][]*co
 	if err := os.MkdirAll(directory, 0o755); err != nil {
 		return err
 	}
-	for name, data := range map[string][]byte{
-		ManifestFile: manifestData, PagesFile: pagesData, ChunksFile: chunksData, IndexFile: indexData,
-	} {
+	files[ManifestFile] = manifestData
+	for name, data := range files {
 		if err := os.WriteFile(filepath.Join(directory, name), data, 0o644); err != nil {
 			return err
 		}
 	}
-	return nil
+	return removeStaleArtifacts(directory, files)
 }
 
 func marshalArtifact(value any) ([]byte, error) {
@@ -417,7 +424,7 @@ func makeIndex(chunks []Chunk) Index {
 		keys = append(keys, term)
 	}
 	sort.Strings(keys)
-	index := Index{Schema: Schema, Terms: make([]IndexTerm, 0, len(keys))}
+	index := Index{Schema: 1, Terms: make([]IndexTerm, 0, len(keys))}
 	for _, term := range keys {
 		index.Terms = append(index.Terms, IndexTerm{Term: term, Postings: terms[term]})
 	}
@@ -544,21 +551,21 @@ func Load(output string) (*Store, error) {
 	if err := readJSON(filepath.Join(directory, ManifestFile), &manifest); err != nil {
 		return nil, err
 	}
-	if manifest.Schema != Schema {
+	if manifest.Schema != 1 && manifest.Schema != Schema {
 		return nil, fmt.Errorf("knowledge schema %d is not supported", manifest.Schema)
 	}
 	var pages []Page
 	var chunks []Chunk
 	var index Index
-	pageData, err := os.ReadFile(filepath.Join(directory, manifest.Artifacts.Pages))
+	pageData, err := readArtifact(filepath.Join(directory, manifest.Artifacts.Pages))
 	if err != nil {
 		return nil, err
 	}
-	chunkData, err := os.ReadFile(filepath.Join(directory, manifest.Artifacts.Chunks))
+	chunkData, err := readArtifact(filepath.Join(directory, manifest.Artifacts.Chunks))
 	if err != nil {
 		return nil, err
 	}
-	indexData, err := os.ReadFile(filepath.Join(directory, manifest.Artifacts.Index))
+	indexData, err := readArtifact(filepath.Join(directory, manifest.Artifacts.Index))
 	if err != nil {
 		return nil, err
 	}

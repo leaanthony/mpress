@@ -1112,7 +1112,11 @@ func replaceExistingPlaceholders(target string, pattern *regexp.Regexp, grouped 
 		output.WriteString(target[cursor:span[0]])
 		cursor = span[1]
 		index := counts[original]
-		counts[original]++
+		// Translating a sentence can move another @mention to a line start,
+		// where the MPD writer must introduce an additional escape.
+		if index < len(grouped[original]) || original != `\@` || !lineLeadingEscape(target, span[0]) {
+			counts[original]++
+		}
 		if index < len(grouped[original]) {
 			output.WriteString(grouped[original][index].placeholder)
 		} else {
@@ -1121,6 +1125,11 @@ func replaceExistingPlaceholders(target string, pattern *regexp.Regexp, grouped 
 	}
 	output.WriteString(target[cursor:])
 	return output.String(), counts
+}
+
+func lineLeadingEscape(text string, start int) bool {
+	lineStart := strings.LastIndexByte(text[:start], '\n') + 1
+	return strings.TrimSpace(text[lineStart:start]) == ""
 }
 
 // A unit suffix is allowed, but a fragment of a different decimal, range,
