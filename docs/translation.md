@@ -26,6 +26,12 @@ aligned with the source so these links remain correct. External links, code
 examples, and explicit links to another language retain their destinations.
 The edit-page link opens the source file for the current language.
 
+D2 translation state identifies labels by their node or edge, so adding explicit
+labels cannot mix them up during review. If you translated diagrams with M-Press
+v1.0.4–v1.0.6, run `mpress translate --lang <language> --scope stale` after
+upgrading. This regenerates diagram labels recorded with the old positional
+identifiers. Review the resulting diagrams before publishing.
+
 ## Add target languages
 
 Add every published language to `mpress.yaml`:

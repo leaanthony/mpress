@@ -129,6 +129,89 @@ func TestD2TranslationDoesNotReadImports(t *testing.T) {
 	}
 }
 
+func TestD2SequenceLabelIdentitySurvivesTranslationAndRefinement(t *testing.T) {
+	source := []byte("```d2\napp: {\n shape: sequence_diagram\n frontend: Frontend\n backend: Backend\n Communication: {\n  shape: sequence_diagram\n  frontend.\"Make request\"\n  frontend -> backend.a: JSON\n  backend.a.\"Process request\"\n  backend.a.\"Generate response\"\n  backend.a -> frontend: JSON\n  frontend.\"Process response\"\n }\n}\n```\n")
+	doc, err := ExtractMPD("diagram.mpd", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	values := map[string]string{}
+	for _, segment := range doc.Segments {
+		values[segment.ID] = "FR " + segment.Text
+	}
+	output, err := Apply(doc, values)
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err := ExtractMPD("diagram.mpd", output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	byID := map[string]Segment{}
+	for _, segment := range target.Segments {
+		byID[segment.ID] = segment
+	}
+	for _, segment := range doc.Segments {
+		got := byID[segment.ID]
+		if got.D2Key != segment.D2Key || got.Original != "FR "+segment.Original {
+			t.Fatalf("label %s moved: source %s=%q, target %s=%q", segment.ID, segment.D2Key, segment.Original, got.D2Key, got.Original)
+		}
+	}
+	if err := Validate(doc, output); err != nil {
+		t.Fatal(err)
+	}
+	var selected Segment
+	for _, segment := range target.Segments {
+		if segment.Original == "FR Process request" {
+			selected = segment
+			break
+		}
+	}
+	if selected.ID == "" {
+		t.Fatal("missing request label")
+	}
+	refined, err := Apply(target, map[string]string{selected.ID: "Traiter la requête"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	updated, err := ExtractMPD("diagram.mpd", refined)
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, segment := range updated.Segments {
+		want := byID[segment.ID].Original
+		if segment.ID == selected.ID {
+			want = "Traiter la requête"
+		}
+		if segment.Original != want {
+			t.Fatalf("refinement changed %s: %q, want %q", segment.D2Key, segment.Original, want)
+		}
+	}
+}
+
+func TestDiagramStateUsesGraphIdentityAndRejectsOldOrdinalState(t *testing.T) {
+	current := []Segment{{ID: "d0001-label-graph-key", D2Key: "node.label", SourceHash: Hash("Open")}}
+	old := map[string]SegmentState{"d0001-label-001": {SourceHash: Hash("Open")}}
+	if got := matchSegments(current, old); len(got) != 0 {
+		t.Fatalf("reused ambiguous ordinal diagram state: %v", got)
+	}
+	old[current[0].ID] = SegmentState{SourceHash: Hash("Closed")}
+	if got := matchSegments(current, old)[current[0].ID]; got != current[0].ID {
+		t.Fatalf("graph identity should be retained for stale labels: %q", got)
+	}
+}
+
+func TestTranslationStatePrefersExactIdentityForRepeatedProse(t *testing.T) {
+	current := []Segment{{ID: "first", SourceHash: Hash("Open")}, {ID: "second", SourceHash: Hash("Open")}}
+	old := map[string]SegmentState{"first": {SourceHash: Hash("Open")}, "second": {SourceHash: Hash("Open")}}
+	for range 20 {
+		got := matchSegments(current, old)
+		if got["first"] != "first" || got["second"] != "second" {
+			t.Fatalf("swapped repeated labels: %v", got)
+		}
+	}
+}
+
 func TestNavigationQuotedMultilineLabels(t *testing.T) {
 	source := []byte("- label: \"Getting\n    started\" # preserved\n  link: /start/\n- label: 'User''s\n    guide'\n  link: /guide/\n")
 	doc, err := ExtractNavigation(source)

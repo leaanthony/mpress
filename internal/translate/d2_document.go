@@ -36,7 +36,10 @@ func d2Segments(source []byte, start, end, ordinal int, section string) ([]Segme
 			return
 		}
 		text, placeholders := protect(value)
-		result = append(result, Segment{ID: fmt.Sprintf("d%04d-label-%03d", ordinal, len(result)+1), Kind: "diagram-label", Section: section, Original: value, Text: text, Start: start, End: end, SourceHash: Hash(value), Placeholders: placeholders, D2Key: key, D2Tag: tag})
+		// D2 can reorder implicit objects when the editor adds explicit labels.
+		// Bind translation state to the graph key, never its traversal position.
+		id := fmt.Sprintf("d%04d-label-%s", ordinal, Hash(key)[:16])
+		result = append(result, Segment{ID: id, Kind: "diagram-label", Section: section, Original: value, Text: text, Start: start, End: end, SourceHash: Hash(value), Placeholders: placeholders, D2Key: key, D2Tag: tag})
 	}
 	if graph.Root.Label.Value != "" {
 		add("label", graph.Root.Label.Value, graph.Root.Language)

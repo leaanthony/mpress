@@ -966,13 +966,13 @@ func validateFile(sourceFile, navFile string, source *Document, target []byte) e
 }
 
 func matchSegments(current []Segment, old map[string]SegmentState) map[string]string {
-	result := map[string]string{}
-	used := map[string]bool{}
-	byHash := map[string][]string{}
-	for id, state := range old {
-		byHash[state.SourceHash] = append(byHash[state.SourceHash], id)
-	}
+	result, used := matchExactSegments(current, old)
+	byHash := indexMovableSegments(old)
+
 	for _, segment := range current {
+		if result[segment.ID] != "" || segment.D2Key != "" {
+			continue
+		}
 		for _, id := range byHash[segment.SourceHash] {
 			if !used[id] {
 				result[segment.ID] = id
@@ -991,6 +991,31 @@ func matchSegments(current []Segment, old map[string]SegmentState) map[string]st
 		}
 	}
 	return result
+}
+
+// Exact identities take precedence over identical text elsewhere. Diagram
+// identities encode graph keys and must never move between nodes or edges.
+func matchExactSegments(current []Segment, old map[string]SegmentState) (map[string]string, map[string]bool) {
+	result := map[string]string{}
+	used := map[string]bool{}
+	for _, segment := range current {
+		if state, ok := old[segment.ID]; ok && (segment.D2Key != "" || state.SourceHash == segment.SourceHash) {
+			result[segment.ID] = segment.ID
+			used[segment.ID] = true
+		}
+	}
+	return result, used
+}
+
+func indexMovableSegments(old map[string]SegmentState) map[string][]string {
+	byHash := map[string][]string{}
+	for id, state := range old {
+		if strings.HasPrefix(id, "d") && strings.Contains(id, "-label-") {
+			continue
+		}
+		byHash[state.SourceHash] = append(byHash[state.SourceHash], id)
+	}
+	return byHash
 }
 
 func segmentStatus(segment Segment, old SegmentState, exists bool, targetText string) string {
