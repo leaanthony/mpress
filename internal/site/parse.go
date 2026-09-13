@@ -25,8 +25,8 @@ import (
 // changes that produce different output for identical Markdown.
 // Increment this whenever parser or component rendering changes can alter the
 // cached page HTML without changing the source document.
-// v19 renders D2 fences as SVG instead of retaining cached code frames.
-const parseCacheVersion = "mpress-parse-v19"
+// v20 preserves native MPD emphasis adjacent to translated words.
+const parseCacheVersion = "mpress-parse-v20"
 
 const maxParseWorkers = 8
 
