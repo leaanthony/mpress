@@ -1,3 +1,10 @@
+<p align="center">
+  <picture>
+    <source media="(prefers-color-scheme: dark)" srcset="static/brand/m-press-logo-dark.svg">
+    <img src="static/brand/m-press-logo-light.svg" alt="M-Press" width="320" height="320">
+  </picture>
+</p>
+
 # M-Press
 
 M-Press is an MIT-licensed documentation static-site generator written in Go. Authors
