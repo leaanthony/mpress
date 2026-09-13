@@ -1084,7 +1084,7 @@ func prepareExistingRanges(segment Segment, target string, ranges []mpdProtected
 		pattern := regexp.QuoteMeta(original)
 		// The numeric protector uses a leading word boundary. A version digit in an
 		// unprotected name such as v2 must not consume a standalone 2 token.
-		if original[0] >= '0' && original[0] <= '9' || len(original) > 1 && (original[0] == 'v' || original[0] == 'V') && original[1] >= '0' && original[1] <= '9' {
+		if ranges == nil && (original[0] >= '0' && original[0] <= '9' || len(original) > 1 && (original[0] == 'v' || original[0] == 'V') && original[1] >= '0' && original[1] <= '9') {
 			pattern = `\b` + pattern
 		}
 		patterns = append(patterns, pattern)

@@ -228,6 +228,13 @@ func protectMPDInline(document *mpd.Document, parent uint32, start, end int) (st
 				return
 			}
 			switch node.Kind {
+			case mpd.KindText:
+				// Formatting delimiters are not part of the text node. A number
+				// immediately after a closing underscore still needs protection.
+				textStart, textEnd := int(node.Source.Start), int(node.Source.End)
+				for _, match := range protectedPattern.FindAllIndex(document.Source[textStart:textEnd], -1) {
+					add(textStart+match[0], textStart+match[1])
+				}
 			case mpd.KindCodeSpan, mpd.KindAutomaticLink, mpd.KindEmoji, mpd.KindMetadataReference, mpd.KindFootnoteReference:
 				add(int(node.Source.Start), int(node.Source.End))
 			case mpd.KindEmphasis, mpd.KindStrong:

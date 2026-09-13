@@ -575,3 +575,28 @@ func TestMPDReuseAllowsNewLineLeadingMentionEscapes(t *testing.T) {
 		t.Fatal("accepted unrelated extra inline escape")
 	}
 }
+
+func TestMPDProtectsNumbersAdjacentToEmphasis(t *testing.T) {
+	source, err := ExtractMPD("source.mpd", []byte("Measured _lower_ latency than 100 frames/s.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err := ExtractMPD("target.mpd", []byte("延遲_低於_100影格/秒。\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	value, err := prepareExistingSegment(source.Segments[0], target.Segments[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err := Apply(source, map[string]string{source.Segments[0].ID: value})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Validate(source, output); err != nil {
+		t.Fatal(err)
+	}
+	if err := Validate(source, []byte("延遲_低於_1000影格/秒。\n")); err == nil {
+		t.Fatal("changed quantity accepted")
+	}
+}
