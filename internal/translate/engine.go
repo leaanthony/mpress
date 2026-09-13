@@ -1052,17 +1052,18 @@ func shouldTranslate(status, scope string, force bool) bool {
 	return status == "missing" || status == "stale"
 }
 
+type existingPlaceholder struct {
+	placeholder string
+	position    int
+}
+
 func prepareExisting(segment Segment, target string) (string, error) {
 	if len(segment.Placeholders) == 0 {
 		return target, nil
 	}
-	type replacement struct {
-		placeholder string
-		position    int
-	}
-	grouped := map[string][]replacement{}
+	grouped := map[string][]existingPlaceholder{}
 	for placeholder, original := range segment.Placeholders {
-		grouped[original] = append(grouped[original], replacement{placeholder: placeholder, position: strings.Index(segment.Text, placeholder)})
+		grouped[original] = append(grouped[original], existingPlaceholder{placeholder: placeholder, position: strings.Index(segment.Text, placeholder)})
 	}
 	originals := make([]string, 0, len(grouped))
 	for original := range grouped {
@@ -1074,33 +1075,59 @@ func prepareExisting(segment Segment, target string) (string, error) {
 		replacements := grouped[original]
 		sort.Slice(replacements, func(i, j int) bool { return replacements[i].position < replacements[j].position })
 		pattern := regexp.QuoteMeta(original)
-		// The numeric protector uses word boundaries. A version digit in an
+		// The numeric protector uses a leading word boundary. A version digit in an
 		// unprotected name such as v2 must not consume a standalone 2 token.
 		if original[0] >= '0' && original[0] <= '9' {
 			pattern = `\b` + pattern
-		}
-		if last := original[len(original)-1]; last >= '0' && last <= '9' {
-			pattern += `\b`
 		}
 		patterns = append(patterns, pattern)
 	}
 	// Match the original target once: inserted placeholder indices must never
 	// become matches for a later protected number.
-	counts := map[string]int{}
-	value := regexp.MustCompile(strings.Join(patterns, "|")).ReplaceAllStringFunc(target, func(original string) string {
-		index := counts[original]
-		counts[original]++
-		if index >= len(grouped[original]) {
-			return original
-		}
-		return grouped[original][index].placeholder
-	})
+	value, counts := replaceExistingPlaceholders(target, regexp.MustCompile(strings.Join(patterns, "|")), grouped)
 	for original, replacements := range grouped {
 		if counts[original] != len(replacements) {
 			return "", fmt.Errorf("existing translation for %s does not preserve %s", segment.ID, original)
 		}
 	}
 	return value, nil
+}
+
+func replaceExistingPlaceholders(target string, pattern *regexp.Regexp, grouped map[string][]existingPlaceholder) (string, map[string]int) {
+	var output strings.Builder
+	counts := map[string]int{}
+	cursor := 0
+	for _, span := range pattern.FindAllStringIndex(target, -1) {
+		original := target[span[0]:span[1]]
+		if partialQuantityMatch(target, span[0], span[1]) {
+			continue
+		}
+		output.WriteString(target[cursor:span[0]])
+		cursor = span[1]
+		index := counts[original]
+		counts[original]++
+		if index < len(grouped[original]) {
+			output.WriteString(grouped[original][index].placeholder)
+		} else {
+			output.WriteString(original)
+		}
+	}
+	output.WriteString(target[cursor:])
+	return output.String(), counts
+}
+
+// A unit suffix is allowed, but a fragment of a different decimal, range,
+// version, or integer must not satisfy a protected quantity.
+func partialQuantityMatch(text string, start, end int) bool {
+	digit := func(value byte) bool { return value >= '0' && value <= '9' }
+	separator := func(value byte) bool { return strings.ContainsRune(".,:/-", rune(value)) }
+	if digit(text[start]) && start >= 2 && separator(text[start-1]) && digit(text[start-2]) {
+		return true
+	}
+	if !digit(text[end-1]) || end == len(text) {
+		return false
+	}
+	return digit(text[end]) || end+1 < len(text) && separator(text[end]) && digit(text[end+1])
 }
 
 func Validate(source *Document, target []byte) error {

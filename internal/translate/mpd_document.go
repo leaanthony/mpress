@@ -454,6 +454,20 @@ func encodeSegment(segment Segment, value string) (string, error) {
 	return string(encoded[1 : len(encoded)-1]), nil
 }
 
+// A translated sentence may put an @mention first even when the English
+// sentence did not. It is still prose, not an MPD component invocation.
+func escapeMPDDirectiveText(value string) string {
+	lines := strings.Split(value, "\n")
+	for index, line := range lines {
+		content := strings.TrimLeft(line, " \t")
+		if strings.HasPrefix(content, "@") {
+			prefix := line[:len(line)-len(content)]
+			lines[index] = prefix + `\` + content
+		}
+	}
+	return strings.Join(lines, "\n")
+}
+
 func translationRenderable(filename string, source []byte) ([]byte, error) {
 	if !strings.EqualFold(filepath.Ext(filename), ".mpd") {
 		return source, nil

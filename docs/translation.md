@@ -32,6 +32,13 @@ v1.0.4–v1.0.6, run `mpress translate --lang <language> --scope stale` after
 upgrading. This regenerates diagram labels recorded with the old positional
 identifiers. Review the resulting diagrams before publishing.
 
+Numbers immediately before units, including decimals and ranges such as `0.5s`,
+`2-3s`, and `150MB`, are protected during translation. To regenerate a machine
+translation made before v1.0.8, select its page with
+`mpress translate --lang <language> --file <page.mpd> --scope all` and review the
+result. A translated paragraph that starts with an `@mention` remains ordinary
+text rather than becoming an MPD directive.
+
 ## Add target languages
 
 Add every published language to `mpress.yaml`:

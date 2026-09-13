@@ -113,7 +113,7 @@ func navigationLabelStart(line []byte) int {
 	return start
 }
 
-var protectedPattern = regexp.MustCompile(`&(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]+);|\\[^\r\n]|\{\{[^\n{}]+\}\}|\$\{[^\n{}]+\}|\{[A-Za-z_][A-Za-z0-9_.-]*\}|%[-+#0-9.*]*[bcdeEfFgGopqstvxX]|\b[0-9]+(?:[.,:/-][0-9]+)*\b`)
+var protectedPattern = regexp.MustCompile(`&(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]+);|\\[^\r\n]|\{\{[^\n{}]+\}\}|\$\{[^\n{}]+\}|\{[A-Za-z_][A-Za-z0-9_.-]*\}|%[-+#0-9.*]*[bcdeEfFgGopqstvxX]|\b[0-9]+(?:[.,:/-][0-9]+)*`)
 var blockPrefixPattern = regexp.MustCompile(`^[ \t]*(?:[-+*][ \t]+|[0-9]+[.)][ \t]+|>+[ \t]*)`)
 var parenthesizedMarkerSuffixPattern = regexp.MustCompile(`\([0-9]+\)[ \t]*$`)
 var pricingMarkerSuffixPattern = regexp.MustCompile(`[✓✗][ \t]*$`)
@@ -795,12 +795,7 @@ func applyDocumentValues(document *Document, translated map[string]string, resto
 			diagrams[segment.Start] = true
 			restored, err = applyD2Labels(document, segment, translated, restoreText)
 		} else {
-			if restoreText {
-				restored, err = restore(segment, value, preservesMarkdownSyntax(document.Format))
-			}
-			if err == nil {
-				restored, err = encodeSegment(segment, restored)
-			}
+			restored, err = encodeTranslationSegment(document.Format, segment, value, restoreText)
 		}
 		if err != nil {
 			return nil, err
@@ -808,6 +803,20 @@ func applyDocumentValues(document *Document, translated map[string]string, resto
 		result = append(result[:segment.Start], append([]byte(restored), result[segment.End:]...)...)
 	}
 	return result, nil
+}
+
+func encodeTranslationSegment(format string, segment Segment, value string, restoreText bool) (string, error) {
+	if !restoreText {
+		return encodeSegment(segment, value)
+	}
+	restored, err := restore(segment, value, preservesMarkdownSyntax(format))
+	if err != nil {
+		return "", err
+	}
+	if format == "mpd" && segment.Kind == "text" {
+		restored = escapeMPDDirectiveText(restored)
+	}
+	return encodeSegment(segment, restored)
 }
 
 func Hash(value string) string {

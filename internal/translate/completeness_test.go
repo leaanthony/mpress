@@ -212,6 +212,63 @@ func TestTranslationStatePrefersExactIdentityForRepeatedProse(t *testing.T) {
 	}
 }
 
+func TestProtectedQuantitiesKeepDecimalsAndRangesBeforeUnits(t *testing.T) {
+	doc, err := ExtractMPD("quantities.mpd", []byte("Startup &lt;0.5s versus 2-3s, with 2.2K downloads and 150MB memory.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	segment := doc.Segments[0]
+	for _, quantity := range []string{"0.5", "2-3", "2.2", "150"} {
+		found := false
+		for _, value := range segment.Placeholders {
+			if strings.Contains(value, quantity) {
+				found = true
+			}
+		}
+		if !found {
+			t.Errorf("quantity %s was only partially protected: %v", quantity, segment.Placeholders)
+		}
+	}
+	prepared, err := prepareExisting(segment, "FR "+segment.Original)
+	if err != nil {
+		t.Fatal(err)
+	}
+	restored, err := restore(segment, prepared, false)
+	if err != nil || restored != "FR "+segment.Original {
+		t.Fatalf("quantity round trip: %q, %v", restored, err)
+	}
+}
+
+func TestExistingQuantityCannotMatchPartOfAnotherNumber(t *testing.T) {
+	text, placeholders := protect("Wait 2 seconds.")
+	segment := Segment{ID: "quantity", Original: "Wait 2 seconds.", Text: text, Placeholders: placeholders}
+	for _, target := range []string{"Wait 20ms.", "Wait 1.2s.", "Wait 2.5s.", "Wait v2."} {
+		if _, err := prepareExisting(segment, target); err == nil {
+			t.Errorf("accepted changed quantity: %s", target)
+		}
+	}
+	if _, err := prepareExisting(segment, "Attendre 2s."); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestTranslatedMentionAtStartOfParagraphRemainsText(t *testing.T) {
+	doc, err := ExtractMPD("mention.mpd", []byte("Thanks to @lea for this fix.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err := Apply(doc, map[string]string{doc.Segments[0].ID: "@lea 님이 수정했습니다."})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Validate(doc, output); err != nil {
+		t.Fatalf("mention became a directive: %v\n%s", err, output)
+	}
+	if !strings.Contains(string(output), "\\@lea") {
+		t.Fatalf("mention was not escaped: %s", output)
+	}
+}
+
 func TestNavigationQuotedMultilineLabels(t *testing.T) {
 	source := []byte("- label: \"Getting\n    started\" # preserved\n  link: /start/\n- label: 'User''s\n    guide'\n  link: /guide/\n")
 	doc, err := ExtractNavigation(source)
