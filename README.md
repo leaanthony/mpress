@@ -24,7 +24,7 @@ mpress build --strict
 ## Install and upgrade
 
 Download the archive for your OS and architecture and `checksums.txt` from the
-[v1.0.0 release](https://github.com/leaanthony/mpress/releases/tag/v1.0.0).
+[v1.0.1 release](https://github.com/leaanthony/mpress/releases/tag/v1.0.1).
 Archives are available for Linux, macOS, and Windows on AMD64 and ARM64.
 Verify the archive's SHA-256 digest against `checksums.txt` before extracting it:
 

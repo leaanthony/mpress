@@ -25,7 +25,7 @@ jobs:
       - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
         with:
           go-version-file: go.mod
-          cache: true
+          cache: false
       - name: Public tests and security gate
         run: |
           go test -race ./...
@@ -37,7 +37,12 @@ jobs:
       - name: Build release candidate
         run: go build -o "$RUNNER_TEMP/mpress" ./cmd/mpress
       - name: Private conformance
-        run: MPRESS_BIN="$RUNNER_TEMP/mpress" MPRESS_SOURCE="$GITHUB_WORKSPACE" go test ./...
+        run: |
+          if ! MPRESS_BIN="$RUNNER_TEMP/mpress" MPRESS_SOURCE="$GITHUB_WORKSPACE" go test ./... > "$RUNNER_TEMP/private-conformance.log" 2>&1; then
+            echo "Private conformance failed. Reproduce in the private test repository to inspect the output."
+            exit 1
+          fi
+          echo "Private conformance passed."
         working-directory: private-tests
 
   archives:
