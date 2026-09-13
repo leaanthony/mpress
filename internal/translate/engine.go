@@ -400,6 +400,7 @@ type matchedSegment struct {
 	OldID      string
 	Old        SegmentState
 	TargetText string
+	Target     Segment
 	State      string
 }
 
@@ -450,10 +451,10 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 	} else if !errors.Is(readErr, os.ErrNotExist) {
 		return FileReport{}, readErr
 	}
-	targetByID := map[string]string{}
+	targetByID := map[string]Segment{}
 	if targetDoc != nil {
 		for _, segment := range targetDoc.Segments {
-			targetByID[segment.ID] = segment.Original
+			targetByID[segment.ID] = segment
 		}
 	}
 
@@ -465,7 +466,7 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 		old, exists := state.Segments[oldID]
 		targetText := ""
 		if exists {
-			targetText = targetByID[oldID]
+			targetText = targetByID[oldID].Original
 			if targetText == "" {
 				targetText = old.MachineText
 			}
@@ -476,7 +477,7 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 			status = "protected"
 		}
 		report.States[status]++
-		items = append(items, matchedSegment{Segment: segment, OldID: oldID, Old: old, TargetText: targetText, State: status})
+		items = append(items, matchedSegment{Segment: segment, OldID: oldID, Old: old, TargetText: targetText, Target: targetByID[oldID], State: status})
 	}
 
 	var pending []RequestSegment
@@ -557,7 +558,9 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 			status = "machine-translated"
 			report.Translated++
 		} else if item.TargetText != "" {
-			value, err = prepareExisting(item.Segment, item.TargetText)
+			target := item.Target
+			target.Original = item.TargetText
+			value, err = prepareExistingSegment(item.Segment, target)
 			if err != nil {
 				return report, err
 			}

@@ -98,7 +98,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			if !ok {
 				continue
 			}
-			current, prepareErr := prepareExisting(segment, target.Original)
+			current, prepareErr := prepareExistingSegment(segment, target)
 			if prepareErr != nil {
 				return report, prepareErr
 			}
@@ -135,7 +135,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			if !ok {
 				return report, fmt.Errorf("refine %s: target segment %s is missing", file, segment.ID)
 			}
-			value, prepareErr := prepareExisting(segment, target.Original)
+			value, prepareErr := prepareExistingSegment(segment, target)
 			if prepareErr != nil {
 				return report, prepareErr
 			}

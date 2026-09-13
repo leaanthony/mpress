@@ -269,6 +269,42 @@ func TestTranslatedMentionAtStartOfParagraphRemainsText(t *testing.T) {
 	}
 }
 
+func TestMPDReuseDistinguishesLiteralAndFormattingUnderscores(t *testing.T) {
+	source, err := ExtractMPD("source.mpd", []byte("Update G_APPLICATION_NON_UNIQUE for Linux.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err := ExtractMPD("target.mpd", []byte("Mettre à jour G_APPLICATION_NON_UNIQUE pour Linux.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	value, err := prepareExistingSegment(source.Segments[0], target.Segments[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err := Apply(source, map[string]string{source.Segments[0].ID: value})
+	if err != nil || string(output) != string(target.Source) {
+		t.Fatalf("reuse changed the translation: %s, %v", output, err)
+	}
+	if err := Validate(source, output); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestMPDReuseRejectsChangedProtectedQuantity(t *testing.T) {
+	source, err := ExtractMPD("source.mpd", []byte("Wait 2.5s before trying again.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	target, err := ExtractMPD("target.mpd", []byte("Attendre 12.5s avant de réessayer.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := prepareExistingSegment(source.Segments[0], target.Segments[0]); err == nil {
+		t.Fatal("accepted a changed quantity")
+	}
+}
+
 func TestNavigationQuotedMultilineLabels(t *testing.T) {
 	source := []byte("- label: \"Getting\n    started\" # preserved\n  link: /start/\n- label: 'User''s\n    guide'\n  link: /guide/\n")
 	doc, err := ExtractNavigation(source)
