@@ -123,7 +123,7 @@ func (e *Engine) Mark(language, sourceFile, status string) (FileReport, error) {
 	if err != nil {
 		return FileReport{}, errors.New("translate the page before marking its review state")
 	}
-	targetDoc, err := extractFile(sourceFile, e.Config.Build.NavFile, targetBytes)
+	targetDoc, err := extractTargetFile(sourceFile, e.Config.Build.NavFile, sourceBytes, targetBytes)
 	if err != nil {
 		return FileReport{}, err
 	}

@@ -227,3 +227,46 @@ func TestAmbiguousRelocationDoesNotOverwriteManualWork(t *testing.T) {
 		t.Fatalf("explicit regeneration failed: %q", got)
 	}
 }
+
+func TestReviewedMPDLinksRemainFinalUntilEdited(t *testing.T) {
+	root, cfg := translationProject(t)
+	source := filepath.Join(root, "content", "links.mpd")
+	target := filepath.Join(root, "content", "fr", "links.mpd")
+	if err := os.WriteFile(source, []byte("# Welcome\n\n[See details](#details).\n\n## Details\n\nMore information.\n"), 0600); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(root, cfg, &fakeProvider{})
+	options := Options{Language: "fr", File: "links.mpd", Workers: 1}
+	if _, err := engine.Run(context.Background(), options); err != nil {
+		t.Fatal(err)
+	}
+	translated, err := os.ReadFile(target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(translated), "(#fr-details)") {
+		t.Fatalf("missing translated anchor: %s", translated)
+	}
+	if _, err := engine.Mark("fr", "links.mpd", "final"); err != nil {
+		t.Fatal(err)
+	}
+	options.DryRun = true
+	report, err := engine.Run(context.Background(), options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Files[0].States["final"] != report.Segments || report.Files[0].States["manual"] != 0 {
+		t.Fatalf("reviewed links appear modified: %#v", report)
+	}
+	edited := strings.Replace(string(translated), "See details", "Voir les détails", 1)
+	if err := os.WriteFile(target, []byte(edited), 0600); err != nil {
+		t.Fatal(err)
+	}
+	report, err = engine.Run(context.Background(), options)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Files[0].States["manual"] != 1 {
+		t.Fatalf("real manual edit was missed: %#v", report)
+	}
+}
