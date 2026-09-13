@@ -254,6 +254,58 @@ func TestRefinementRepairsOnlyFlaggedSegmentsAndKeepsStateCurrent(t *testing.T) 
 	}
 }
 
+func TestAuditAndRefinementRepairDamagedProtectedContent(t *testing.T) {
+	root := t.TempDir()
+	cfg := config.Default()
+	cfg.Site.Languages = []string{"en", "fr"}
+	cfg.Build.ContentDir = "content"
+	cfg.Translation.SourceLanguage = "en"
+	if err := os.MkdirAll(filepath.Join(root, "content", "fr"), 0o755); err != nil {
+		t.Fatal(err)
+	}
+	source := "# Intro\n\nWait 20 seconds.\n\nCall `Do()` now.\n\nKeep this sentence.\n"
+	target := "# Introduction\n\nAttendre 200 secondes.\n\nAppeler `Other()` maintenant.\n\nGarder cette phrase.\n"
+	targetPath := filepath.Join(root, "content", "fr", "page.mpd")
+	for path, text := range map[string]string{filepath.Join(root, "content", "page.mpd"): source, targetPath: target} {
+		if err := os.WriteFile(path, []byte(text), 0o644); err != nil {
+			t.Fatal(err)
+		}
+	}
+	engine := NewEngine(root, cfg, nil)
+	audit, err := engine.Audit("fr", "page.mpd")
+	if err != nil || audit.Errors != 2 || len(audit.Findings) != 2 {
+		t.Fatalf("expected both damaged segments: %#v, %v", audit, err)
+	}
+	for _, finding := range audit.Findings {
+		if finding.Code != "protected-content" || finding.Segment == "" {
+			t.Fatalf("finding cannot target a repair: %#v", finding)
+		}
+	}
+	bad := &fakeRefinementProvider{}
+	if _, err := engine.RefineWithProvider(context.Background(), "fr", "page.mpd", audit.Findings, bad); err == nil {
+		t.Fatal("accepted a refinement that retained damaged protected content")
+	}
+	if len(bad.requests) != 1 || !strings.Contains(bad.requests[0].Segments[0].ReviewNotes, "Rebuild this segment") {
+		t.Fatalf("repair guidance was not sent: %#v", bad.requests)
+	}
+	unchanged, err := os.ReadFile(targetPath)
+	if err != nil || string(unchanged) != target {
+		t.Fatalf("failed refinement changed the file: %q, %v", unchanged, err)
+	}
+	report, err := engine.RefineWithProvider(context.Background(), "fr", "page.mpd", audit.Findings, &fakeProvider{})
+	if err != nil || report.Segments != 2 || report.Written != 1 {
+		t.Fatalf("targeted repair failed: %#v, %v", report, err)
+	}
+	output, err := os.ReadFile(targetPath)
+	if err != nil || !strings.Contains(string(output), "Wait 20 seconds.") || !strings.Contains(string(output), "`Do()`") || !strings.Contains(string(output), "Garder cette phrase.") {
+		t.Fatalf("incorrect repair: %s, %v", output, err)
+	}
+	audit, err = engine.Audit("fr", "page.mpd")
+	if err != nil || audit.Errors != 0 {
+		t.Fatalf("repaired content still fails: %#v, %v", audit, err)
+	}
+}
+
 func TestLocaleGuidanceCoversFrenchAndCJK(t *testing.T) {
 	for _, language := range []string{"fr-FR", "zh-Hans", "ja", "ko"} {
 		if guidance := localeGuidance(language); strings.TrimSpace(guidance) == "" {

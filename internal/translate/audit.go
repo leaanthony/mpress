@@ -46,6 +46,22 @@ func (report *AuditReport) add(finding AuditFinding) {
 	}
 }
 
+func (report *AuditReport) addStructureError(file string, err error) {
+	var inlineFailure *inlineProtectionFailure
+	if err != nil && !errors.As(err, &inlineFailure) {
+		report.add(AuditFinding{Severity: "error", Code: "structure", File: file, Message: err.Error()})
+	}
+}
+
+func (report *AuditReport) addProtectedContentError(format, file string, source, target Segment) {
+	if format != "mpd" || !strings.Contains(source.Text, "⟪MPRESS_INLINE_") {
+		return
+	}
+	if _, err := prepareExistingSegment(source, target); err != nil {
+		report.add(AuditFinding{Severity: "error", Code: "protected-content", File: file, Segment: source.ID, Message: err.Error()})
+	}
+}
+
 func (report AuditReport) JSON() string {
 	data, _ := json.MarshalIndent(report, "", "  ")
 	return string(data)
@@ -156,9 +172,7 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 			report.add(AuditFinding{Severity: "error", Code: "invalid-target", File: file, Message: extractErr.Error()})
 			continue
 		}
-		if validateErr := validateFile(file, e.Config.Build.NavFile, sourceDoc, target); validateErr != nil {
-			report.add(AuditFinding{Severity: "error", Code: "structure", File: file, Message: validateErr.Error()})
-		}
+		report.addStructureError(file, validateFile(file, e.Config.Build.NavFile, sourceDoc, target))
 		targets := make(map[string]Segment, len(targetDoc.Segments))
 		for _, segment := range targetDoc.Segments {
 			targets[segment.ID] = segment
@@ -174,6 +188,7 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 				continue
 			}
 			pairs = append(pairs, AuditPair{File: file, ID: segment.ID, Section: segment.Section, Source: segment.Original, Target: targetSegment.Original})
+			report.addProtectedContentError(sourceDoc.Format, file, segment, targetSegment)
 			if severity, unchanged := unchangedSegmentProse(segment, targetSegment.Original, e.Config.Site.Title); unchanged {
 				report.add(AuditFinding{Severity: severity, Code: "untranslated", File: file, Segment: segment.ID, Message: "prose is unchanged from the source"})
 			}

@@ -272,6 +272,12 @@ translated anchors as manual edits. If the heading structure changes and those
 anchors cannot be aligned safely, preserve any manual corrections, regenerate
 that page with `--file path/to/page.mpd --scope all --force`, and review it again.
 
+Audits report each damaged native MPD inline segment as `protected-content`,
+including changed quantities, code, or formatting. Targeted refinement can
+rebuild those segments from the protected source while retaining the other
+translations. A refinement that still damages protected content is rejected
+before the target file is replaced.
+
 You can run the same workflow from the **Translations** item in the development
 bar. Start with the outcome you need: add a language, translate the current
 page, update a complete language, or mark the current page as reviewed. M-Press

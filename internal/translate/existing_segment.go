@@ -16,11 +16,19 @@ func validateMPDInlineProtection(source, target *Document) error {
 			continue
 		}
 		if _, err := prepareExistingSegment(segment, targets[segment.ID]); err != nil {
-			return fmt.Errorf("translation changed protected inline content: %w", err)
+			return &inlineProtectionFailure{err: err}
 		}
 	}
 	return nil
 }
+
+type inlineProtectionFailure struct{ err error }
+
+func (e *inlineProtectionFailure) Error() string {
+	return fmt.Sprintf("translation changed protected inline content: %v", e.err)
+}
+
+func (e *inlineProtectionFailure) Unwrap() error { return e.err }
 
 // Reuse the parsed target's inline boundaries. Literal underscores and stars
 // in prose must not be counted as formatting delimiters with the same spelling.

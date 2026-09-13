@@ -100,7 +100,8 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			}
 			current, prepareErr := prepareExistingSegment(segment, target)
 			if prepareErr != nil {
-				return report, prepareErr
+				current = target.Original
+				messages = append(append([]string(nil), messages...), "The existing translation has damaged protected content. Rebuild this segment from the source, preserving every source placeholder exactly. "+prepareErr.Error())
 			}
 			pending = append(pending, RequestSegment{ID: segment.ID, Kind: segment.Kind, Section: segment.Section, Text: segment.Text, CurrentText: current, ReviewNotes: strings.Join(messages, "; ")})
 		}
