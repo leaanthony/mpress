@@ -541,7 +541,7 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 		machineText := item.Old.MachineText
 		machineHash := item.Old.MachineHash
 		if newlyTranslated {
-			restored, restoreErr := restore(item.Segment, value, sourceDoc.Format != "mpd")
+			restored, restoreErr := restore(item.Segment, value, preservesMarkdownSyntax(sourceDoc.Format))
 			if restoreErr != nil {
 				return report, restoreErr
 			}
@@ -561,7 +561,7 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 			return report, fmt.Errorf("segment %s has no reusable target text", item.ID)
 		}
 		values[item.ID] = value
-		restored, restoreErr := restore(item.Segment, value, sourceDoc.Format != "mpd")
+		restored, restoreErr := restore(item.Segment, value, preservesMarkdownSyntax(sourceDoc.Format))
 		if restoreErr != nil {
 			return report, restoreErr
 		}
@@ -974,7 +974,9 @@ func shouldTranslate(status, scope string, force bool) bool {
 }
 
 func prepareExisting(segment Segment, target string) (string, error) {
-	value := target
+	if len(segment.Placeholders) == 0 {
+		return target, nil
+	}
 	type replacement struct {
 		placeholder string
 		position    int
@@ -988,31 +990,35 @@ func prepareExisting(segment Segment, target string) (string, error) {
 		originals = append(originals, original)
 	}
 	sort.Slice(originals, func(i, j int) bool { return len(originals[i]) > len(originals[j]) })
+	patterns := make([]string, 0, len(originals))
 	for _, original := range originals {
 		replacements := grouped[original]
 		sort.Slice(replacements, func(i, j int) bool { return replacements[i].position < replacements[j].position })
-		if strings.Count(value, original) != len(replacements) {
+		patterns = append(patterns, regexp.QuoteMeta(original))
+	}
+	// Match the original target once: inserted placeholder indices must never
+	// become matches for a later protected number.
+	counts := map[string]int{}
+	value := regexp.MustCompile(strings.Join(patterns, "|")).ReplaceAllStringFunc(target, func(original string) string {
+		index := counts[original]
+		counts[original]++
+		if index >= len(grouped[original]) {
+			return original
+		}
+		return grouped[original][index].placeholder
+	})
+	for original, replacements := range grouped {
+		if counts[original] != len(replacements) {
 			return "", fmt.Errorf("existing translation for %s does not preserve %s", segment.ID, original)
 		}
-		var output strings.Builder
-		cursor := 0
-		for _, item := range replacements {
-			index := strings.Index(value[cursor:], original)
-			if index < 0 {
-				return "", fmt.Errorf("existing translation for %s does not preserve %s", segment.ID, original)
-			}
-			index += cursor
-			output.WriteString(value[cursor:index])
-			output.WriteString(item.placeholder)
-			cursor = index + len(original)
-		}
-		output.WriteString(value[cursor:])
-		value = output.String()
 	}
 	return value, nil
 }
 
 func Validate(source *Document, target []byte) error {
+	if err := validateTranslationControls(string(target)); err != nil {
+		return err
+	}
 	var targetDoc *Document
 	var err error
 	if source.Format == "mpd" {
@@ -1084,21 +1090,7 @@ func immutableSkeleton(document *Document) string {
 var mpdSkeletonText = regexp.MustCompile(`(?:⟪TEXT_[^⟫]+⟫)+`)
 
 func applyRaw(document *Document, values map[string]string) ([]byte, error) {
-	result := append([]byte(nil), document.Source...)
-	segments := append([]Segment(nil), document.Segments...)
-	sort.Slice(segments, func(i, j int) bool { return segments[i].Start > segments[j].Start })
-	for _, segment := range segments {
-		value, ok := values[segment.ID]
-		if !ok {
-			continue
-		}
-		value, err := encodeSegment(segment, value)
-		if err != nil {
-			return nil, err
-		}
-		result = append(result[:segment.Start], append([]byte(value), result[segment.End:]...)...)
-	}
-	return result, nil
+	return applyDocumentValues(document, values, false)
 }
 
 func writeAtomic(path string, data []byte) error {

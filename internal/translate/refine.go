@@ -170,7 +170,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			if !changed {
 				continue
 			}
-			restored, restoreErr := restore(segment, value, sourceDoc.Format != "mpd")
+			restored, restoreErr := restore(segment, value, preservesMarkdownSyntax(sourceDoc.Format))
 			if restoreErr != nil {
 				return report, restoreErr
 			}

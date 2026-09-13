@@ -294,7 +294,7 @@ func TestNavigationTranslationPreservesLinksAndNesting(t *testing.T) {
 	if err := validateFile("_nav.yaml", "_nav.yaml", document, output); err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(output), "link: /start/") || !strings.Contains(string(output), "label: FR Build your first site") {
+	if !strings.Contains(string(output), "link: /start/") || !strings.Contains(string(output), `label: "FR Build your first site"`) {
 		t.Fatalf("navigation translation is wrong:\n%s", output)
 	}
 }

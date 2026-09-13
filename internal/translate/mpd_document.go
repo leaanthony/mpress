@@ -43,6 +43,8 @@ func ExtractMPD(filename string, source []byte) (*Document, error) {
 	var headings []heading
 	blockNumber := 0
 	attributeNumber := 0
+	htmlNumber := 0
+	diagramNumber := 0
 
 	var visit func(uint32, string) error
 	visit = func(parent uint32, section string) error {
@@ -54,19 +56,7 @@ func ExtractMPD(filename string, source []byte) (*Document, error) {
 			}
 			switch node.Kind {
 			case mpd.KindMetadata:
-				for _, segment := range mpdAttributeSegments(parsed, node, "fm", 0, mpdTranslatableMetadata) {
-					document.Segments = append(document.Segments, segment)
-				}
-				for offset := 0; offset < int(node.AttrCount); offset++ {
-					attribute := parsed.Attributes[int(node.FirstAttr)+offset]
-					name := string(parsed.Text(attribute.Name))
-					if name == "translationKey" {
-						var value string
-						if json.Unmarshal(parsed.Text(attribute.Value), &value) == nil {
-							document.TranslationKey = strings.TrimSpace(value)
-						}
-					}
-				}
+				appendMPDMetadata(document, parsed, node)
 			case mpd.KindComponent:
 				attributeNumber++
 				name := string(parsed.Text(node.Name))
@@ -115,7 +105,19 @@ func ExtractMPD(filename string, source []byte) (*Document, error) {
 						section = strings.Join(parts, " > ")
 					}
 				}
-			case mpd.KindCode, mpd.KindRawHTML, mpd.KindComment:
+			case mpd.KindRawHTML:
+				htmlNumber++
+				document.Segments = append(document.Segments, htmlSegments(parsed.Text(node.Content), int(node.Content.Start), fmt.Sprintf("h%04d", htmlNumber), section)...)
+			case mpd.KindCode:
+				if info := strings.Fields(string(parsed.Text(node.Name))); len(info) > 0 && info[0] == "d2" {
+					diagramNumber++
+					segments, err := d2Segments(parsed.Text(node.Content), int(node.Content.Start), int(node.Content.End), diagramNumber, section)
+					if err != nil {
+						return err
+					}
+					document.Segments = append(document.Segments, segments...)
+				}
+			case mpd.KindComment:
 				continue
 			default:
 				if err := visit(index, section); err != nil {
@@ -130,6 +132,20 @@ func ExtractMPD(filename string, source []byte) (*Document, error) {
 	}
 	sort.SliceStable(document.Segments, func(i, j int) bool { return document.Segments[i].Start < document.Segments[j].Start })
 	return document, nil
+}
+
+func appendMPDMetadata(document *Document, parsed *mpd.Document, node *mpd.Node) {
+	document.Segments = append(document.Segments, mpdAttributeSegments(parsed, node, "fm", 0, mpdTranslatableMetadata)...)
+	for offset := 0; offset < int(node.AttrCount); offset++ {
+		attribute := parsed.Attributes[int(node.FirstAttr)+offset]
+		if string(parsed.Text(attribute.Name)) != "translationKey" {
+			continue
+		}
+		var value string
+		if json.Unmarshal(parsed.Text(attribute.Value), &value) == nil {
+			document.TranslationKey = strings.TrimSpace(value)
+		}
+	}
 }
 
 func mpdPlainInlineText(document *mpd.Document, parent uint32) string {
@@ -393,11 +409,17 @@ func mpdAttributeSegments(document *mpd.Document, node *mpd.Node, prefix string,
 	for offset := 0; offset < int(node.AttrCount); offset++ {
 		attribute := document.Attributes[int(node.FirstAttr)+offset]
 		name := string(document.Text(attribute.Name))
-		if !allowed[name] || attribute.Flag {
+		if attribute.Flag {
 			continue
 		}
 		var value string
-		if json.Unmarshal(document.Text(attribute.Value), &value) != nil || !translatableText(value) {
+		if json.Unmarshal(document.Text(attribute.Value), &value) != nil {
+			if prefix == "fm" && (name == "hero" || name == "banner") {
+				result = append(result, nestedMetadataSegments(document.Text(attribute.Value), int(attribute.Value.Start), fmt.Sprintf("%s%04d-%s", prefix, ordinal, name))...)
+			}
+			continue
+		}
+		if !allowed[name] || !translatableText(value) {
 			continue
 		}
 		counts[name]++
@@ -412,6 +434,16 @@ func mpdAttributeSegments(document *mpd.Document, node *mpd.Node, prefix string,
 }
 
 func encodeSegment(segment Segment, value string) (string, error) {
+	if segment.Encoding == "html-unquoted" {
+		return `"` + escapeHTMLTranslation(value) + `"`, nil
+	}
+	if segment.Encoding == "html-text" {
+		return escapeHTMLTranslation(value), nil
+	}
+	if segment.Encoding == "yaml-string" {
+		encoded, err := json.Marshal(value)
+		return string(encoded), err
+	}
 	if segment.Encoding != "json-string" {
 		return value, nil
 	}

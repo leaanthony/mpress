@@ -34,6 +34,8 @@ type Segment struct {
 	Placeholders map[string]string `json:"-"`
 	Encoding     string            `json:"-"`
 	Protected    bool              `json:"-"`
+	D2Key        string            `json:"-"`
+	D2Tag        string            `json:"-"`
 }
 
 // EditableSegment is the compact subset of Segment required by browser quick
@@ -61,7 +63,7 @@ func ExtractNavigation(source []byte) (*Document, error) {
 	if err := yaml.Unmarshal(source, &parsed); err != nil {
 		return nil, fmt.Errorf("parse navigation YAML: %w", err)
 	}
-	document := &Document{Source: append([]byte(nil), source...)}
+	document := &Document{Source: append([]byte(nil), source...), Format: "navigation"}
 	position := 0
 	labelIndex := 0
 	for position < len(source) {
@@ -71,24 +73,23 @@ func ExtractNavigation(source []byte) (*Document, error) {
 			lineEnd = position + next
 		}
 		line := source[position:lineEnd]
-		colon := bytes.IndexByte(line, ':')
-		key := strings.TrimSpace(string(line[:colon]))
-		key = strings.TrimSpace(strings.TrimPrefix(key, "-"))
-		if colon > 0 && key == "label" {
-			start := colon + 1
-			for start < len(line) && (line[start] == ' ' || line[start] == '\t') {
-				start++
+		if start := navigationLabelStart(line); start >= 0 {
+			absoluteStart := position + start
+			end := navigationLabelEnd(source, absoluteStart)
+			var raw string
+			if err := yaml.Unmarshal(source[absoluteStart:end], &raw); err != nil {
+				return nil, fmt.Errorf("parse navigation label: %w", err)
 			}
-			end := len(line)
-			if start < end && (line[start] == '\'' || line[start] == '"') && line[end-1] == line[start] {
-				start++
-				end--
-			}
-			raw := string(line[start:end])
 			if translatableText(raw) {
 				labelIndex++
 				protected, placeholders := protect(raw)
-				document.Segments = append(document.Segments, Segment{ID: fmt.Sprintf("nav-label-%03d", labelIndex), Kind: "navigation", Original: raw, Text: protected, Start: position + start, End: position + end, SourceHash: Hash(raw), Placeholders: placeholders})
+				document.Segments = append(document.Segments, Segment{ID: fmt.Sprintf("nav-label-%03d", labelIndex), Kind: "navigation", Original: raw, Text: protected, Start: absoluteStart, End: end, SourceHash: Hash(raw), Placeholders: placeholders, Encoding: "yaml-string"})
+			}
+			if end > lineEnd {
+				lineEnd = end
+				if next := bytes.IndexByte(source[end:], '\n'); next >= 0 {
+					lineEnd = end + next
+				}
 			}
 		}
 		position = lineEnd + 1
@@ -96,7 +97,23 @@ func ExtractNavigation(source []byte) (*Document, error) {
 	return document, nil
 }
 
-var protectedPattern = regexp.MustCompile(`\\[^\r\n]|\{\{[^\n{}]+\}\}|\$\{[^\n{}]+\}|\{[A-Za-z_][A-Za-z0-9_.-]*\}|%[-+#0-9.*]*[bcdeEfFgGopqstvxX]|\b[0-9]+(?:[.,:/-][0-9]+)*\b`)
+func navigationLabelStart(line []byte) int {
+	colon := bytes.IndexByte(line, ':')
+	if colon <= 0 {
+		return -1
+	}
+	key := strings.TrimSpace(string(line[:colon]))
+	if strings.TrimSpace(strings.TrimPrefix(key, "-")) != "label" {
+		return -1
+	}
+	start := colon + 1
+	for start < len(line) && (line[start] == ' ' || line[start] == '\t') {
+		start++
+	}
+	return start
+}
+
+var protectedPattern = regexp.MustCompile(`&(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]+);|\\[^\r\n]|\{\{[^\n{}]+\}\}|\$\{[^\n{}]+\}|\{[A-Za-z_][A-Za-z0-9_.-]*\}|%[-+#0-9.*]*[bcdeEfFgGopqstvxX]|\b[0-9]+(?:[.,:/-][0-9]+)*\b`)
 var blockPrefixPattern = regexp.MustCompile(`^[ \t]*(?:[-+*][ \t]+|[0-9]+[.)][ \t]+|>+[ \t]*)`)
 var parenthesizedMarkerSuffixPattern = regexp.MustCompile(`\([0-9]+\)[ \t]*$`)
 var pricingMarkerSuffixPattern = regexp.MustCompile(`[✓✗][ \t]*$`)
@@ -687,7 +704,7 @@ func protect(value string) (string, map[string]string) {
 	// Placeholder syntax always starts with one of these three bytes. Most
 	// documentation prose contains none of them, so avoid starting the regexp
 	// engine for the overwhelmingly common case.
-	if !strings.ContainsAny(value, "\\{$%0123456789") {
+	if !strings.ContainsAny(value, "&\\{$%0123456789") {
 		return value, nil
 	}
 	values := map[string]string{}
@@ -702,6 +719,9 @@ func protect(value string) (string, map[string]string) {
 }
 
 func restore(segment Segment, translated string, preserveLineStructure bool) (string, error) {
+	if err := validateTranslationControls(translated); err != nil {
+		return "", fmt.Errorf("segment %s: %w", segment.ID, err)
+	}
 	for placeholder, original := range segment.Placeholders {
 		if strings.Count(translated, placeholder) != 1 {
 			return "", fmt.Errorf("segment %s did not preserve placeholder %s", segment.ID, placeholder)
@@ -723,6 +743,15 @@ func restore(segment Segment, translated string, preserveLineStructure bool) (st
 	return translated, nil
 }
 
+func validateTranslationControls(value string) error {
+	for _, r := range value {
+		if r < 0x20 && r != '\n' && r != '\r' && r != '\t' {
+			return fmt.Errorf("translation contains forbidden control character U+%04X", r)
+		}
+	}
+	return nil
+}
+
 func preserveOuterWhitespace(original, translated string) string {
 	leading := original[:len(original)-len(strings.TrimLeft(original, " \t\r\n"))]
 	trailing := original[len(strings.TrimRight(original, " \t\r\n")):]
@@ -741,22 +770,38 @@ func syntaxSignature(value string) string {
 }
 
 // Apply patches translated text into the original bytes from the end towards
-// the beginning. No parser serialisation occurs, so all untouched bytes remain
-// exactly identical.
+// the beginning. Untouched bytes remain identical, except translated D2 blocks
+// which are formatted by D2's editing API to preserve their graph structure.
 func Apply(document *Document, translated map[string]string) ([]byte, error) {
+	return applyDocumentValues(document, translated, true)
+}
+
+func applyDocumentValues(document *Document, translated map[string]string, restoreText bool) ([]byte, error) {
 	result := append([]byte(nil), document.Source...)
 	segments := append([]Segment(nil), document.Segments...)
 	sort.Slice(segments, func(i, j int) bool { return segments[i].Start > segments[j].Start })
+	diagrams := map[int]bool{}
 	for _, segment := range segments {
 		value, ok := translated[segment.ID]
 		if !ok {
 			continue
 		}
-		restored, err := restore(segment, value, document.Format != "mpd")
-		if err != nil {
-			return nil, err
+		var err error
+		restored := value
+		if segment.D2Key != "" {
+			if diagrams[segment.Start] {
+				continue
+			}
+			diagrams[segment.Start] = true
+			restored, err = applyD2Labels(document, segment, translated, restoreText)
+		} else {
+			if restoreText {
+				restored, err = restore(segment, value, preservesMarkdownSyntax(document.Format))
+			}
+			if err == nil {
+				restored, err = encodeSegment(segment, restored)
+			}
 		}
-		restored, err = encodeSegment(segment, restored)
 		if err != nil {
 			return nil, err
 		}
@@ -803,4 +848,40 @@ func writePaddedInt(result *strings.Builder, value, width int) {
 		result.WriteByte('0')
 	}
 	_, _ = result.Write(digits)
+}
+
+func preservesMarkdownSyntax(format string) bool { return format != "mpd" && format != "navigation" }
+
+func navigationLabelEnd(line []byte, start int) int {
+	if start < len(line) && (line[start] == '\'' || line[start] == '"') {
+		quote := line[start]
+		for i := start + 1; i < len(line); i++ {
+			if quote == '"' && line[i] == '\\' {
+				i++
+				continue
+			}
+			if line[i] != quote {
+				continue
+			}
+			if quote == '\'' && i+1 < len(line) && line[i+1] == quote {
+				i++
+				continue
+			}
+			return i + 1
+		}
+	}
+	end := len(line)
+	if next := bytes.IndexByte(line[start:], '\n'); next >= 0 {
+		end = start + next
+	}
+	for i := start + 1; i < end; i++ {
+		if line[i] == '#' && (line[i-1] == ' ' || line[i-1] == '\t') {
+			end = i
+			break
+		}
+	}
+	for end > start && (line[end-1] == ' ' || line[end-1] == '\t') {
+		end--
+	}
+	return end
 }

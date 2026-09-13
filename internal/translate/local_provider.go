@@ -184,7 +184,10 @@ func validateTranslations(request TranslationRequest, result map[string]string) 
 		if strings.TrimSpace(translated) == "" {
 			return nil, fmt.Errorf("provider returned an empty translation for segment %q", segment.ID)
 		}
-		if request.Format != "mpd" && strings.Count(translated, "\n") != strings.Count(segment.Text, "\n") {
+		if err := validateTranslationControls(translated); err != nil {
+			return nil, fmt.Errorf("provider segment %q: %w", segment.ID, err)
+		}
+		if preservesMarkdownSyntax(request.Format) && strings.Count(translated, "\n") != strings.Count(segment.Text, "\n") {
 			return nil, fmt.Errorf("provider changed line count for segment %q", segment.ID)
 		}
 		plainSource := translationPlaceholderPattern.ReplaceAllString(segment.Text, "")
@@ -194,13 +197,13 @@ func validateTranslations(request TranslationRequest, result map[string]string) 
 		}
 		sourceRunes := utf8.RuneCountInString(strings.TrimSpace(plainSource))
 		targetRunes := utf8.RuneCountInString(strings.TrimSpace(plainTarget))
-		if request.Format != "mpd" && sourceRunes >= 12 && !containsLetterOrNumber(plainTarget) {
+		if preservesMarkdownSyntax(request.Format) && sourceRunes >= 12 && !containsLetterOrNumber(plainTarget) {
 			return nil, fmt.Errorf("provider returned punctuation only for segment %q", segment.ID)
 		}
 		if sourceRunes >= 20 && targetRunes < max(2, sourceRunes/10) {
 			return nil, fmt.Errorf("provider collapsed segment %q from %d to %d characters", segment.ID, sourceRunes, targetRunes)
 		}
-		if request.Format != "mpd" {
+		if preservesMarkdownSyntax(request.Format) {
 			for _, delimiter := range "()[]{}<>" {
 				if strings.Count(translated, string(delimiter)) != strings.Count(segment.Text, string(delimiter)) {
 					return nil, fmt.Errorf("provider changed structural delimiter %q in segment %q", delimiter, segment.ID)

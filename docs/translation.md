@@ -266,6 +266,13 @@ The translator protects:
 - Markdown punctuation and line structure;
 - navigation links and YAML nesting.
 
+D2 diagram labels are translated using D2's editing API. Shape identifiers,
+connections, styles, imports, and code-shaped labels remain protected. Visible
+text and accessibility labels inside raw HTML are translated; scripts, styles,
+code, and tag structure remain unchanged. Nested hero and banner metadata is
+included, so landing-page text is covered too. Navigation labels are safely
+quoted as YAML strings and can use natural target-language punctuation.
+
 Requests use structured output keyed by a stable segment ID. Long pages are
 split into bounded requests with the page title, outline, nearby text, style
 guide, and glossary as context. M-Press rejects incomplete responses and any
