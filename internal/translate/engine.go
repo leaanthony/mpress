@@ -127,16 +127,17 @@ func (e *Engine) Mark(language, sourceFile, status string) (FileReport, error) {
 	if err != nil {
 		return FileReport{}, err
 	}
-	targetByID := map[string]string{}
+	targetByID := map[string]Segment{}
 	for _, segment := range targetDoc.Segments {
-		targetByID[segment.ID] = segment.Original
+		targetByID[segment.ID] = segment
 	}
 	matches := matchSegments(sourceDoc.Segments, state.Segments)
+	reviewed := make(map[string]SegmentState, len(sourceDoc.Segments))
 	report := FileReport{SourceFile: sourceFile, TargetFile: filepath.ToSlash(filepath.Join(language, sourceFile)), TargetLanguage: language, Segments: len(sourceDoc.Segments), States: map[string]int{status: len(sourceDoc.Segments)}}
 	for _, segment := range sourceDoc.Segments {
 		oldID := matches[segment.ID]
 		old, ok := state.Segments[oldID]
-		targetText := targetByID[oldID]
+		targetText := reusableTarget(segment.ID, oldID, old, targetByID).Original
 		if !ok || targetText == "" {
 			return FileReport{}, fmt.Errorf("segment %s has not been translated", segment.ID)
 		}
@@ -147,9 +148,9 @@ func (e *Engine) Mark(language, sourceFile, status string) (FileReport, error) {
 		old.TargetHash = Hash(targetText)
 		old.SourceHash = segment.SourceHash
 		old.UpdatedAt = nowString()
-		delete(state.Segments, oldID)
-		state.Segments[segment.ID] = old
+		reviewed[segment.ID] = old
 	}
+	state.Segments = reviewed
 	state.SourceFile = filepath.ToSlash(sourceFile)
 	state.PageKey = newFileState(sourceFile, e.Config.Translation.SourceLanguage, language, sourceDoc.TranslationKey).PageKey
 	if err := saveState(stateFile, state); err != nil {
@@ -464,9 +465,10 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 	for _, segment := range sourceDoc.Segments {
 		oldID := matches[segment.ID]
 		old, exists := state.Segments[oldID]
+		target := reusableTarget(segment.ID, oldID, old, targetByID)
 		targetText := ""
 		if exists {
-			targetText = targetByID[oldID].Original
+			targetText = target.Original
 			if targetText == "" {
 				targetText = old.MachineText
 			}
@@ -477,7 +479,7 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 			status = "protected"
 		}
 		report.States[status]++
-		items = append(items, matchedSegment{Segment: segment, OldID: oldID, Old: old, TargetText: targetText, Target: targetByID[oldID], State: status})
+		items = append(items, matchedSegment{Segment: segment, OldID: oldID, Old: old, TargetText: targetText, Target: target, State: status})
 	}
 
 	var pending []RequestSegment
@@ -966,6 +968,18 @@ func validateFile(sourceFile, navFile string, source *Document, target []byte) e
 		return nil
 	}
 	return Validate(source, target)
+}
+
+// A structural edit may move both source and target before state is refreshed.
+// Prefer the current position only when its text matches the recorded target;
+// otherwise retain the old position, including any manual edit there.
+func reusableTarget(currentID, oldID string, old SegmentState, targets map[string]Segment) Segment {
+	if currentID != oldID && old.TargetHash != "" {
+		if current, ok := targets[currentID]; ok && Hash(current.Original) == old.TargetHash {
+			return current
+		}
+	}
+	return targets[oldID]
 }
 
 func matchSegments(current []Segment, old map[string]SegmentState) map[string]string {
