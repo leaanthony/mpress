@@ -32,6 +32,28 @@ Built 15 pages in 24ms.
 ```
 @end
 
+## D2 diagrams
+
+Use a `d2` fence to render a diagram as an SVG image during the build:
+
+```text
+Frontend -> Backend: Call service
+Backend -> Database: Query
+```
+
+```d2
+Frontend -> Backend: Call service
+Backend -> Database: Query
+```
+
+The SVG includes its fonts and works without JavaScript, a diagram service,
+or a separate D2 installation. M-Press uses the Dagre layout engine. Keep each
+diagram self-contained: file imports are disabled. Invalid D2 fails the build
+and reports the compiler error instead of displaying the source as code.
+Add `title="Description of the diagram"` after `d2` in the opening fence to
+provide alternative text. Without a title, the diagram's node labels are used.
+Wide diagrams scroll within their frame so their text remains readable.
+
 ## Diffs
 
 @diff{title="mpress.yaml" mode="inline"}

@@ -6,6 +6,16 @@ command binary. The bundle is generated from the release dependency graph, so
 it cannot silently fall behind `go.mod`. The directory also contains the Astro
 Starlight icon license described below.
 
+## D2 diagrams
+
+Fenced D2 diagrams are compiled and rendered using the unmodified
+[D2 v0.8.1 source](https://github.com/d2lang/d2/tree/v0.8.1), licensed under
+Mozilla Public License 2.0. Release archives include the D2 license and the
+licenses of its linked dependencies. The linked source is available from the
+upstream repository and the Go module proxy.
+
+Copyright 2022 Terrastruct Inc.
+
 ## OpenAI Go SDK
 
 The translation provider client uses OpenAI Go SDK v3. The SDK is licensed

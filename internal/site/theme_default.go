@@ -517,6 +517,8 @@ article h6 { margin: 1.5rem 0 .5rem; scroll-margin-top: 88px; font-size: 14px; f
 article h1 + h2, article h2 + h3, article h3 + h4, article h4 + h5, article h5 + h6 { margin-top: 1.5rem; }
 article p, article li { color: color-mix(in srgb, var(--text) 89%, var(--muted)); font-weight: 400; line-height: 1.7; }
 article img, article video { max-width: 100%; height: auto; border: 0; }
+.mpress-diagram { margin: 1.35rem 0; padding: .5rem; overflow: auto; border: 1px solid var(--border); border-radius: 7px; background: #fff; }
+.mpress-diagram img { display: block; width: auto; max-width: none; height: auto; margin-inline: auto; }
 .mpress-theme-image { display: contents; }
 .mpress-theme-image-dark { display: none; }
 html[data-theme="dark"] .mpress-theme-image-light { display: none; }

@@ -121,6 +121,9 @@ func TestFenceRenderingUnchangedOnRealDocs(t *testing.T) {
 		if readErr != nil {
 			return fmt.Errorf("read %s: %w", path, readErr)
 		}
+		// D2 now intentionally renders as a diagram; its contract is covered
+		// by d2_test.go. Preserve this comparison for ordinary code fences.
+		source = []byte(strings.ReplaceAll(string(source), "\n```d2\n", "\n```text\n"))
 		rel, relErr := filepath.Rel(root, path)
 		if relErr != nil {
 			return fmt.Errorf("resolve %s relative to %s: %w", path, root, relErr)

@@ -331,6 +331,11 @@ required inside a code block.
 The attributes `language`, `title`, `filename`, `highlight`, and `lineNumbers`
 have the same meanings as their MPress Markdown component equivalents.
 
+A fence whose language is `d2` renders a static SVG diagram. Its body is passed
+unchanged to the bundled D2 compiler using the Dagre layout engine. File imports
+are disabled, and invalid diagrams fail the build. See [D2 diagrams](/code-components/#d2-diagrams)
+for an example.
+
 ### Raw HTML
 
 Raw HTML is explicit.

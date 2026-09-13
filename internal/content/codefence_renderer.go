@@ -63,7 +63,13 @@ func renderFencedCodeBlock(w util.BufWriter, source []byte, node ast.Node, enter
 	// Render only the frame this fence actually needs; both walk the body and
 	// escape it, so building the unused one would double that work per fence.
 	var markup string
-	if isTerminalFence(info) {
+	if fields := strings.Fields(info); len(fields) > 0 && strings.EqualFold(fields[0], "d2") {
+		var err error
+		markup, err = renderD2Diagram(info, strings.Join(lines, "\n"))
+		if err != nil {
+			return ast.WalkStop, err
+		}
+	} else if isTerminalFence(info) {
 		markup = renderTerminalFence(info, lines)
 	} else {
 		markup = renderAnnotatedCodeFrame(info, lines)
