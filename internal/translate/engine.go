@@ -132,12 +132,17 @@ func (e *Engine) Mark(language, sourceFile, status string) (FileReport, error) {
 		targetByID[segment.ID] = segment
 	}
 	matches := matchSegments(sourceDoc.Segments, state.Segments)
+	layout := inferTargetLayout(matches, state.Segments, targetByID)
 	reviewed := make(map[string]SegmentState, len(sourceDoc.Segments))
 	report := FileReport{SourceFile: sourceFile, TargetFile: filepath.ToSlash(filepath.Join(language, sourceFile)), TargetLanguage: language, Segments: len(sourceDoc.Segments), States: map[string]int{status: len(sourceDoc.Segments)}}
 	for _, segment := range sourceDoc.Segments {
 		oldID := matches[segment.ID]
 		old, ok := state.Segments[oldID]
-		targetText := reusableTarget(segment.ID, oldID, old, targetByID).Original
+		target, err := reusableTarget(segment.ID, oldID, old, targetByID, layout)
+		if err != nil {
+			return FileReport{}, err
+		}
+		targetText := target.Original
 		if !ok || targetText == "" {
 			return FileReport{}, fmt.Errorf("segment %s has not been translated", segment.ID)
 		}
@@ -460,12 +465,19 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 	}
 
 	matches := matchSegments(sourceDoc.Segments, state.Segments)
+	layout := inferTargetLayout(matches, state.Segments, targetByID)
 	items := make([]matchedSegment, 0, len(sourceDoc.Segments))
 	report := FileReport{SourceFile: filepath.ToSlash(sourceFile), TargetFile: filepath.ToSlash(filepath.Join(language, sourceFile)), TargetLanguage: language, Segments: len(sourceDoc.Segments), States: map[string]int{}}
 	for _, segment := range sourceDoc.Segments {
 		oldID := matches[segment.ID]
 		old, exists := state.Segments[oldID]
-		target := reusableTarget(segment.ID, oldID, old, targetByID)
+		target, targetErr := reusableTarget(segment.ID, oldID, old, targetByID, layout)
+		if targetErr != nil {
+			if !options.Force || options.Scope != "all" {
+				return FileReport{}, targetErr
+			}
+			target = targetByID[segment.ID]
+		}
 		targetText := ""
 		if exists {
 			targetText = target.Original
@@ -970,16 +982,49 @@ func validateFile(sourceFile, navFile string, source *Document, target []byte) e
 	return Validate(source, target)
 }
 
-// A structural edit may move both source and target before state is refreshed.
-// Prefer the current position only when its text matches the recorded target;
-// otherwise retain the old position, including any manual edit there.
-func reusableTarget(currentID, oldID string, old SegmentState, targets map[string]Segment) Segment {
-	if currentID != oldID && old.TargetHash != "" {
-		if current, ok := targets[currentID]; ok && Hash(current.Original) == old.TargetHash {
-			return current
+type targetLayout uint8
+
+const (
+	targetAtCurrent targetLayout = 1 << iota
+	targetAtOld
+)
+
+// Unchanged translations provide anchors for manually edited neighbours.
+// Mixed or absent evidence must not silently select a different paragraph.
+func inferTargetLayout(matches map[string]string, old map[string]SegmentState, targets map[string]Segment) targetLayout {
+	var layout targetLayout
+	for currentID, oldID := range matches {
+		if currentID == oldID || old[oldID].TargetHash == "" {
+			continue
+		}
+		if target, ok := targets[currentID]; ok && Hash(target.Original) == old[oldID].TargetHash {
+			layout |= targetAtCurrent
+		}
+		if target, ok := targets[oldID]; ok && Hash(target.Original) == old[oldID].TargetHash {
+			layout |= targetAtOld
 		}
 	}
-	return targets[oldID]
+	return layout
+}
+
+func reusableTarget(currentID, oldID string, old SegmentState, targets map[string]Segment, layout targetLayout) (Segment, error) {
+	if currentID == oldID || oldID == "" || len(targets) == 0 {
+		return targets[oldID], nil
+	}
+	if current, ok := targets[currentID]; ok && Hash(current.Original) == old.TargetHash {
+		return current, nil
+	}
+	if previous, ok := targets[oldID]; ok && Hash(previous.Original) == old.TargetHash {
+		return previous, nil
+	}
+	switch layout {
+	case targetAtCurrent:
+		return targets[currentID], nil
+	case targetAtOld:
+		return targets[oldID], nil
+	default:
+		return Segment{}, fmt.Errorf("segment %s moved and its edited target position is ambiguous; reconcile the translation or use --scope all --force to regenerate it", currentID)
+	}
 }
 
 func matchSegments(current []Segment, old map[string]SegmentState) map[string]string {
