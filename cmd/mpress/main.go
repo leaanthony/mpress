@@ -33,8 +33,6 @@ import (
 	docversion "github.com/leaanthony/mpress/internal/version"
 )
 
-var version = "0.1.0-dev"
-
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
@@ -73,7 +71,7 @@ func run(args []string) error {
 	case "knowledge":
 		return serveKnowledge(args[1:])
 	case "version", "--version", "-v":
-		fmt.Println("mpress", version)
+		fmt.Println("mpress", cliVersion())
 		return nil
 	case "help", "--help", "-h":
 		return usage()
