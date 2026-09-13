@@ -113,7 +113,7 @@ func navigationLabelStart(line []byte) int {
 	return start
 }
 
-var protectedPattern = regexp.MustCompile(`&(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]+);|\\[^\r\n]|\{\{[^\n{}]+\}\}|\$\{[^\n{}]+\}|\{[A-Za-z_][A-Za-z0-9_.-]*\}|%[-+#0-9.*]*[bcdeEfFgGopqstvxX]|\b[0-9]+(?:[.,:/-][0-9]+)*`)
+var protectedPattern = regexp.MustCompile(`&(?:#[0-9]+|#x[0-9A-Fa-f]+|[A-Za-z][A-Za-z0-9]+);|\\[^\r\n]|\{\{[^\n{}]+\}\}|\$\{[^\n{}]+\}|\{[A-Za-z_][A-Za-z0-9_.-]*\}|%[-+#0-9.*]*[bcdeEfFgGopqstvxX]|\b[vV]?[0-9]+\.[0-9]+\.[0-9]+[-+][0-9A-Za-z-]+(?:[.+][0-9A-Za-z-]+)*|\b[vV]?[0-9]+(?:[.,:/-][0-9]+)*`)
 var blockPrefixPattern = regexp.MustCompile(`^[ \t]*(?:[-+*][ \t]+|[0-9]+[.)][ \t]+|>+[ \t]*)`)
 var parenthesizedMarkerSuffixPattern = regexp.MustCompile(`\([0-9]+\)[ \t]*$`)
 var pricingMarkerSuffixPattern = regexp.MustCompile(`[✓✗][ \t]*$`)

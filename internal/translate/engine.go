@@ -1061,6 +1061,10 @@ type existingPlaceholder struct {
 }
 
 func prepareExisting(segment Segment, target string) (string, error) {
+	return prepareExistingRanges(segment, target, nil)
+}
+
+func prepareExistingRanges(segment Segment, target string, ranges []mpdProtectedRange) (string, error) {
 	if len(segment.Placeholders) == 0 {
 		return target, nil
 	}
@@ -1080,14 +1084,14 @@ func prepareExisting(segment Segment, target string) (string, error) {
 		pattern := regexp.QuoteMeta(original)
 		// The numeric protector uses a leading word boundary. A version digit in an
 		// unprotected name such as v2 must not consume a standalone 2 token.
-		if original[0] >= '0' && original[0] <= '9' {
+		if original[0] >= '0' && original[0] <= '9' || len(original) > 1 && (original[0] == 'v' || original[0] == 'V') && original[1] >= '0' && original[1] <= '9' {
 			pattern = `\b` + pattern
 		}
 		patterns = append(patterns, pattern)
 	}
 	// Match the original target once: inserted placeholder indices must never
 	// become matches for a later protected number.
-	value, counts := replaceExistingPlaceholders(target, regexp.MustCompile(strings.Join(patterns, "|")), grouped)
+	value, counts := replaceExistingPlaceholders(target, regexp.MustCompile(strings.Join(patterns, "|")), grouped, ranges)
 	for original, replacements := range grouped {
 		if counts[original] != len(replacements) {
 			return "", fmt.Errorf("existing translation for %s does not preserve %s", segment.ID, original)
@@ -1096,13 +1100,13 @@ func prepareExisting(segment Segment, target string) (string, error) {
 	return value, nil
 }
 
-func replaceExistingPlaceholders(target string, pattern *regexp.Regexp, grouped map[string][]existingPlaceholder) (string, map[string]int) {
+func replaceExistingPlaceholders(target string, pattern *regexp.Regexp, grouped map[string][]existingPlaceholder, ranges []mpdProtectedRange) (string, map[string]int) {
 	var output strings.Builder
 	counts := map[string]int{}
 	cursor := 0
 	for _, span := range pattern.FindAllStringIndex(target, -1) {
 		original := target[span[0]:span[1]]
-		if partialQuantityMatch(target, span[0], span[1]) {
+		if !withinProtectedRanges(span[0], span[1], ranges) || ranges == nil && partialQuantityMatch(target, span[0], span[1]) {
 			continue
 		}
 		output.WriteString(target[cursor:span[0]])
@@ -1140,7 +1144,7 @@ func Validate(source *Document, target []byte) error {
 	var targetDoc *Document
 	var err error
 	if source.Format == "mpd" {
-		targetDoc, err = ExtractMPD("translated.mpd", target)
+		targetDoc, err = extractTargetFile("translated.mpd", "_nav.yaml", source.Source, target)
 	} else {
 		targetDoc, err = Extract(target)
 	}
@@ -1158,6 +1162,9 @@ func Validate(source *Document, target []byte) error {
 	}
 	if sourceSkeleton != targetSkeleton {
 		return structuralTranslationError(sourceSkeleton, targetSkeleton, source.Format)
+	}
+	if source.Format == "mpd" {
+		return validateMPDInlineProtection(source, targetDoc)
 	}
 	return nil
 }

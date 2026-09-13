@@ -234,7 +234,7 @@ func protectMPDInline(document *mpd.Document, parent uint32, start, end int) (st
 				add(int(node.Source.Start), int(node.Content.Start))
 				add(int(node.Content.End), int(node.Source.End))
 				walk(childIndex)
-			case mpd.KindLink, mpd.KindImage:
+			case mpd.KindLink, mpd.KindImage, mpd.KindInlineRole:
 				labelStart, labelEnd, hasLabel := mpdInlineBounds(document, childIndex)
 				if !hasLabel {
 					add(int(node.Source.Start), int(node.Source.End))
@@ -260,7 +260,7 @@ func protectMPDInline(document *mpd.Document, parent uint32, start, end int) (st
 	})
 	merged := ranges[:0]
 	for _, item := range ranges {
-		if len(merged) > 0 && item.start <= merged[len(merged)-1].end {
+		if len(merged) > 0 && item.start < merged[len(merged)-1].end {
 			merged[len(merged)-1].end = max(merged[len(merged)-1].end, item.end)
 			continue
 		}
@@ -456,11 +456,13 @@ func encodeSegment(segment Segment, value string) (string, error) {
 
 // A translated sentence may put an @mention first even when the English
 // sentence did not. It is still prose, not an MPD component invocation.
+var mpdInlineRolePrefix = regexp.MustCompile(`^@[A-Za-z_][A-Za-z0-9_.-]*\[`)
+
 func escapeMPDDirectiveText(value string) string {
 	lines := strings.Split(value, "\n")
 	for index, line := range lines {
 		content := strings.TrimLeft(line, " \t")
-		if strings.HasPrefix(content, "@") {
+		if strings.HasPrefix(content, "@") && !mpdInlineRolePrefix.MatchString(content) {
 			prefix := line[:len(line)-len(content)]
 			lines[index] = prefix + `\` + content
 		}

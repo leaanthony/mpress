@@ -252,6 +252,35 @@ func TestExistingQuantityCannotMatchPartOfAnotherNumber(t *testing.T) {
 	}
 }
 
+func TestVersionProtectionIncludesPrefixAndAllComponents(t *testing.T) {
+	for _, version := range []string{"v3.0.0-alpha2.122", "3.0.0-alpha2.122", "v1.0.8+build.1", "127.0.0.1:34115"} {
+		_, values := protect("Connect using " + version + " now.")
+		if len(values) != 1 {
+			t.Fatalf("split protected value %q: %v", version, values)
+		}
+		for _, value := range values {
+			if value != version {
+				t.Fatalf("protected %q incompletely as %q", version, value)
+			}
+		}
+	}
+	text, placeholders := protect("Release v1.0.8 is available.")
+	segment := Segment{ID: "version", Original: "Release v1.0.8 is available.", Text: text, Placeholders: placeholders}
+	if len(placeholders) != 1 {
+		t.Fatalf("version was split: %v", placeholders)
+	}
+	for _, value := range placeholders {
+		if value != "v1.0.8" {
+			t.Fatalf("version was partially protected: %q", value)
+		}
+	}
+	for _, value := range []string{"Version v1.0.80 disponible.", "Version av1.0.8 disponible.", "Version v1.0.8.1 disponible."} {
+		if _, err := prepareExisting(segment, value); err == nil {
+			t.Errorf("accepted changed version: %s", value)
+		}
+	}
+}
+
 func TestTranslatedMentionAtStartOfParagraphRemainsText(t *testing.T) {
 	doc, err := ExtractMPD("mention.mpd", []byte("Thanks to @lea for this fix.\n"))
 	if err != nil {
@@ -296,12 +325,52 @@ func TestMPDReuseRejectsChangedProtectedQuantity(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	target, err := ExtractMPD("target.mpd", []byte("Attendre 12.5s avant de réessayer.\n"))
+	for _, text := range []string{"Attendre 12.5s avant de réessayer.\n", "Attendre `2.5`s avant de réessayer.\n"} {
+		target, err := ExtractMPD("target.mpd", []byte(text))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := prepareExistingSegment(source.Segments[0], target.Segments[0]); err == nil {
+			t.Fatalf("accepted changed quantity or protection boundaries: %s", text)
+		}
+	}
+}
+
+func TestMPDReuseAllowsProtectedSpansToBecomeAdjacent(t *testing.T) {
+	source, err := ExtractMPD("source.mpd", []byte("*Validate `IsMainFrame`* (macOS) before continuing.\n"))
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := prepareExistingSegment(source.Segments[0], target.Segments[0]); err == nil {
-		t.Fatal("accepted a changed quantity")
+	target, err := ExtractMPD("target.mpd", []byte("*`IsMainFrame`*を検証する（macOS）してから続行します。\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	value, err := prepareExistingSegment(source.Segments[0], target.Segments[0])
+	if err != nil {
+		t.Fatal(err)
+	}
+	output, err := Apply(source, map[string]string{source.Segments[0].ID: value})
+	if err != nil || string(output) != string(target.Source) {
+		t.Fatalf("adjacent spans changed: %s, %v", output, err)
+	}
+	if err := Validate(source, output); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestMPDValidationRejectsBrokenInlineProtection(t *testing.T) {
+	source, err := ExtractMPD("source.mpd", []byte("*Defaults to `arraybuffer`*, not `blob`, after 2.5s.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, target := range []string{
+		"* vaut `arraybuffer`* par défaut, et non `blob`, après 2.5s.\n",
+		"*Vaut `arraybuffer`* par défaut, et non `text`, après 2.5s.\n",
+		"*Vaut `arraybuffer`* par défaut, et non `blob`, après 12.5s.\n",
+	} {
+		if err := Validate(source, []byte(target)); err == nil {
+			t.Errorf("accepted changed inline content: %s", target)
+		}
 	}
 }
 
