@@ -1,0 +1,96 @@
+site:
+    title: M-Press
+    description: Beautiful documentation from Markdown, without Node.js or MDX.
+    baseURL: ""
+    defaultLanguage: en
+    languages:
+        - en
+        - fr
+        - cy
+    languageLabels:
+        cy: Cymraeg
+        en: EN
+        fr: Français
+    logoLight: brand/m-press-logo-light.svg
+    logoDark: brand/m-press-logo-dark.svg
+    logoWidth: 36px
+    favicon: brand/m-press-favicon.svg
+    socialImage: ""
+    headerLinks:
+        - label: Docs
+          url: /tutorials/first-site/
+        - label: Components
+          url: /components/
+    defaultLanguageAtRoot: true
+    missingTranslation: link-to-default
+build:
+    contentDir: docs
+    staticDir: static
+    outputDir: site
+    navFile: _nav.yaml
+    customCSS: docs-theme.css
+theme:
+    accentColor: '#5375f6'
+    hoverColor: '#7593ff'
+    hoverColorLight: '#5375f6'
+    hoverColorDark: '#ffffff'
+    colorScheme: dark
+    layout:
+        preset: starlight
+        contentWidth: 50rem
+        wideContentWidth: 64rem
+        sidebarWidth: 18.75rem
+        tocWidth: 16rem
+        contentTocGap: 2.5rem
+        alignment: cluster
+        toc: right
+search:
+    enabled: true
+    shortcut: Mod+K
+accessibility:
+    enabled: true
+    shortcut: Mod+A
+contribution:
+    enabled: true
+    repository: https://github.com/leaanthony/mpress.git
+    branch: main
+    quickEdit: false
+    guide: docs/contributing.md
+social:
+    github: https://github.com/leaanthony/mpress
+    discord: ""
+    reddit: ""
+    x: ""
+    rss: ""
+    sponsor: ""
+    editURL: ""
+versioning:
+    enabled: true
+    current: next
+    artifactsDir: .mpress/versions
+translation:
+    provider: codex
+    model: gpt-5.6-sol
+    command: codex
+    baseURL: https://openrouter.ai/api/v1
+    apiKeyEnv: OPENROUTER_API_KEY
+    sourceLanguage: en
+    glossary: ""
+    styleGuide: docs/writing-standard.md
+    stateDir: .mpress/translations
+    dataCollection: deny
+    requireParameters: true
+    inputPricePerMillion: 0
+    outputPricePerMillion: 0
+deploy:
+    default: ""
+    targets: {}
+blog:
+    landingStyle: featured
+    tagline: ""
+    showTags: true
+    headingSize: default
+    imageMode: panel
+    imageFit: cover
+    imageWidth: 100
+    imageBackground: ""

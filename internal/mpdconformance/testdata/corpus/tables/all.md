@@ -1,0 +1,4 @@
+| Capability | Support | Time |
+| :--- | :---: | ---: |
+| Plain text | *Complete* | `4 ms` |
+| Escaped \| pipe | [Built in](/guide) | `8 ms` |

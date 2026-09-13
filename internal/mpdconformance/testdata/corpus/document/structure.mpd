@@ -1,0 +1,14 @@
+---
+schema = 1
+title = "Fixture page"
+description = "Every metadata value has a deterministic representation."
+order = 12
+draft = false
+tags = ["reference", "format"]
+wails.redirect = null
+wails.owner = {"name":"MPress","team":"docs"}
+---
+
+# Fixture page
+
+The metadata selects schema 1. Metadata does not add visible content.

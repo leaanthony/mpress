@@ -1,0 +1,98 @@
+# Code components
+
+@tabs
+@tab label="Go"
+Run `go test ./...`.
+@end
+@tab label="Shell"
+Run `mpress check`.
+@end
+@end
+
+@terminal title="Build" frame="macos" prompt="$" comment="#"
+# Validate the site before publishing.
+$ # Comments are visible but are not copied.
+$ mpress check
+No issues found.
+@end
+
+@api method="POST" path="/v1/builds"
+Creates a build.
+
+| Field | Type |
+| ref | string |
+@end
+
+@steps
+@step title="Write"
+Add a Markdown file.
+@end
+@step title="Build"
+Run the compiler.
+@end
+@step title="Configure"
+Set the project options.
+@end
+@step title="Add navigation"
+Arrange the pages.
+@end
+@step title="Add components"
+Enrich the documentation.
+@end
+@step title="Check links"
+Validate every destination.
+@end
+@step title="Test themes"
+Check light and dark modes.
+@end
+@step title="Test mobile"
+Use a narrow viewport.
+@end
+@step title="Inspect output"
+Review the generated HTML.
+@end
+@step title="Package"
+Create the deployment archive.
+@end
+@step title="Publish"
+Upload the static output.
+@end
+@step title="Verify deployment"
+Open the production site.
+@end
+@end
+
+@diff title="mpress.yaml" mode="inline"
+search: false
+---
+search: true
+@end
+
+@filetree
+docs/
+  index.md  Home page
+  guide/
+    installation.md  Install MPress
+    deployment.md  Publish the site
+  reference/
+    configuration.md  Configuration keys
+    components.md  Component catalogue
+  assets/
+    logo.svg  Site mark
+    screenshots/
+      home.png  Landing page
+  blog/
+    index.md  Blog landing page
+mpress.yaml  Configuration
+@end
+
+@explained
+```go
+func main() { // (1)
+    site.Build() // (2)
+}
+```
+
+(1) Start with the entry point.
+(2) Build the static site.
+@end

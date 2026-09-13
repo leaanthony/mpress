@@ -1,0 +1,86 @@
+<link rel="stylesheet" href="/__mpress/devbar.css">
+<div class="devbar" role="region" aria-label="M-Press development tools">
+  <button class="launcher" id="launcher" type="button" aria-label="Open M-Press project editor" title="M-Press project editor" aria-expanded="false">
+    <span class="mark" aria-hidden="true">{{brand:mpress-mark}}</span>
+  </button>
+  <span class="separator" aria-hidden="true"></span>
+  <span class="status"><span class="status-dot"></span><span id="status-label">Connecting</span></span>
+  <span class="status detail" id="build-label">Starting build</span>
+  <span class="status detail" id="check-label">Checks not run</span>
+  <span class="spacer"></span>
+  <div class="preview-sizes" role="group" aria-label="Preview size">
+    <button type="button" data-preview-size="mobile" aria-label="Mobile preview" title="Mobile preview (390 px)">{{icon:smartphone}}</button>
+    <button type="button" data-preview-size="tablet" aria-label="Tablet preview" title="Tablet preview (768 px)">{{icon:tablet}}</button>
+    <button type="button" data-preview-size="web" aria-label="Full-width web preview" title="Full-width web preview" aria-pressed="true">{{icon:monitor}}</button>
+  </div>
+  <button class="quiet-action" id="quick-check" type="button" aria-label="Run project checks">{{icon:check-circle}}<span>Run checks</span></button>
+</div>
+
+<div class="command-menu" id="command-menu" role="menu" hidden>
+  <a class="workspace-back" id="workspace-back" href="/" data-workspace-only>{{icon:eye}}<span><strong>Back to site</strong><small>Return to the page you were viewing</small></span></a>
+  <div class="menu-title">Project</div>
+  <button type="button" role="menuitem" data-command="page" data-write>{{icon:pencil}}<span><strong>Edit this page</strong><small>Open the source for the page you are viewing</small></span>{{icon:chevron-right}}</button>
+  <button type="button" role="menuitem" data-command="config" data-write>{{icon:settings}}<span><strong>Settings</strong><small>Site identity, theme and deployment</small></span>{{icon:chevron-right}}</button>
+  <div class="menu-title tool-title">Tools</div>
+  <button type="button" role="menuitem" data-command="checks">{{icon:check-circle}}<span><strong>Run checks</strong><small>Build, links and assets</small></span>{{icon:chevron-right}}</button>
+  <button type="button" role="menuitem" data-command="lighthouse" data-write>{{icon:gauge}}<span><strong>Lighthouse audit</strong><small>Performance, accessibility, SEO and quality</small></span>{{icon:chevron-right}}</button>
+  <button type="button" role="menuitem" data-command="export" data-write>{{icon:package}}<span><strong>Export ZIP</strong><small>Download a production-ready static site</small></span>{{icon:chevron-right}}</button>
+  <button type="button" role="menuitem" data-command="translations" data-write>{{icon:languages}}<span><strong>Translations</strong><small>Add, update and review languages</small></span>{{icon:chevron-right}}</button>
+  <button type="button" role="menuitem" data-command="deploy" data-write>{{icon:rocket}}<span><strong>Deploy</strong><small>Create a preview or publish</small></span>{{icon:chevron-right}}</button>
+  <span class="menu-rule"></span>
+  <button type="button" role="menuitem" data-command="onboarding" data-write>{{icon:zap}}<span><strong>Project guide</strong><small>Finish setting up this site</small></span>{{icon:chevron-right}}</button>
+  <button type="button" role="menuitem" data-command="contribution" data-contribution-session hidden>{{icon:pencil}}<span><strong>Contribution guide</strong><small>Return to your chosen task</small></span>{{icon:chevron-right}}</button>
+</div>
+
+<div class="scrim" id="scrim" hidden></div>
+<section class="drawer" id="drawer" role="dialog" aria-modal="true" aria-labelledby="drawer-title" hidden>
+  <header>
+    <div><span class="eyebrow" id="drawer-eyebrow">M-Press</span><h2 id="drawer-title">Project tools</h2></div>
+    <button class="icon-button" id="drawer-close" type="button" aria-label="Close">{{icon:x}}</button>
+  </header>
+  <div class="drawer-body" id="drawer-body"></div>
+</section>
+
+<div class="toast" id="devbar-toast" role="status" hidden></div>
+
+<template id="icon-check">{{icon:check}}</template>
+<template id="icon-x">{{icon:x}}</template>
+<template id="icon-cloudflare">{{brand:cloudflare}}</template>
+<template id="icon-netlify">{{brand:netlify}}</template>
+<template id="icon-pencil">{{icon:pencil}}</template>
+<template id="icon-settings">{{icon:settings}}</template>
+<template id="icon-arrow-left">{{icon:arrow-left}}</template>
+<template id="icon-star">{{icon:star}}</template>
+<template id="icon-globe">{{icon:globe}}</template>
+<template id="icon-languages">{{icon:languages}}</template>
+<template id="icon-image">{{icon:image}}</template>
+<template id="icon-book-open">{{icon:book-open}}</template>
+<template id="icon-link">{{icon:link}}</template>
+<template id="icon-bold">{{icon:bold}}</template>
+<template id="icon-italic">{{icon:italic}}</template>
+<template id="icon-code">{{icon:code}}</template>
+<template id="icon-code-xml">{{icon:code-xml}}</template>
+<template id="icon-eye">{{icon:eye}}</template>
+<template id="icon-file-text">{{icon:file-text}}</template>
+<template id="icon-list">{{icon:list}}</template>
+<template id="icon-list-ordered">{{icon:list-ordered}}</template>
+<template id="icon-quote">{{icon:quote}}</template>
+<template id="icon-grip-vertical">{{icon:grip-vertical}}</template>
+<template id="icon-chevron-down">{{icon:chevron-down}}</template>
+<template id="icon-file">{{icon:file}}</template>
+<template id="icon-package">{{icon:package}}</template>
+<template id="icon-chevron-right">{{icon:chevron-right}}</template>
+<template id="icon-sun">{{icon:sun}}</template>
+<template id="icon-moon">{{icon:moon}}</template>
+<template id="icon-accessibility">{{icon:accessibility}}</template>
+<template id="icon-layout">{{icon:layout}}</template>
+<template id="icon-versions">{{icon:versions}}</template>
+<template id="icon-check-circle">{{icon:check-circle}}</template>
+<template id="icon-minus">{{icon:minus}}</template>
+<template id="icon-eye">{{icon:eye}}</template>
+<template id="icon-triangle-alert">{{icon:triangle-alert}}</template>
+<template id="icon-search">{{icon:search}}</template>
+<template id="icon-zap">{{icon:zap}}</template>
+<template id="icon-gauge">{{icon:gauge}}</template>
+<template id="icon-rocket">{{icon:rocket}}</template>
+<template id="icon-guide">{{icon:zap}}</template>

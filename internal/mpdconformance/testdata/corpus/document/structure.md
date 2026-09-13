@@ -1,0 +1,3 @@
+# Fixture page
+
+The metadata selects schema 1. Metadata does not add visible content.

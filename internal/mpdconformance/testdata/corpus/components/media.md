@@ -1,0 +1,5 @@
+# Video
+
+@video{src="/assets/mp4.mp4"}
+
+@video{base="/assets" src="mp4.mp4" poster="mp4.webp" title="Video with a poster"}

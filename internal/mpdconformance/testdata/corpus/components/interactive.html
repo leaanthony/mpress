@@ -1,0 +1,55 @@
+<div class="mpress-audience" data-audience="developer">
+<p>Extend the pipeline in Go.</p>
+</div>
+<div class="mpress-audience" data-audience="writer">
+<p>Write plain text documentation.</p>
+</div>
+<div class="mpress-conditional" data-param="framework" data-value="plain" data-default="true" id="mpress-if-framework-plain">
+<p>Framework-neutral guidance.</p>
+</div>
+<div class="mpress-conditional" data-param="framework" data-value="go" id="mpress-if-framework-go">
+<p>Guidance for Go users.</p>
+</div>
+<div class="mpress-reactive-input" data-reactive-name="projects"><label class="mpress-reactive-label">Projects<span class="mpress-reactive-range-wrap"><input type="range" class="mpress-reactive-control" data-reactive="projects" min="1" max="20" value="4"><span class="mpress-reactive-range-value" data-reactive-display="projects">4</span></span></label></div>
+<div class="mpress-reactive-input" data-reactive-name="seats"><label class="mpress-reactive-label">Editors<input type="number" class="mpress-reactive-control" data-reactive="seats" value="3"></label></div>
+<span class="mpress-reactive-computed" data-reactive-expr="projects * seats" data-reactive-deps="projects,seats" data-reactive-format="%d"><span class="mpress-reactive-computed-label">Project seats: </span><span class="mpress-reactive-computed-value">…</span></span>
+<div class="mpress-api-playground" id="api-pg-3038366364333539" data-method="GET" data-path="/search-index.json" data-base-url="http://127.0.0.1:4174">
+  <div class="mpress-api-header">
+    <span class="mpress-api-method" style="background:#0d9488">GET</span>
+    <code class="mpress-api-path">/search-index.json</code>
+  </div>
+  <div class="mpress-api-description">
+<p>Inspect the generated search index.</p>
+  </div>
+  <div class="mpress-api-pg-body">
+    <div class="mpress-api-pg-url">
+      <label>URL</label>
+      <input type="text" class="mpress-api-pg-url-input" value="http://127.0.0.1:4174/search-index.json" />
+    </div>
+    <details class="mpress-api-pg-section">
+      <summary><span class="mpress-disclosure-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><span>Headers</span></summary>
+      <div class="mpress-api-pg-headers">
+        <div class="mpress-api-pg-header-row">
+          <input type="text" placeholder="Content-Type" value="Content-Type" />
+          <input type="text" placeholder="application/json" value="application/json" />
+        </div>
+        <div class="mpress-api-pg-header-row">
+          <input type="text" placeholder="Header name" />
+          <input type="text" placeholder="Header value" />
+        </div>
+      </div>
+    </details>
+    <div class="mpress-api-pg-actions">
+      <button class="mpress-api-pg-send" style="background:#0d9488">Send Request</button>
+      <span class="mpress-api-pg-status"></span>
+    </div>
+    <div class="mpress-api-pg-response" hidden>
+      <div class="mpress-api-pg-response-header">
+        <span class="mpress-api-pg-response-status"></span>
+        <span class="mpress-api-pg-response-time"></span>
+      </div>
+      <pre tabindex="0" class="mpress-api-pg-response-body"><code></code></pre>
+    </div>
+  </div>
+</div>
+<p>Content selected at build time.</p>

@@ -1,0 +1,18 @@
+- First item
+- Second item
+  - Nested item
+  - Another nested item
+
+3. Preserve the starting number.
+4. Continue in order.
+
+- [ ] Write the guide.
+- [x] Run the checks.
+
+- First paragraph in a rich item.
+
+  Second paragraph in the same item.
+
+  @note type="tip"
+  Components can appear in list items.
+  @end

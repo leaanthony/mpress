@@ -1,0 +1,197 @@
+<ot-tabs class="mpress-tabs" id="mpress-tabs-a7dbd42b">
+<div role="tablist">
+<button id="mpress-tabs-a7dbd42b-tab-1" role="tab" type="button" aria-selected="true" aria-controls="mpress-tabs-a7dbd42b-panel-1">Go</button>
+<button id="mpress-tabs-a7dbd42b-tab-2" role="tab" type="button" aria-selected="false" aria-controls="mpress-tabs-a7dbd42b-panel-2" tabindex="-1">Shell</button>
+</div>
+<div id="mpress-tabs-a7dbd42b-panel-1" role="tabpanel" aria-labelledby="mpress-tabs-a7dbd42b-tab-1">
+<p>Run <code>go test ./...</code>.</p>
+</div>
+<div id="mpress-tabs-a7dbd42b-panel-2" role="tabpanel" aria-labelledby="mpress-tabs-a7dbd42b-tab-2" hidden>
+<p>Run <code>mpress check</code>.</p>
+</div>
+</ot-tabs>
+<div class="mpress-terminal mpress-terminal-macos" data-prompt="$" data-comment="#">
+  <div class="mpress-terminal-title"><span>Build</span><button type="button" class="mpress-copy" aria-label="Copy commands" title="Copy commands" data-copy-label="Copy commands" data-copied-label="Copied"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="sr-only" data-copy-status aria-live="polite">Copy commands</span></button></div>
+  <pre tabindex="0" data-commands="mpress check"><code><span class="mpress-comment"># Validate the site before publishing.</span>
+<span class="mpress-prompt">$</span> <span class="mpress-comment"># Comments are visible but are not copied.</span>
+<span class="mpress-prompt">$</span> <span class="mpress-cmd">mpress check</span>
+<span class="mpress-output">No issues found.</span>
+</code></pre>
+</div>
+<div class="mpress-api-endpoint">
+  <div class="mpress-api-header">
+    <span class="mpress-api-method" style="background:#3b82f6">POST</span>
+    <code class="mpress-api-path">/v1/builds</code>
+  </div>
+  <div class="mpress-api-description">
+<p>Creates a build.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ref</code></td>
+<td>string</td>
+</tr>
+</tbody>
+</table>
+  </div>
+</div>
+<div class="mpress-timeline mpress-steps">
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">1</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Write</h3>
+<div class="mpress-step-content">
+<p>Add a Markdown file.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">2</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Build</h3>
+<div class="mpress-step-content">
+<p>Run the compiler.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">3</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Configure</h3>
+<div class="mpress-step-content">
+<p>Set the project options.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">4</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Add navigation</h3>
+<div class="mpress-step-content">
+<p>Arrange the pages.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">5</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Add components</h3>
+<div class="mpress-step-content">
+<p>Enrich the documentation.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">6</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Check links</h3>
+<div class="mpress-step-content">
+<p>Validate every destination.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">7</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Test themes</h3>
+<div class="mpress-step-content">
+<p>Check light and dark modes.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">8</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Test mobile</h3>
+<div class="mpress-step-content">
+<p>Use a narrow viewport.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">9</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Inspect output</h3>
+<div class="mpress-step-content">
+<p>Review the generated HTML.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">10</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Package</h3>
+<div class="mpress-step-content">
+<p>Create the deployment archive.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">11</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Publish</h3>
+<div class="mpress-step-content">
+<p>Upload the static output.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">12</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Verify deployment</h3>
+<div class="mpress-step-content">
+<p>Open the production site.</p>
+</div>
+    </div>
+  </div>
+</div>
+<div class="mpress-diff mpress-diff-inline">
+  <div class="mpress-diff-title">mpress.yaml</div>
+  <div class="mpress-diff-body">
+    <pre tabindex="0"><code><span class="mpress-diff-line mpress-diff-removed">− search: false</span><span class="mpress-diff-line mpress-diff-added">+ search: true</span></code></pre>
+  </div>
+</div>
+<div class="mpress-filetree">
+  <ul>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">docs</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">index.md</span><span class="mpress-filetree-desc">Home page</span></span></li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">guide</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">installation.md</span><span class="mpress-filetree-desc">Install MPress</span></span></li>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">deployment.md</span><span class="mpress-filetree-desc">Publish the site</span></span></li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">reference</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">configuration.md</span><span class="mpress-filetree-desc">Configuration keys</span></span></li>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">components.md</span><span class="mpress-filetree-desc">Component catalogue</span></span></li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">assets</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span><span class="mpress-filetree-name">logo.svg</span><span class="mpress-filetree-desc">Site mark</span></span></li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">screenshots</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span><span class="mpress-filetree-name">home.png</span><span class="mpress-filetree-desc">Landing page</span></span></li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">blog</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">index.md</span><span class="mpress-filetree-desc">Blog landing page</span></span></li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="mpress-filetree-name">mpress.yaml</span><span class="mpress-filetree-desc">Configuration</span></span></li>
+  </ul>
+</div>
+<div class="mpress-explained" role="group" aria-label="Code explanation"><div class="mpress-explained-code"><pre tabindex="0"><code class="language-go"><span class="mpress-explained-line" data-ref="1" data-explanation="Start with the entry point." tabindex="0">func main() {</span><span class="mpress-explained-line" data-ref="2" data-explanation="Build the static site." tabindex="0">    site.Build()</span><span class="mpress-explained-line">}</span></code></pre></div><div class="mpress-explained-prose"><p class="mpress-explained-para" data-ref="1"><span class="mpress-explained-ref">1</span><span class="mpress-explained-copy">Start with the entry point.</span></p><p class="mpress-explained-para" data-ref="2"><span class="mpress-explained-ref">2</span><span class="mpress-explained-copy">Build the static site.</span></p></div></div>

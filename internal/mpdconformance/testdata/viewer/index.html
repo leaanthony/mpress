@@ -1,0 +1,893 @@
+<!doctype html><html lang="en" data-theme="system"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>MPD Fixture Viewer · MPD Fixture Viewer</title><meta name="description" content="Visual conformance corpus for MPress Document."><meta property="og:title" content="MPD Fixture Viewer · MPD Fixture Viewer"><meta property="og:description" content="Visual conformance corpus for MPress Document."><meta property="og:site_name" content="MPD Fixture Viewer"><meta property="og:type" content="website"><meta name="twitter:card" content="summary"><meta name="twitter:title" content="MPD Fixture Viewer · MPD Fixture Viewer"><meta name="twitter:description" content="Visual conformance corpus for MPress Document."><script>document.documentElement.classList.add('js');(function(){try{var t=localStorage.getItem('mpress-theme');if(t==='system'||t==='dark'||t==='light'){document.documentElement.setAttribute('data-theme',t);}}catch(_){}})();</script><link rel="stylesheet" href="./assets/mpress.css?v=3aab99fe860c"></head><body class="landing-page" data-search="./search-index.json" data-search-placeholder="Search documentation" data-search-max-results="12" data-search-recent="true" data-shortcut-search="Mod+K" data-shortcut-accessibility="Mod+A"><a class="skip" href="#content">Skip to content</a><header><button id="menu" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mpress-sidebar"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-menu" aria-hidden="true"><line x1="4" x2="20" y1="12" y2="12"/><line x1="4" x2="20" y1="6" y2="6"/><line x1="4" x2="20" y1="18" y2="18"/></svg></button><a class="brand" href="./"><span class="brand-mark" aria-hidden="true">M</span><span>MPD Fixture Viewer</span></a><span class="header-spacer" aria-hidden="true"></span><nav class="header-links" aria-label="Documentation controls"><span class="header-utility-cluster" role="group" aria-label="Site preferences"><div class="header-group utility-select utility-menu language-select"><button class="utility-menu-trigger" type="button" popovertarget="mpress-language-menu" aria-label="Select language: en" aria-haspopup="menu" aria-expanded="false" title="Change language"><svg xmlns="http://www.w3.org/2000/svg" width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-languages" aria-hidden="true"><path d="m5 8 6 6"/><path d="m4 14 6-6 2-3"/><path d="M2 5h12"/><path d="M7 2h1"/><path d="m22 22-5-10-5 10"/><path d="M14 18h6"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></button><menu id="mpress-language-menu" class="utility-menu-panel utility-language-menu" popover data-utility-menu><li><a href="/" role="menuitem" aria-current="true"><span>en</span></a></li></menu></div><!--mpress-version-menu:start--><!--mpress-version-menu:end--><button id="theme" class="header-group theme-toggle" type="button" data-theme-mode="system" aria-label="Theme: System. Switch to Dark" title="Theme: System"><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-monitor" aria-hidden="true"><rect width="20" height="14" x="2" y="3" rx="2"/><line x1="8" x2="16" y1="21" y2="21"/><line x1="12" x2="12" y1="17" y2="21"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-moon" aria-hidden="true"><path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-sun" aria-hidden="true"><circle cx="12" cy="12" r="4"/><path d="M12 2v2"/><path d="M12 20v2"/><path d="m4.93 4.93 1.41 1.41"/><path d="m17.66 17.66 1.41 1.41"/><path d="M2 12h2"/><path d="M20 12h2"/><path d="m6.34 17.66-1.41 1.41"/><path d="m19.07 4.93-1.41 1.41"/></svg></button></span></nav></header><main class="landing-main" id="content"><div class="mpd-viewer"><header class="mpd-viewer-hero"><p class="mpd-kicker">MPress Document · conformance corpus</p><h1>Every construct, rendered.</h1><p>Review the native MPD source, its Markdown interchange form, and the production HTML contract. Every preview uses the current MPress CSS and runtime.</p><dl class="mpd-stats"><div><dt>Fixtures</dt><dd>27</dd></div><div><dt>Top level</dt><dd>18</dd></div><div><dt>Nested</dt><dd>9</dd></div><div><dt>Categories</dt><dd>10</dd></div></dl></header><section class="mpd-toolbar" aria-label="Fixture controls"><label class="mpd-search"><span>Find a fixture</span><input type="search" data-fixture-search placeholder="Search fixtures and features"></label><div class="mpd-filter-group" role="group" aria-label="Fixture depth"><button type="button" class="active" data-level="all">All</button><button type="button" data-level="top">Top level</button><button type="button" data-level="nested">Nested</button></div><div class="mpd-filter-group" role="group" aria-label="Preview theme"><button type="button" data-preview-theme="system">System</button><button type="button" data-preview-theme="light">Light</button><button type="button" data-preview-theme="dark">Dark</button></div></section><nav class="mpd-categories" aria-label="Fixture categories"><button type="button" class="active" data-category="all">All</button><button type="button" data-category="blocks">Blocks</button><button type="button" data-category="components">Components</button><button type="button" data-category="document">Document</button><button type="button" data-category="footnotes">Footnotes</button><button type="button" data-category="imports">Imports</button><button type="button" data-category="links">Links</button><button type="button" data-category="lists">Lists</button><button type="button" data-category="nesting">Nesting</button><button type="button" data-category="tables">Tables</button><button type="button" data-category="text">Text</button></nav><p class="mpd-result-count" role="status" aria-live="polite"></p><div class="mpd-fixtures"><article class="mpd-fixture" id="fixture-document-minimal" data-category="document" data-level="top" data-search="minimal document document/minimal default-schema paragraph no-preamble"><header class="mpd-fixture-heading"><div><p>Document · top</p><h2>Minimal document</h2></div><a href="#fixture-document-minimal" aria-label="Link to Minimal document">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>Hello world.</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>Hello world.</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><p>Hello world.</p>
+</div></div></article><article class="mpd-fixture" id="fixture-document-structure" data-category="document" data-level="top" data-search="metadata values and namespaces document/structure metadata schema reserved-key custom-namespace string number boolean null array object"><header class="mpd-fixture-heading"><div><p>Document · top</p><h2>Metadata values and namespaces</h2></div><a href="#fixture-document-structure" aria-label="Link to Metadata values and namespaces">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>---&#10;schema = 1&#10;title = &#34;Fixture page&#34;&#10;description = &#34;Every metadata value has a deterministic representation.&#34;&#10;order = 12&#10;draft = false&#10;tags = [&#34;reference&#34;, &#34;format&#34;]&#10;wails.redirect = null&#10;wails.owner = {&#34;name&#34;:&#34;MPress&#34;,&#34;team&#34;:&#34;docs&#34;}&#10;---&#10;&#10;# Fixture page&#10;&#10;The metadata selects schema 1. Metadata does not add visible content.</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Fixture page&#10;&#10;The metadata selects schema 1. Metadata does not add visible content.</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><p>The metadata selects schema 1. Metadata does not add visible content.</p>
+</div></div></article><article class="mpd-fixture" id="fixture-document-metadata-reference" data-category="document" data-level="top" data-search="metadata references as text document/metadata-reference metadata-reference reserved-key-reference custom-key-reference string-value number-value boolean-value null-value array-value object-value heading-reference paragraph-reference"><header class="mpd-fixture-heading"><div><p>Document · top</p><h2>Metadata references as text</h2></div><a href="#fixture-document-metadata-reference" aria-label="Link to Metadata references as text">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>---&#10;schema = 1&#10;title = &#34;Metadata references&#34;&#10;draft = false&#10;order = 25&#10;tags = [&#34;reference&#34;,&#34;format&#34;]&#10;wails.redirect = null&#10;wails.owner = {&#34;name&#34;:&#34;MPress&#34;,&#34;team&#34;:&#34;docs&#34;}&#10;---&#10;&#10;# &#64;metadata[title]&#10;&#10;Schema &#64;metadata[schema] renders this page at order &#64;metadata[order]. Draft is&#10;&#64;metadata[draft]. Tags are &#64;metadata[tags]. The previous location is&#10;&#64;metadata[wails.redirect]. The owner is &#64;metadata[wails.owner].</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Metadata references&#10;&#10;Schema 1 renders this page at order 25. Draft is false. Tags are [&amp;quot;reference&amp;quot;,&amp;quot;format&amp;quot;]. The previous location is null. The owner is {&amp;quot;name&amp;quot;:&amp;quot;MPress&amp;quot;,&amp;quot;team&amp;quot;:&amp;quot;docs&amp;quot;}.</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><p>Schema 1 renders this page at order 25. Draft is false. Tags are [&quot;reference&quot;,&quot;format&quot;]. The previous location is null. The owner is {&quot;name&quot;:&quot;MPress&quot;,&quot;team&quot;:&quot;docs&quot;}.</p>
+</div></div></article><article class="mpd-fixture" id="fixture-text-blocks" data-category="text" data-level="top" data-search="paragraphs, continuation, headings, and rules text/blocks paragraph line-continuation hard-break heading-1 heading-2 heading-3 heading-4 heading-5 heading-6 hr escape entity"><header class="mpd-fixture-heading"><div><p>Text · top</p><h2>Paragraphs, continuation, headings, and rules</h2></div><a href="#fixture-text-blocks" aria-label="Link to Paragraphs, continuation, headings, and rules">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Heading one&#10;## Heading two&#10;### Heading three&#10;#### Heading four&#10;##### Heading five&#10;###### Heading six&#10;&#10;The first line ends here.&#10;This line starts after a hard break.&#10;&#10;This sentence is \&#10;continued without a rendered line break.&#10;&#10;Escaped \*asterisks\* stay literal. An entity such as &amp;copy; remains meaningful.&#10;&#10;&#64;hr&#10;&#10;Text follows the thematic break.</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Heading one&#10;## Heading two&#10;### Heading three&#10;#### Heading four&#10;##### Heading five&#10;###### Heading six&#10;&#10;The first line ends here.\&#10;This line starts after a hard break.&#10;&#10;This sentence is continued without a rendered line break.&#10;&#10;Escaped \*asterisks\* stay literal. An entity such as &amp;copy; remains meaningful.&#10;&#10;---&#10;&#10;Text follows the thematic break.</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><h2 id="heading-two">Heading two</h2>
+<h3 id="heading-three">Heading three</h3>
+<h4 id="heading-four">Heading four</h4>
+<h5 id="heading-five">Heading five</h5>
+<h6 id="heading-six">Heading six</h6>
+<p>The first line ends here.<br>
+This line starts after a hard break.</p>
+<p>This sentence is continued without a rendered line break.</p>
+<p>Escaped *asterisks* stay literal. An entity such as © remains meaningful.</p>
+<hr>
+<p>Text follows the thematic break.</p>
+</div></div></article><article class="mpd-fixture" id="fixture-text-inline" data-category="text" data-level="top" data-search="inline formatting, roles, and emoji text/inline emphasis strong strong-emphasis code-span mark delete subscript superscript keyboard emoji-shortcode emoji-unknown emoji-escaped emoji-literal-code"><header class="mpd-fixture-heading"><div><p>Text · top</p><h2>Inline formatting, roles, and emoji</h2></div><a href="#fixture-text-inline" aria-label="Link to Inline formatting, roles, and emoji">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>Use _emphasis_, *strong text*, and *_strong emphasis_* with `inline code`.&#10;&#10;Roles include &#64;mark[marked], &#64;delete[removed], &#64;sub[2], &#64;sup[n], and &#64;key[Command K].&#10;&#10;Ship :rocket: with :sparkles:. Unknown :not_an_emoji: and escaped \:rocket: remain text. Code `:rocket:` remains literal.</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>Use *emphasis*, **strong text**, and ***strong emphasis*** with `inline code`.&#10;&#10;Roles include &lt;mark&gt;marked&lt;/mark&gt;, ~~removed~~, H&lt;sub&gt;2&lt;/sub&gt;O, x&lt;sup&gt;n&lt;/sup&gt;, and &lt;kbd&gt;Command K&lt;/kbd&gt;.&#10;&#10;Ship 🚀 with ✨. Unknown :not_an_emoji: and escaped :rocket: remain text. Code `:rocket:` remains literal.</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><p>Use <em>emphasis</em>, <strong>strong text</strong>, and <em><strong>strong emphasis</strong></em> with <code>inline code</code>.</p>
+<p>Roles include <mark>marked</mark>, <del>removed</del>, H<sub>2</sub>O, x<sup>n</sup>, and <kbd>Command K</kbd>.</p>
+<p>Ship 🚀 with ✨. Unknown :not_an_emoji: and escaped :rocket: remain text. Code <code>:rocket:</code> remains literal.</p>
+</div></div></article><article class="mpd-fixture" id="fixture-links-all" data-category="links" data-level="top" data-search="links, images, and references links/all inline-link titled-link reference-link automatic-link email-link image reference-definition"><header class="mpd-fixture-heading"><div><p>Links · top</p><h2>Links, images, and references</h2></div><a href="#fixture-links-all" aria-label="Link to Links, images, and references">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>Open the [guide](/guide), the [titled guide](/guide &#34;Read the guide&#34;), or [Go downloads][go].&#10;&#10;Automatic links include &lt;https://m-press.me&gt; and &lt;docs&#64;example.com&gt;.&#10;&#10;![MPress mark](/assets/logo.svg &#34;MPress&#34;)&#10;&#10;&#64;link id=&#34;go&#34; destination=&#34;https://go.dev/dl/&#34; title=&#34;Download Go&#34;</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>Open the [guide](/guide), the [titled guide](/guide &#34;Read the guide&#34;), or [Go downloads][go].&#10;&#10;Automatic links include &lt;https://m-press.me&gt; and &lt;docs&#64;example.com&gt;.&#10;&#10;![MPress mark](/assets/logo.svg &#34;MPress&#34;)&#10;&#10;[go]: https://go.dev/dl/ &#34;Download Go&#34;</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><p>Open the <a href="/guide">guide</a>, the <a href="/guide" title="Read the guide">titled guide</a>, or <a href="https://go.dev/dl/" title="Download Go">Go downloads</a>.</p>
+<p>Automatic links include <a href="https://m-press.me">https://m-press.me</a> and <a href="mailto:docs@example.com">docs@example.com</a>.</p>
+<p><img src="/assets/logo.svg" alt="MPress mark" title="MPress"></p>
+</div></div></article><article class="mpd-fixture" id="fixture-lists-all" data-category="lists" data-level="top" data-search="ordered, unordered, task, and nested lists lists/all unordered-list ordered-list task-list nested-list multi-block-item"><header class="mpd-fixture-heading"><div><p>Lists · top</p><h2>Ordered, unordered, task, and nested lists</h2></div><a href="#fixture-lists-all" aria-label="Link to Ordered, unordered, task, and nested lists">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>- First item&#10;- Second item&#10;  - Nested item&#10;  - Another nested item&#10;&#10;3. Preserve the starting number.&#10;4. Continue in order.&#10;&#10;- [ ] Write the guide.&#10;- [x] Run the checks.&#10;&#10;- First paragraph in a rich item.&#10;&#10;  Second paragraph in the same item.&#10;&#10;  &#64;note type=&#34;tip&#34;&#10;    Components can appear in list items.&#10;  &#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>- First item&#10;- Second item&#10;  - Nested item&#10;  - Another nested item&#10;&#10;3. Preserve the starting number.&#10;4. Continue in order.&#10;&#10;- [ ] Write the guide.&#10;- [x] Run the checks.&#10;&#10;- First paragraph in a rich item.&#10;&#10;  Second paragraph in the same item.&#10;&#10;  &#64;note{type=&#34;tip&#34;}&#10;  Components can appear in list items.&#10;  &#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><ul>
+<li>First item</li>
+<li>Second item
+<ul>
+<li>Nested item</li>
+<li>Another nested item</li>
+</ul>
+</li>
+</ul>
+<ol start="3">
+<li>Preserve the starting number.</li>
+<li>Continue in order.</li>
+</ol>
+<ul>
+<li>
+<p><input disabled="" type="checkbox" aria-label="Incomplete task"> Write the guide.</p>
+</li>
+<li>
+<p><input checked="" disabled="" type="checkbox" aria-label="Completed task"> Run the checks.</p>
+</li>
+<li>
+<p>First paragraph in a rich item.</p>
+<p>Second paragraph in the same item.</p>
+</li>
+</ul>
+<aside aria-label="Tip" class="mpress-admonition mpress-admonition-tip" data-variant="tip">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.87 12.87 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> <span>Tip</span></p>
+<div class="mpress-admonition-body">
+<p>Components can appear in list items.</p>
+</div>
+</aside>
+</div></div></article><article class="mpd-fixture" id="fixture-blocks-all" data-category="blocks" data-level="top" data-search="quotes, code, raw html, and comments blocks/all quote nested-quote code-fence long-code-fence literal-directive-in-code short-fence-in-code raw-html comment"><header class="mpd-fixture-heading"><div><p>Blocks · top</p><h2>Quotes, code, raw HTML, and comments</h2></div><a href="#fixture-blocks-all" aria-label="Link to Quotes, code, raw HTML, and comments">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&gt; Documentation is part of the product.&#10;&gt;&#10;&gt; &gt; Clear examples make adoption easier.&#10;&#10;````go {title=&#34;Build the site&#34; lineNumbers=true}&#10;site, err := mpress.Build(config)&#10;&#64;end&#10;```&#10;````&#10;&#10;&#64;rawHTML&#10;    &lt;details&gt;&lt;summary&gt;Rendered HTML&lt;/summary&gt;&lt;p&gt;Raw HTML is explicit.&lt;/p&gt;&lt;/details&gt;&#10;&#64;end&#10;&#10;&#64;comment&#10;  This retained author note is not rendered.&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&gt; Documentation is part of the product.&#10;&gt;&#10;&gt; &gt; Clear examples make adoption easier.&#10;&#10;````go {title=&#34;Build the site&#34; lineNumbers=true}&#10;site, err := mpress.Build(config)&#10;&#64;end&#10;```&#10;````&#10;&#10;&lt;details&gt;&lt;summary&gt;Rendered HTML&lt;/summary&gt;&lt;p&gt;Raw HTML is explicit.&lt;/p&gt;&lt;/details&gt;&#10;&#10;&lt;!-- This retained author note is not rendered. --&gt;</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><blockquote>
+<p>Documentation is part of the product.</p>
+<blockquote>
+<p>Clear examples make adoption easier.</p>
+</blockquote>
+</blockquote>
+<div class="mpress-codeframe mpress-codeframe-line-numbers"><div class="mpress-codeframe-header"><div class="mpress-codeframe-title">Build the site</div><span class="mpress-codeframe-language">go</span><button type="button" class="mpress-copy mpress-code-copy" aria-label="Copy code" title="Copy code" data-copy-label="Copy code" data-copied-label="Copied"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="sr-only" data-copy-status aria-live="polite">Copy code</span></button></div><pre tabindex="0" data-code="site, err := mpress.Build(config)&#10;@end&#10;```"><code class="language-go"><span class="mpress-code-line">site, err <span class="mpress-token-operator">:=</span> mpress.<span class="mpress-token-function">Build</span>(config)
+</span><span class="mpress-code-line">@end
+</span><span class="mpress-code-line"><span class="mpress-token-string">``</span><span class="mpress-token-string">`</span></span></code></pre></div>
+<details><summary>Rendered HTML</summary><p>Raw HTML is explicit.</p></details>
+<!-- This retained author note is not rendered. -->
+</div></div></article><article class="mpd-fixture" id="fixture-tables-all" data-category="tables" data-level="top" data-search="tables and alignment tables/all table header-row alignment escaped-pipe inline-cell-content"><header class="mpd-fixture-heading"><div><p>Tables · top</p><h2>Tables and alignment</h2></div><a href="#fixture-tables-all" aria-label="Link to Tables and alignment">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;table header=true align=[&#34;left&#34;,&#34;center&#34;,&#34;right&#34;]&#10;  | Capability | Support | Time |&#10;  | Plain text | *Complete* | `4 ms` |&#10;  | Escaped \| pipe | [Built in](/guide) | `8 ms` |&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>| Capability | Support | Time |&#10;| :--- | :---: | ---: |&#10;| Plain text | *Complete* | `4 ms` |&#10;| Escaped \| pipe | [Built in](/guide) | `8 ms` |</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><table>
+<thead>
+<tr>
+<th style="text-align:left">Capability</th>
+<th style="text-align:center">Support</th>
+<th style="text-align:right">Time</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left">Plain text</td>
+<td style="text-align:center"><em>Complete</em></td>
+<td style="text-align:right"><code>4 ms</code></td>
+</tr>
+<tr>
+<td style="text-align:left">Escaped | pipe</td>
+<td style="text-align:center"><a href="/guide">Built in</a></td>
+<td style="text-align:right"><code>8 ms</code></td>
+</tr>
+</tbody>
+</table>
+</div></div></article><article class="mpd-fixture" id="fixture-tables-interactive" data-category="tables" data-level="top" data-search="searchable, filterable, sortable, paginated table tables/interactive table boolean-shorthand search column-filter styled-filter-menu column-separators stable-sort numeric-sort pagination page-size combined-controls accessible-status"><header class="mpd-fixture-heading"><div><p>Tables · top</p><h2>Searchable, filterable, sortable, paginated table</h2></div><a href="#fixture-tables-interactive" aria-label="Link to Searchable, filterable, sortable, paginated table">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;table header search filter sort paginate column-separators page-size=2&#10;  | Package | Platform | Downloads |&#10;  | Core | Linux | 1840 |&#10;  | Studio | macOS | 920 |&#10;  | Core | Windows | 1260 |&#10;  | CLI | Linux | 640 |&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;table{header search filter sort paginate column-separators page-size=2}&#10;| Package | Platform | Downloads |&#10;| Core | Linux | 1840 |&#10;| Studio | macOS | 920 |&#10;| Core | Windows | 1260 |&#10;| CLI | Linux | 640 |&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-data-table mpress-table-column-separators" data-table-search="true" data-table-filter="true" data-table-sort="true" data-table-paginate="true" data-table-column-separators="true" data-table-page-size="2"><div class="mpress-table-toolbar"><label class="mpress-table-search"><span class="sr-only">Search table</span><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-search" aria-hidden="true"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg><input type="search" placeholder="Search table" autocomplete="off" data-table-query aria-controls="mpress-table-1ce716bce109"></label></div><div class="mpress-table-scroll"><table id="mpress-table-1ce716bce109"><thead><tr><th scope="col" aria-sort="none"><div class="mpress-table-heading"><button class="mpress-table-sort" type="button" data-table-sort-column="0"><span>Package</span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-down" aria-hidden="true"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg></button><button class="mpress-table-filter-trigger utility-menu-trigger" type="button" popovertarget="mpress-table-1ce716bce109-filter-0" aria-label="Filter Package" aria-haspopup="menu" aria-expanded="false"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-filter" aria-hidden="true"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></button><menu id="mpress-table-1ce716bce109-filter-0" class="utility-menu-panel mpress-table-filter-menu" popover data-utility-menu data-table-filter-column="0" data-table-filter-label="Package" data-table-filter-value=""><li><button type="button" role="menuitem" data-table-filter-value="" aria-current="true">All</button></li><li><button type="button" role="menuitem" data-table-filter-value="cli">CLI</button></li><li><button type="button" role="menuitem" data-table-filter-value="core">Core</button></li><li><button type="button" role="menuitem" data-table-filter-value="studio">Studio</button></li></menu></div></th><th scope="col" aria-sort="none"><div class="mpress-table-heading"><button class="mpress-table-sort" type="button" data-table-sort-column="1"><span>Platform</span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-down" aria-hidden="true"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg></button><button class="mpress-table-filter-trigger utility-menu-trigger" type="button" popovertarget="mpress-table-1ce716bce109-filter-1" aria-label="Filter Platform" aria-haspopup="menu" aria-expanded="false"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-filter" aria-hidden="true"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></button><menu id="mpress-table-1ce716bce109-filter-1" class="utility-menu-panel mpress-table-filter-menu" popover data-utility-menu data-table-filter-column="1" data-table-filter-label="Platform" data-table-filter-value=""><li><button type="button" role="menuitem" data-table-filter-value="" aria-current="true">All</button></li><li><button type="button" role="menuitem" data-table-filter-value="linux">Linux</button></li><li><button type="button" role="menuitem" data-table-filter-value="macos">macOS</button></li><li><button type="button" role="menuitem" data-table-filter-value="windows">Windows</button></li></menu></div></th><th scope="col" aria-sort="none"><div class="mpress-table-heading"><button class="mpress-table-sort" type="button" data-table-sort-column="2"><span>Downloads</span><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-up-down" aria-hidden="true"><path d="m21 16-4 4-4-4"/><path d="M17 20V4"/><path d="m3 8 4-4 4 4"/><path d="M7 4v16"/></svg></button><button class="mpress-table-filter-trigger utility-menu-trigger" type="button" popovertarget="mpress-table-1ce716bce109-filter-2" aria-label="Filter Downloads" aria-haspopup="menu" aria-expanded="false"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-list-filter" aria-hidden="true"><path d="M3 6h18"/><path d="M7 12h10"/><path d="M10 18h4"/></svg></button><menu id="mpress-table-1ce716bce109-filter-2" class="utility-menu-panel mpress-table-filter-menu" popover data-utility-menu data-table-filter-column="2" data-table-filter-label="Downloads" data-table-filter-value=""><li><button type="button" role="menuitem" data-table-filter-value="" aria-current="true">All</button></li><li><button type="button" role="menuitem" data-table-filter-value="640">640</button></li><li><button type="button" role="menuitem" data-table-filter-value="920">920</button></li><li><button type="button" role="menuitem" data-table-filter-value="1260">1260</button></li><li><button type="button" role="menuitem" data-table-filter-value="1840">1840</button></li></menu></div></th></tr></thead><tbody><tr data-table-row data-table-index="0"><td data-table-value="core">Core</td><td data-table-value="linux">Linux</td><td data-table-value="1840">1840</td></tr><tr data-table-row data-table-index="1"><td data-table-value="studio">Studio</td><td data-table-value="macos">macOS</td><td data-table-value="920">920</td></tr><tr data-table-row data-table-index="2"><td data-table-value="core">Core</td><td data-table-value="windows">Windows</td><td data-table-value="1260">1260</td></tr><tr data-table-row data-table-index="3"><td data-table-value="cli">CLI</td><td data-table-value="linux">Linux</td><td data-table-value="640">640</td></tr></tbody></table></div><div class="mpress-table-footer"><p class="mpress-table-status" role="status" aria-live="polite">4 rows</p><nav class="mpress-table-pagination" aria-label="Table pages"><button type="button" data-table-page-prev aria-label="Previous page" disabled><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><span data-table-page-status>Page 1 of 2</span><button type="button" data-table-page-next aria-label="Next page"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></nav></div></div>
+</div></div></article><article class="mpd-fixture" id="fixture-footnotes-all" data-category="footnotes" data-level="top" data-search="footnote references and definitions footnotes/all footnote-reference footnote-definition multiple-paragraphs"><header class="mpd-fixture-heading"><div><p>Footnotes · top</p><h2>Footnote references and definitions</h2></div><a href="#fixture-footnotes-all" aria-label="Link to Footnote references and definitions">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>MPress keeps source ranges stable.[^ranges] One note can be cited twice.[^ranges]&#10;&#10;&#64;footnote id=&#34;ranges&#34;&#10;  Stable ranges make precise edits possible.&#10;&#10;  The definition can contain more than one paragraph.&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>MPress keeps source ranges stable.[^ranges] One note can be cited twice.[^ranges]&#10;&#10;[^ranges]: Stable ranges make precise edits possible.&#10;&#10;    The definition can contain more than one paragraph.</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><p>MPress keeps source ranges stable.<sup id="fnref:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup> One note can be cited twice.<sup id="fnref1:1"><a href="#fn:1" class="footnote-ref" role="doc-noteref">1</a></sup></p>
+<div class="footnotes" role="doc-endnotes">
+<hr>
+<ol>
+<li id="fn:1">
+<p>Stable ranges make precise edits possible.</p>
+<p>The definition can contain more than one paragraph.&#160;<a href="#fnref:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a>&#160;<a href="#fnref1:1" class="footnote-backref" role="doc-backlink">&#x21a9;&#xfe0e;</a></p>
+</li>
+</ol>
+</div>
+</div></div></article><article class="mpd-fixture" id="fixture-imports-all" data-category="imports" data-level="top" data-search="imports, includes, formats, and modes imports/all include markdown-import openapi-import fragment-mode document-mode data-mode"><header class="mpd-fixture-heading"><div><p>Imports · top</p><h2>Imports, includes, formats, and modes</h2></div><a href="#fixture-imports-all" aria-label="Link to Imports, includes, formats, and modes">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Import forms&#10;&#10;&#64;include src=&#34;shared/introduction.mpd&#34; mode=&#34;fragment&#34;&#10;&#10;&#64;import src=&#34;README.md&#34; format=&#34;markdown&#34; profile=&#34;gfm&#34; mode=&#34;document&#34;&#10;&#10;&#64;import src=&#34;api/openapi.yaml&#34; format=&#34;openapi&#34; mode=&#34;data&#34; as=&#34;api&#34;</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Import forms&#10;&#10;Imports are resolved before Markdown export. This portable reference records the three supported forms without executing them.&#10;&#10;- Include an MPD fragment from `shared/introduction.mpd`.&#10;- Import a complete GFM document from `README.md`.&#10;- Load `api/openapi.yaml` as structured OpenAPI data named `api`.</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><p>Imports are resolved before Markdown export. This portable reference records the three supported forms without executing them.</p>
+<ul>
+<li>Include an MPD fragment from <code>shared/introduction.mpd</code>.</li>
+<li>Import a complete GFM document from <code>README.md</code>.</li>
+<li>Load <code>api/openapi.yaml</code> as structured OpenAPI data named <code>api</code>.</li>
+</ul>
+</div></div></article><article class="mpd-fixture" id="fixture-components-content" data-category="components" data-level="top" data-search="content and navigation components components/content content-components"><header class="mpd-fixture-heading"><div><p>Components · top</p><h2>Content and navigation components</h2></div><a href="#fixture-components-content" aria-label="Link to Content and navigation components">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Content components&#10;&#10;&#64;note type=&#34;info&#34; title=&#34;Information&#34;&#10;  Information uses ordinary *inline formatting*.&#10;&#64;end&#10;&#64;note type=&#34;tip&#34;&#10;  A useful tip.&#10;&#64;end&#10;&#64;note type=&#34;warning&#34;&#10;  Check this condition.&#10;&#64;end&#10;&#64;note type=&#34;caution&#34;&#10;  Proceed with care.&#10;&#64;end&#10;&#64;note type=&#34;danger&#34;&#10;  Do not continue.&#10;&#64;end&#10;&#64;note type=&#34;important&#34;&#10;  Keep this requirement.&#10;&#64;end&#10;&#10;&#64;details title=&#34;Closed details&#34;&#10;  Hidden until the reader opens it.&#10;&#64;end&#10;&#64;details title=&#34;Open details&#34; open=true&#10;  Visible on first render.&#10;&#64;end&#10;&#10;&#64;badge type=&#34;default&#34;&#10;  Default&#10;&#64;end&#10;&#64;badge type=&#34;success&#34;&#10;  Stable&#10;&#64;end&#10;&#64;badge type=&#34;warning&#34;&#10;  Beta&#10;&#64;end&#10;&#64;badge type=&#34;danger&#34;&#10;  Breaking&#10;&#64;end&#10;&#10;&#64;linkcard title=&#34;Authoring guide&#34; href=&#34;/authoring/&#34; icon=&#34;book-open&#34; description=&#34;Write portable documentation.&#34;&#10;&#10;  &#64;button href=&#34;/start/&#34; variant=&#34;primary&#34; icon=&#34;play&#34;&#10;    Get started&#10;  &#64;end&#10;  &#64;button href=&#34;/reference/&#34; variant=&#34;secondary&#34;&#10;    Reference&#10;  &#64;end&#10;&#10;  &#64;image light=&#34;/assets/example-light.svg&#34; dark=&#34;/assets/example-dark.svg&#34; alt=&#34;Theme-aware example&#34;</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Content components&#10;&#10;&#64;note{type=&#34;info&#34; title=&#34;Information&#34;}&#10;Information uses ordinary *inline formatting*.&#10;&#64;end&#10;&#64;note{type=&#34;tip&#34;}&#10;A useful tip.&#10;&#64;end&#10;&#64;note{type=&#34;warning&#34;}&#10;Check this condition.&#10;&#64;end&#10;&#64;note{type=&#34;caution&#34;}&#10;Proceed with care.&#10;&#64;end&#10;&#64;note{type=&#34;danger&#34;}&#10;Do not continue.&#10;&#64;end&#10;&#64;note{type=&#34;important&#34;}&#10;Keep this requirement.&#10;&#64;end&#10;&#10;&#64;details{title=&#34;Closed details&#34;}&#10;Hidden until the reader opens it.&#10;&#64;end&#10;&#64;details{title=&#34;Open details&#34; open=&#34;true&#34;}&#10;Visible on first render.&#10;&#64;end&#10;&#10;&#64;badge{type=&#34;default&#34;}&#10;Default&#10;&#64;end&#10;&#64;badge{type=&#34;success&#34;}&#10;Stable&#10;&#64;end&#10;&#64;badge{type=&#34;warning&#34;}&#10;Beta&#10;&#64;end&#10;&#64;badge{type=&#34;danger&#34;}&#10;Breaking&#10;&#64;end&#10;&#10;&#64;linkcard{title=&#34;Authoring guide&#34; href=&#34;/authoring/&#34; icon=&#34;book-open&#34; description=&#34;Write portable documentation.&#34;}&#10;&#10;&#64;button{href=&#34;/start/&#34; variant=&#34;primary&#34; icon=&#34;play&#34;}&#10;Get started&#10;&#64;end&#10;&#64;button{href=&#34;/reference/&#34; variant=&#34;secondary&#34;}&#10;Reference&#10;&#64;end&#10;&#10;&#64;image{light=&#34;/assets/example-light.svg&#34; dark=&#34;/assets/example-dark.svg&#34; alt=&#34;Theme-aware example&#34;}</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><aside aria-label="Information" class="mpress-admonition mpress-admonition-info">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-info" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> <span>Information</span></p>
+<div class="mpress-admonition-body">
+<p>Information uses ordinary <em>inline formatting</em>.</p>
+</div>
+</aside>
+<aside aria-label="Tip" class="mpress-admonition mpress-admonition-tip" data-variant="tip">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.87 12.87 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> <span>Tip</span></p>
+<div class="mpress-admonition-body">
+<p>A useful tip.</p>
+</div>
+</aside>
+<aside aria-label="Warning" class="mpress-admonition mpress-admonition-warning" data-variant="warning">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> <span>Warning</span></p>
+<div class="mpress-admonition-body">
+<p>Check this condition.</p>
+</div>
+</aside>
+<aside aria-label="Warning" class="mpress-admonition mpress-admonition-warning" data-variant="warning">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> <span>Warning</span></p>
+<div class="mpress-admonition-body">
+<p>Proceed with care.</p>
+</div>
+</aside>
+<aside aria-label="Danger" class="mpress-admonition mpress-admonition-danger" data-variant="danger">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-x" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="m15 9-6 6"/><path d="m9 9 6 6"/></svg> <span>Danger</span></p>
+<div class="mpress-admonition-body">
+<p>Do not continue.</p>
+</div>
+</aside>
+<aside aria-label="Important" class="mpress-admonition mpress-admonition-important" data-variant="warning">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.164.75a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.61 1.88l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.97 0l-4.618 2.428a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.162 9.79a.53.53 0 0 1 .294-.906l5.165-.75a2.12 2.12 0 0 0 1.594-1.16z"/></svg> <span>Important</span></p>
+<div class="mpress-admonition-body">
+<p>Keep this requirement.</p>
+</div>
+</aside>
+<details class="mpress-details">
+  <summary><span class="mpress-disclosure-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><span>Closed details</span></summary>
+<div class="mpress-details-content">
+<p>Hidden until the reader opens it.</p>
+</div>
+</details>
+<details class="mpress-details" open>
+  <summary><span class="mpress-disclosure-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><span>Open details</span></summary>
+<div class="mpress-details-content">
+<p>Visible on first render.</p>
+</div>
+</details>
+<p><span class="mpress-badge mpress-badge-default">Default</span></p>
+<p><span class="mpress-badge mpress-badge-success">Stable</span></p>
+<p><span class="mpress-badge mpress-badge-warning">Beta</span></p>
+<p><span class="mpress-badge mpress-badge-danger">Breaking</span></p>
+<a href="/authoring/" class="mpress-linkcard">
+  <span class="mpress-linkcard-icon"><svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-book-open" aria-hidden="true"><path d="M12 7v14"/><path d="M3 18a1 1 0 0 1-1-1V5a2 2 0 0 1 2-2h5a3 3 0 0 1 3 3v15a3 3 0 0 0-3-3Z"/><path d="M21 18a1 1 0 0 0 1-1V5a2 2 0 0 0-2-2h-5a3 3 0 0 0-3 3v15a3 3 0 0 1 3-3Z"/></svg></span>
+  <div class="mpress-linkcard-body">
+    <span class="mpress-linkcard-title">Authoring guide</span>
+    <span class="mpress-linkcard-desc">Write portable documentation.</span>
+  </div>
+  <span class="mpress-linkcard-arrow"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-arrow-right" aria-hidden="true"><path d="M5 12h14"/><path d="m12 5 7 7-7 7"/></svg></span>
+</a>
+<p><a class="mpress-button mpress-button-primary" href="/start/"><span class="mpress-button-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-play" aria-hidden="true"><polygon points="6 3 20 12 6 21 6 3"/></svg></span>Get started</a></p>
+<p><a class="mpress-button mpress-button-secondary" href="/reference/">Reference</a></p>
+<p><span class="mpress-theme-image"><img class="mpress-theme-image-light" src="/assets/example-light.svg" alt="Theme-aware example" loading="lazy"><img class="mpress-theme-image-dark" src="/assets/example-dark.svg" alt="Theme-aware example" loading="lazy"></span></p>
+</div></div></article><article class="mpd-fixture" id="fixture-components-media" data-category="components" data-level="top" data-search="native video components/media video native-controls mime-inference base-path poster safe-defaults"><header class="mpd-fixture-heading"><div><p>Components · top</p><h2>Native video</h2></div><a href="#fixture-components-media" aria-label="Link to Native video">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Video&#10;&#10;&#64;video src=&#34;/assets/mp4.mp4&#34;&#10;&#10;  &#64;video base=&#34;/assets&#34; src=&#34;mp4.mp4&#34; poster=&#34;mp4.webp&#34; title=&#34;Video with a poster&#34;</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Video&#10;&#10;&#64;video{src=&#34;/assets/mp4.mp4&#34;}&#10;&#10;&#64;video{base=&#34;/assets&#34; src=&#34;mp4.mp4&#34; poster=&#34;mp4.webp&#34; title=&#34;Video with a poster&#34;}</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><figure class="mpress-video"><video controls playsinline preload="metadata" width="1280" height="720"><source src="/assets/mp4.mp4" type="video/mp4">Your browser cannot play this video. <a href="/assets/mp4.mp4">Open the video file</a>.</video></figure>
+<figure class="mpress-video"><video controls playsinline preload="metadata" width="1280" height="720" poster="/assets/mp4.webp" aria-label="Video with a poster"><source src="/assets/mp4.mp4" type="video/mp4">Your browser cannot play this video. <a href="/assets/mp4.mp4">Open the video file</a>.</video><figcaption>Video with a poster</figcaption></figure>
+</div></div></article><article class="mpd-fixture" id="fixture-components-code" data-category="components" data-level="top" data-search="code and api components components/code code-components double-digit-steps deep-file-tree file-tree-siblings file-tree-last-child"><header class="mpd-fixture-heading"><div><p>Components · top</p><h2>Code and API components</h2></div><a href="#fixture-components-code" aria-label="Link to Code and API components">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Code components&#10;&#10;&#64;tabs&#10;  &#64;tab label=&#34;Go&#34;&#10;    Run `go test ./...`.&#10;  &#64;end&#10;  &#64;tab label=&#34;Shell&#34;&#10;    Run `mpress check`.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;terminal title=&#34;Build&#34; frame=&#34;macos&#34; prompt=&#34;$&#34; comment=&#34;#&#34;&#10;  # Validate the site before publishing.&#10;  $ # Comments are visible but are not copied.&#10;  $ mpress check&#10;  No issues found.&#10;&#64;end&#10;&#10;&#64;api method=&#34;POST&#34; path=&#34;/v1/builds&#34;&#10;  Creates a build.&#10;&#10;  | Field | Type |&#10;  | ref | string |&#10;&#64;end&#10;&#10;&#64;steps&#10;  &#64;step title=&#34;Write&#34;&#10;    Add a Markdown file.&#10;  &#64;end&#10;  &#64;step title=&#34;Build&#34;&#10;    Run the compiler.&#10;  &#64;end&#10;  &#64;step title=&#34;Configure&#34;&#10;    Set the project options.&#10;  &#64;end&#10;  &#64;step title=&#34;Add navigation&#34;&#10;    Arrange the pages.&#10;  &#64;end&#10;  &#64;step title=&#34;Add components&#34;&#10;    Enrich the documentation.&#10;  &#64;end&#10;  &#64;step title=&#34;Check links&#34;&#10;    Validate every destination.&#10;  &#64;end&#10;  &#64;step title=&#34;Test themes&#34;&#10;    Check light and dark modes.&#10;  &#64;end&#10;  &#64;step title=&#34;Test mobile&#34;&#10;    Use a narrow viewport.&#10;  &#64;end&#10;  &#64;step title=&#34;Inspect output&#34;&#10;    Review the generated HTML.&#10;  &#64;end&#10;  &#64;step title=&#34;Package&#34;&#10;    Create the deployment archive.&#10;  &#64;end&#10;  &#64;step title=&#34;Publish&#34;&#10;    Upload the static output.&#10;  &#64;end&#10;  &#64;step title=&#34;Verify deployment&#34;&#10;    Open the production site.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;diff title=&#34;mpress.yaml&#34; mode=&#34;inline&#34;&#10;  search: false&#10;  ---&#10;  search: true&#10;&#64;end&#10;&#10;&#64;filetree&#10;  docs/&#10;    index.md  Home page&#10;    guide/&#10;      installation.md  Install MPress&#10;      deployment.md  Publish the site&#10;    reference/&#10;      configuration.md  Configuration keys&#10;      components.md  Component catalogue&#10;    assets/&#10;      logo.svg  Site mark&#10;      screenshots/&#10;        home.png  Landing page&#10;    blog/&#10;      index.md  Blog landing page&#10;  mpress.yaml  Configuration&#10;&#64;end&#10;&#10;&#64;explained&#10;  ```go&#10;  func main() { // (1)&#10;      site.Build() // (2)&#10;  }&#10;  ```&#10;&#10;  (1) Start with the entry point.&#10;  (2) Build the static site.&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Code components&#10;&#10;&#64;tabs&#10;[Go]&#10;Run `go test ./...`.&#10;&#10;[Shell]&#10;Run `mpress check`.&#10;&#64;end&#10;&#10;&#64;terminal{title=&#34;Build&#34; frame=&#34;macos&#34; prompt=&#34;$&#34; comment=&#34;#&#34;}&#10;# Validate the site before publishing.&#10;$ # Comments are visible but are not copied.&#10;$ mpress check&#10;No issues found.&#10;&#64;end&#10;&#10;&#64;api{method=&#34;POST&#34; path=&#34;/v1/builds&#34;}&#10;Creates a build.&#10;&#10;| Field | Type |&#10;| --- | --- |&#10;| `ref` | string |&#10;&#64;end&#10;&#10;&#64;steps&#10;### Write&#10;Add a Markdown file.&#10;&#10;### Build&#10;Run the compiler.&#10;&#10;### Configure&#10;Set the project options.&#10;&#10;### Add navigation&#10;Arrange the pages.&#10;&#10;### Add components&#10;Enrich the documentation.&#10;&#10;### Check links&#10;Validate every destination.&#10;&#10;### Test themes&#10;Check light and dark modes.&#10;&#10;### Test mobile&#10;Use a narrow viewport.&#10;&#10;### Inspect output&#10;Review the generated HTML.&#10;&#10;### Package&#10;Create the deployment archive.&#10;&#10;### Publish&#10;Upload the static output.&#10;&#10;### Verify deployment&#10;Open the production site.&#10;&#64;end&#10;&#10;&#64;diff{title=&#34;mpress.yaml&#34; mode=&#34;inline&#34;}&#10;search: false&#10;---&#10;search: true&#10;&#64;end&#10;&#10;&#64;filetree&#10;docs/&#10;  index.md  Home page&#10;  guide/&#10;    installation.md  Install MPress&#10;    deployment.md  Publish the site&#10;  reference/&#10;    configuration.md  Configuration keys&#10;    components.md  Component catalogue&#10;  assets/&#10;    logo.svg  Site mark&#10;    screenshots/&#10;      home.png  Landing page&#10;  blog/&#10;    index.md  Blog landing page&#10;mpress.yaml  Configuration&#10;&#64;end&#10;&#10;&#64;explained&#10;```go&#10;func main() { // (1)&#10;    site.Build() // (2)&#10;}&#10;```&#10;&#10;(1) Start with the entry point.&#10;(2) Build the static site.&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><ot-tabs class="mpress-tabs" id="mpress-tabs-a7dbd42b">
+<div role="tablist">
+<button id="mpress-tabs-a7dbd42b-tab-1" role="tab" type="button" aria-selected="true" aria-controls="mpress-tabs-a7dbd42b-panel-1">Go</button>
+<button id="mpress-tabs-a7dbd42b-tab-2" role="tab" type="button" aria-selected="false" aria-controls="mpress-tabs-a7dbd42b-panel-2" tabindex="-1">Shell</button>
+</div>
+<div id="mpress-tabs-a7dbd42b-panel-1" role="tabpanel" aria-labelledby="mpress-tabs-a7dbd42b-tab-1">
+<p>Run <code>go test ./...</code>.</p>
+</div>
+<div id="mpress-tabs-a7dbd42b-panel-2" role="tabpanel" aria-labelledby="mpress-tabs-a7dbd42b-tab-2" hidden>
+<p>Run <code>mpress check</code>.</p>
+</div>
+</ot-tabs>
+<div class="mpress-terminal mpress-terminal-macos" data-prompt="$" data-comment="#">
+  <div class="mpress-terminal-title"><span>Build</span><button type="button" class="mpress-copy" aria-label="Copy commands" title="Copy commands" data-copy-label="Copy commands" data-copied-label="Copied"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="sr-only" data-copy-status aria-live="polite">Copy commands</span></button></div>
+  <pre tabindex="0" data-commands="mpress check"><code><span class="mpress-comment"># Validate the site before publishing.</span>
+<span class="mpress-prompt">$</span> <span class="mpress-comment"># Comments are visible but are not copied.</span>
+<span class="mpress-prompt">$</span> <span class="mpress-cmd">mpress check</span>
+<span class="mpress-output">No issues found.</span>
+</code></pre>
+</div>
+<div class="mpress-api-endpoint">
+  <div class="mpress-api-header">
+    <span class="mpress-api-method" style="background:#3b82f6">POST</span>
+    <code class="mpress-api-path">/v1/builds</code>
+  </div>
+  <div class="mpress-api-description">
+<p>Creates a build.</p>
+<table>
+<thead>
+<tr>
+<th>Field</th>
+<th>Type</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td><code>ref</code></td>
+<td>string</td>
+</tr>
+</tbody>
+</table>
+  </div>
+</div>
+<div class="mpress-timeline mpress-steps">
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">1</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Write</h3>
+<div class="mpress-step-content">
+<p>Add a Markdown file.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">2</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Build</h3>
+<div class="mpress-step-content">
+<p>Run the compiler.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">3</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Configure</h3>
+<div class="mpress-step-content">
+<p>Set the project options.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">4</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Add navigation</h3>
+<div class="mpress-step-content">
+<p>Arrange the pages.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">5</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Add components</h3>
+<div class="mpress-step-content">
+<p>Enrich the documentation.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">6</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Check links</h3>
+<div class="mpress-step-content">
+<p>Validate every destination.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">7</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Test themes</h3>
+<div class="mpress-step-content">
+<p>Check light and dark modes.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">8</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Test mobile</h3>
+<div class="mpress-step-content">
+<p>Use a narrow viewport.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">9</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Inspect output</h3>
+<div class="mpress-step-content">
+<p>Review the generated HTML.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">10</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Package</h3>
+<div class="mpress-step-content">
+<p>Create the deployment archive.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">11</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Publish</h3>
+<div class="mpress-step-content">
+<p>Upload the static output.</p>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">12</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Verify deployment</h3>
+<div class="mpress-step-content">
+<p>Open the production site.</p>
+</div>
+    </div>
+  </div>
+</div>
+<div class="mpress-diff mpress-diff-inline">
+  <div class="mpress-diff-title">mpress.yaml</div>
+  <div class="mpress-diff-body">
+    <pre tabindex="0"><code><span class="mpress-diff-line mpress-diff-removed">− search: false</span><span class="mpress-diff-line mpress-diff-added">+ search: true</span></code></pre>
+  </div>
+</div>
+<div class="mpress-filetree">
+  <ul>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">docs</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">index.md</span><span class="mpress-filetree-desc">Home page</span></span></li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">guide</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">installation.md</span><span class="mpress-filetree-desc">Install MPress</span></span></li>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">deployment.md</span><span class="mpress-filetree-desc">Publish the site</span></span></li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">reference</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">configuration.md</span><span class="mpress-filetree-desc">Configuration keys</span></span></li>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">components.md</span><span class="mpress-filetree-desc">Component catalogue</span></span></li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">assets</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span><span class="mpress-filetree-name">logo.svg</span><span class="mpress-filetree-desc">Site mark</span></span></li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">screenshots</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-image" aria-hidden="true"><rect width="18" height="18" x="3" y="3" rx="2" ry="2"/><circle cx="9" cy="9" r="2"/><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21"/></svg></span><span class="mpress-filetree-name">home.png</span><span class="mpress-filetree-desc">Landing page</span></span></li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">blog</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">index.md</span><span class="mpress-filetree-desc">Blog landing page</span></span></li>
+      </ul>
+    </li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="mpress-filetree-name">mpress.yaml</span><span class="mpress-filetree-desc">Configuration</span></span></li>
+  </ul>
+</div>
+<div class="mpress-explained" role="group" aria-label="Code explanation"><div class="mpress-explained-code"><pre tabindex="0"><code class="language-go"><span class="mpress-explained-line" data-ref="1" data-explanation="Start with the entry point." tabindex="0">func main() {</span><span class="mpress-explained-line" data-ref="2" data-explanation="Build the static site." tabindex="0">    site.Build()</span><span class="mpress-explained-line">}</span></code></pre></div><div class="mpress-explained-prose"><p class="mpress-explained-para" data-ref="1"><span class="mpress-explained-ref">1</span><span class="mpress-explained-copy">Start with the entry point.</span></p><p class="mpress-explained-para" data-ref="2"><span class="mpress-explained-ref">2</span><span class="mpress-explained-copy">Build the static site.</span></p></div></div>
+</div></div></article><article class="mpd-fixture" id="fixture-components-data" data-category="components" data-level="top" data-search="data and product components components/data data-components"><header class="mpd-fixture-heading"><div><p>Components · top</p><h2>Data and product components</h2></div><a href="#fixture-components-data" aria-label="Link to Data and product components">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Data components&#10;&#10;&#64;matrix highlight=&#34;MPress&#34;&#10;  | Capability | MPress | Other |&#10;  | Single binary | Yes | No |&#10;  | Runtime | No | Yes |&#10;&#64;end&#10;&#10;&#64;status service=&#34;Build service&#34; state=&#34;operational&#34;&#10;  All systems normal&#10;&#64;end&#10;&#64;status service=&#34;Translation queue&#34; state=&#34;degraded&#34;&#10;  Jobs may take longer&#10;&#64;end&#10;&#10;&#64;calendar month=&#34;2026-08&#34; style=&#34;compact&#34; today=&#34;2026-08-11&#34;&#10;  Release dates&#10;&#64;end&#10;&#10;&#64;changelog&#10;  ## v2.0.0 (2026-08-12)&#10;  ### Added&#10;  - Native MPD rendering&#10;  - Accessible reader controls&#10;  ### Breaking changes&#10;  - Removed the legacy component preamble&#10;  ## v1.4.0 (2026-08-01)&#10;  ### Improved&#10;  - Faster document compilation&#10;  ### Fixed&#10;  - Stable fixture output&#10;  ### Documentation&#10;  - Expanded the authoring reference&#10;&#64;end&#10;&#10;&#64;release version=&#34;1.1.0&#34; title=&#34;The Conformance Update&#34; date=&#34;2026-08-01&#34; type=&#34;minor&#34; latest=true&#10;  ## What&#39;s changed&#10;  - A complete conformance corpus.&#10;  ## Bug Fixes&#10;  - Deterministic fixtures.&#10;  ## Assets&#10;  - [Source code (zip)](/downloads/mpress-v1.1.0.zip)&#10;  - [Source code (tar.gz)](/downloads/mpress-v1.1.0.tar.gz)&#10;&#64;end&#10;&#10;&#64;pricing cols=&#34;2&#34;&#10;  &#64;plan&#10;    ## Starter&#10;    $0&#10;    [Start](/start/)&#10;    - One project&#10;  &#64;end&#10;  &#64;plan recommended=true&#10;    ## Team&#10;    $15&#10;    [Upgrade](/team/)&#10;    - Shared projects&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;testimonials&#10;  &#64;testimonial author=&#34;Documentation author&#34;&#10;    The source stays portable.&#10;  &#64;end&#10;  &#64;testimonial author=&#34;Platform engineer&#34;&#10;    The output is static.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;qr url=&#34;https://m-press.me&#34; size=120 label=&#34;MPress website&#34;&#10;&#10;&#64;tutorial title=&#34;Publish a site&#34;&#10;  &#64;lesson title=&#34;Check&#34;&#10;    Run `mpress check`.&#10;  &#64;end&#10;  &#64;lesson title=&#34;Build&#34;&#10;    Run `mpress build`.&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Data components&#10;&#10;&#64;matrix{highlight=&#34;MPress&#34;}&#10;| Capability | MPress | Other |&#10;| --- | --- | --- |&#10;| Single binary | Yes | No |&#10;| Runtime | No | Yes |&#10;&#64;end&#10;&#10;&#64;status{service=&#34;Build service&#34; state=&#34;operational&#34;}&#10;All systems normal&#10;&#64;end&#10;&#64;status{service=&#34;Translation queue&#34; state=&#34;degraded&#34;}&#10;Jobs may take longer&#10;&#64;end&#10;&#10;&#64;calendar{month=&#34;2026-08&#34; style=&#34;compact&#34; today=&#34;2026-08-11&#34;}&#10;Release dates&#10;&#64;end&#10;&#10;&#64;changelog&#10;### v2.0.0 (2026-08-12)&#10;#### Added&#10;- Native MPD rendering&#10;- Accessible reader controls&#10;#### Breaking changes&#10;- Removed the legacy component preamble&#10;### v1.4.0 (2026-08-01)&#10;#### Improved&#10;- Faster document compilation&#10;#### Fixed&#10;- Stable fixture output&#10;#### Documentation&#10;- Expanded the authoring reference&#10;&#64;end&#10;&#10;&#64;release{version=&#34;1.1.0&#34; title=&#34;The Conformance Update&#34; date=&#34;2026-08-01&#34; type=&#34;minor&#34; latest=true}&#10;### What&#39;s changed&#10;- A complete conformance corpus.&#10;### Bug Fixes&#10;- Deterministic fixtures.&#10;### Assets&#10;- [Source code (zip)](/downloads/mpress-v1.1.0.zip)&#10;- [Source code (tar.gz)](/downloads/mpress-v1.1.0.tar.gz)&#10;&#64;end&#10;&#10;&#64;pricing{cols=&#34;2&#34;}&#10;### Starter&#10;$0&#10;[Start](/start/)&#10;- ✓ One project&#10;---&#10;### Team&#10;$15&#10;[Upgrade](/team/)&#10;recommended&#10;- ✓ Shared projects&#10;&#64;end&#10;&#10;&#64;testimonials&#10;“The source stays portable.”&#10;Documentation author&#10;---&#10;“The output is static.”&#10;Platform engineer&#10;&#64;end&#10;&#10;&#64;qr{url=&#34;https://m-press.me&#34; size=&#34;120&#34; label=&#34;MPress website&#34;}&#10;&#10;&#64;tutorial{title=&#34;Publish a site&#34;}&#10;### Check&#10;Run `mpress check`.&#10;&#10;### Build&#10;Run `mpress build`.&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-matrix-wrapper">
+<table class="mpress-matrix" role="grid">
+  <thead>
+    <tr>
+      <th scope="col" class="mpress-matrix-header mpress-matrix-feature">Capability</th>
+      <th scope="col" class="mpress-matrix-header mpress-matrix-highlight">MPress</th>
+      <th scope="col" class="mpress-matrix-header">Other</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td class="mpress-matrix-feature">Single binary</td>
+      <td class="mpress-matrix-cell mpress-matrix-highlight mpress-matrix-yes"><span class="mpress-matrix-check" aria-label="Yes"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></td>
+      <td class="mpress-matrix-cell mpress-matrix-no"><span class="mpress-matrix-cross" aria-label="No"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></td>
+    </tr>
+    <tr>
+      <td class="mpress-matrix-feature">Runtime</td>
+      <td class="mpress-matrix-cell mpress-matrix-highlight mpress-matrix-no"><span class="mpress-matrix-cross" aria-label="No"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-x" aria-hidden="true"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg></span></td>
+      <td class="mpress-matrix-cell mpress-matrix-yes"><span class="mpress-matrix-check" aria-label="Yes"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<p><span class="mpress-status mpress-status-operational" role="status" aria-label="Build service: Operational"><span class="mpress-status-dot"></span><span class="mpress-status-service">Build service</span><span class="mpress-status-label">Operational</span></span><span class="mpress-status-desc">All systems normal</span></p>
+<p><span class="mpress-status mpress-status-degraded" role="status" aria-label="Translation queue: Degraded"><span class="mpress-status-dot"></span><span class="mpress-status-service">Translation queue</span><span class="mpress-status-label">Degraded</span></span><span class="mpress-status-desc">Jobs may take longer</span></p>
+<div class="mpress-calendar mpress-calendar-compact" data-year="2026" data-month="8">
+  <div class="mpress-calendar-header"><button class="mpress-calendar-nav" data-dir="prev" aria-label="Previous month"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><span class="mpress-calendar-title">August 2026</span><button class="mpress-calendar-nav" data-dir="next" aria-label="Next month"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></div>
+  <div class="mpress-calendar-grid">
+    <div class="mpress-calendar-day-header">Mon</div>
+    <div class="mpress-calendar-day-header">Tue</div>
+    <div class="mpress-calendar-day-header">Wed</div>
+    <div class="mpress-calendar-day-header">Thu</div>
+    <div class="mpress-calendar-day-header">Fri</div>
+    <div class="mpress-calendar-day-header">Sat</div>
+    <div class="mpress-calendar-day-header">Sun</div>
+    <div class="mpress-calendar-cell empty"></div>
+    <div class="mpress-calendar-cell empty"></div>
+    <div class="mpress-calendar-cell empty"></div>
+    <div class="mpress-calendar-cell empty"></div>
+    <div class="mpress-calendar-cell empty"></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-01"><span class="mpress-calendar-date">1</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-02"><span class="mpress-calendar-date">2</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-03"><span class="mpress-calendar-date">3</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-04"><span class="mpress-calendar-date">4</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-05"><span class="mpress-calendar-date">5</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-06"><span class="mpress-calendar-date">6</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-07"><span class="mpress-calendar-date">7</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-08"><span class="mpress-calendar-date">8</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-09"><span class="mpress-calendar-date">9</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-10"><span class="mpress-calendar-date">10</span></div>
+    <div class="mpress-calendar-cell today" data-date="2026-08-11"><span class="mpress-calendar-date">11</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-12"><span class="mpress-calendar-date">12</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-13"><span class="mpress-calendar-date">13</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-14"><span class="mpress-calendar-date">14</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-15"><span class="mpress-calendar-date">15</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-16"><span class="mpress-calendar-date">16</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-17"><span class="mpress-calendar-date">17</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-18"><span class="mpress-calendar-date">18</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-19"><span class="mpress-calendar-date">19</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-20"><span class="mpress-calendar-date">20</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-21"><span class="mpress-calendar-date">21</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-22"><span class="mpress-calendar-date">22</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-23"><span class="mpress-calendar-date">23</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-24"><span class="mpress-calendar-date">24</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-25"><span class="mpress-calendar-date">25</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-26"><span class="mpress-calendar-date">26</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-27"><span class="mpress-calendar-date">27</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-28"><span class="mpress-calendar-date">28</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-29"><span class="mpress-calendar-date">29</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-30"><span class="mpress-calendar-date">30</span></div>
+    <div class="mpress-calendar-cell" data-date="2026-08-31"><span class="mpress-calendar-date">31</span></div>
+  </div>
+  <div class="mpress-calendar-content">
+<p>Release dates</p>
+  </div>
+</div>
+<div class="mpress-changelog" role="list">
+<article class="mpress-changelog-entry mpress-changelog-major" role="listitem">
+  <header class="mpress-changelog-header"><span class="mpress-changelog-version">v2.0.0</span><time class="mpress-changelog-date" datetime="2026-08-12">2026-08-12</time></header>
+  <div class="mpress-changelog-body">
+    <div class="mpress-changelog-content">
+      <section class="mpress-changelog-section mpress-badge-feature">
+        <h4 class="mpress-changelog-category"><span aria-hidden="true"></span>Added</h4>
+        <ul class="mpress-changelog-items">
+          <li>Native MPD rendering</li>
+          <li>Accessible reader controls</li>
+        </ul>
+      </section>
+      <section class="mpress-changelog-section mpress-badge-breaking">
+        <h4 class="mpress-changelog-category"><span aria-hidden="true"></span>Breaking changes</h4>
+        <ul class="mpress-changelog-items">
+          <li>Removed the legacy component preamble</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</article>
+<article class="mpress-changelog-entry" role="listitem">
+  <header class="mpress-changelog-header"><span class="mpress-changelog-version">v1.4.0</span><time class="mpress-changelog-date" datetime="2026-08-01">2026-08-01</time></header>
+  <div class="mpress-changelog-body">
+    <div class="mpress-changelog-content">
+      <section class="mpress-changelog-section mpress-badge-improvement">
+        <h4 class="mpress-changelog-category"><span aria-hidden="true"></span>Improved</h4>
+        <ul class="mpress-changelog-items">
+          <li>Faster document compilation</li>
+        </ul>
+      </section>
+      <section class="mpress-changelog-section mpress-badge-fix">
+        <h4 class="mpress-changelog-category"><span aria-hidden="true"></span>Fixed</h4>
+        <ul class="mpress-changelog-items">
+          <li>Stable fixture output</li>
+        </ul>
+      </section>
+      <section class="mpress-changelog-section mpress-badge-docs">
+        <h4 class="mpress-changelog-category"><span aria-hidden="true"></span>Documentation</h4>
+        <ul class="mpress-changelog-items">
+          <li>Expanded the authoring reference</li>
+        </ul>
+      </section>
+    </div>
+  </div>
+</article>
+</div>
+<article class="mpress-release mpress-release-minor">
+  <header class="mpress-release-header">
+    <div class="mpress-release-title-group">
+      <span class="mpress-release-type">Latest release</span>
+      <h3 class="mpress-release-version"><span>v1.1.0</span><span class="mpress-release-title">The Conformance Update</span></h3>
+    </div>
+    <time class="mpress-release-date" datetime="2026-08-01">Released 2026-08-01</time>
+  </header>
+  <div class="mpress-release-notes">
+    <section class="mpress-release-section ">
+      <h4 class="mpress-release-section-title">What&#39;s changed</h4>
+      <ul class="mpress-release-items">
+        <li>A complete conformance corpus.</li>
+      </ul>
+    </section>
+    <section class="mpress-release-section mpress-release-fixes">
+      <h4 class="mpress-release-section-title">Bug Fixes</h4>
+      <ul class="mpress-release-items">
+        <li>Deterministic fixtures.</li>
+      </ul>
+    </section>
+    <section class="mpress-release-section mpress-release-assets">
+      <h4 class="mpress-release-section-title">Assets</h4>
+      <ul class="mpress-release-items">
+        <li><span class="mpress-release-asset-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></span><a href="/downloads/mpress-v1.1.0.zip">Source code (zip)</a></li>
+        <li><span class="mpress-release-asset-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-download" aria-hidden="true"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><path d="m7 10 5 5 5-5"/><path d="M12 15V3"/></svg></span><a href="/downloads/mpress-v1.1.0.tar.gz">Source code (tar.gz)</a></li>
+      </ul>
+    </section>
+  </div>
+</article>
+<div class="mpress-pricing" style="--pricing-cols: 2">
+  <div class="mpress-pricing-card">
+    <h3 class="mpress-pricing-name">Starter</h3>
+    <div class="mpress-pricing-price">$0</div>
+    <a href="/start/" class="mpress-pricing-cta">Start</a>
+    <ul class="mpress-pricing-features">
+      <li class="mpress-pricing-feature included"><span class="mpress-pricing-check" aria-label="Included"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span> One project</li>
+    </ul>
+  </div>
+  <div class="mpress-pricing-card mpress-pricing-recommended">
+    <div class="mpress-pricing-badge">Recommended</div>
+    <h3 class="mpress-pricing-name">Team</h3>
+    <div class="mpress-pricing-price">$15</div>
+    <a href="/team/" class="mpress-pricing-cta mpress-pricing-cta-primary">Upgrade</a>
+    <ul class="mpress-pricing-features">
+      <li class="mpress-pricing-feature included"><span class="mpress-pricing-check" aria-label="Included"><svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span> Shared projects</li>
+    </ul>
+  </div>
+</div>
+<div class="mpress-testimonials" data-autoplay="0">
+  <div class="mpress-testimonials-track" role="region" aria-label="Testimonials" aria-live="off">
+    <blockquote class="mpress-testimonial active" aria-hidden="false">
+      <p class="mpress-testimonial-quote">“The source stays portable. Documentation author”</p>
+    </blockquote>
+    <blockquote class="mpress-testimonial" aria-hidden="true">
+      <p class="mpress-testimonial-quote">“The output is static. Platform engineer”</p>
+    </blockquote>
+  </div>
+  <nav class="mpress-testimonials-nav" aria-label="Testimonial navigation">
+    <button class="mpress-testimonials-dot" aria-label="Show testimonial 1" aria-current="true"></button>
+    <button class="mpress-testimonials-dot" aria-label="Show testimonial 2"></button>
+  </nav>
+</div>
+<figure class="mpress-qr" role="img" aria-label="QR code: MPress website"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 120" width="120" height="120" shape-rendering="crispEdges"><rect width="120" height="120" fill="#fff"/><rect x="14.5" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="18.2" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="14.5" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="18.2" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="21.8" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="25.5" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="29.1" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="32.7" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="18.2" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="36.4" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="40.0" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="40.0" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="40.0" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="40.0" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="40.0" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="40.0" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="40.0" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="43.6" width="4.1" height="4.1" fill="#000"/><rect x="18.2" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="40.0" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="47.3" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="50.9" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="76.4" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="54.5" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="58.2" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="40.0" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="76.4" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="61.8" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="18.2" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="40.0" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="76.4" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="65.5" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="40.0" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="69.1" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="18.2" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="40.0" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="76.4" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="72.7" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="76.4" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="18.2" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="80.0" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="83.6" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="76.4" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="80.0" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="87.3" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="47.3" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="65.5" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="69.1" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="76.4" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="94.5" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="90.9" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="98.2" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="94.5" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="98.2" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="98.2" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="98.2" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="98.2" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="98.2" width="4.1" height="4.1" fill="#000"/><rect x="83.6" y="98.2" width="4.1" height="4.1" fill="#000"/><rect x="87.3" y="98.2" width="4.1" height="4.1" fill="#000"/><rect x="14.5" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="18.2" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="21.8" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="25.5" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="29.1" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="32.7" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="36.4" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="43.6" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="50.9" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="54.5" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="58.2" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="61.8" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="72.7" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="76.4" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="90.9" y="101.8" width="4.1" height="4.1" fill="#000"/><rect x="101.8" y="101.8" width="4.1" height="4.1" fill="#000"/></svg><figcaption class="mpress-qr-label">MPress website</figcaption></figure>
+<div class="mpress-tutorial" data-tutorial-id="tutorial-8240dd61">
+<div class="mpress-tutorial-header">
+<h3 class="mpress-tutorial-title">Publish a site</h3>
+<div class="mpress-tutorial-progress"><div class="mpress-tutorial-progress-bar" style="width: 0%"></div></div>
+<span class="mpress-tutorial-count">0/2 completed</span>
+</div>
+<div class="mpress-tutorial-steps">
+<div class="mpress-tutorial-step" data-step="0">
+<div class="mpress-tutorial-step-header"><label class="mpress-tutorial-check"><input type="checkbox" data-step-id="tutorial-8240dd61-step-0" aria-label="Mark step 1 as complete"><span class="mpress-tutorial-checkmark"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></label><span class="mpress-tutorial-step-num">1</span><span class="mpress-tutorial-step-title">Check</span></div>
+<div class="mpress-tutorial-step-content">
+<p>Run <code>mpress check</code>.</p>
+</div>
+</div>
+<div class="mpress-tutorial-step" data-step="1">
+<div class="mpress-tutorial-step-header"><label class="mpress-tutorial-check"><input type="checkbox" data-step-id="tutorial-8240dd61-step-1" aria-label="Mark step 2 as complete"><span class="mpress-tutorial-checkmark"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></label><span class="mpress-tutorial-step-num">2</span><span class="mpress-tutorial-step-title">Build</span></div>
+<div class="mpress-tutorial-step-content">
+<p>Run <code>mpress build</code>.</p>
+</div>
+</div>
+</div>
+<div class="mpress-tutorial-footer"><button class="mpress-tutorial-reset" aria-label="Reset tutorial progress">Reset progress</button></div>
+</div>
+</div></div></article><article class="mpd-fixture" id="fixture-components-interactive" data-category="components" data-level="top" data-search="interactive and reactive components components/interactive interactive-components"><header class="mpd-fixture-heading"><div><p>Components · top</p><h2>Interactive and reactive components</h2></div><a href="#fixture-components-interactive" aria-label="Link to Interactive and reactive components">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Interactive components&#10;&#10;&#64;audience role=&#34;developer&#34;&#10;  Extend the pipeline in Go.&#10;&#64;end&#10;&#64;audience role=&#34;writer&#34;&#10;  Write plain text documentation.&#10;&#64;end&#10;&#10;&#64;if param=&#34;framework&#34; value=&#34;plain&#34; default=true&#10;  Framework-neutral guidance.&#10;&#64;end&#10;&#64;if param=&#34;framework&#34; value=&#34;go&#34;&#10;  Guidance for Go users.&#10;&#64;end&#10;&#10;&#64;input name=&#34;projects&#34; type=&#34;range&#34; min=1 max=20 value=4 label=&#34;Projects&#34;&#10;&#64;input name=&#34;seats&#34; type=&#34;number&#34; value=3 label=&#34;Editors&#34;&#10;&#64;computed expr=&#34;projects * seats&#34; deps=[&#34;projects&#34;,&#34;seats&#34;] label=&#34;Project seats&#34; format=&#34;%d&#34;&#10;&#10;&#64;api-playground method=&#34;GET&#34; path=&#34;/search-index.json&#34; baseUrl=&#34;http://127.0.0.1:4174&#34;&#10;  Inspect the generated search index.&#10;&#64;end&#10;&#10;&#64;variant name=&#34;react&#34;&#10;  Content selected at build time.&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Interactive components&#10;&#10;&#64;audience{role=&#34;developer&#34;}&#10;Extend the pipeline in Go.&#10;&#64;end&#10;&#64;audience{role=&#34;writer&#34;}&#10;Write plain text documentation.&#10;&#64;end&#10;&#10;&#64;if{param=&#34;framework&#34; value=&#34;plain&#34; default=&#34;true&#34;}&#10;Framework-neutral guidance.&#10;&#64;end&#10;&#64;if{param=&#34;framework&#34; value=&#34;go&#34;}&#10;Guidance for Go users.&#10;&#64;end&#10;&#10;&#64;input{name=&#34;projects&#34; type=&#34;range&#34; min=&#34;1&#34; max=&#34;20&#34; value=&#34;4&#34; label=&#34;Projects&#34;}&#10;&#64;input{name=&#34;seats&#34; type=&#34;number&#34; value=&#34;3&#34; label=&#34;Editors&#34;}&#10;&#64;computed{expr=&#34;projects * seats&#34; deps=&#34;projects,seats&#34; label=&#34;Project seats&#34; format=&#34;%d&#34;}&#10;&#10;&#64;api-playground{method=&#34;GET&#34; path=&#34;/search-index.json&#34; baseUrl=&#34;http://127.0.0.1:4174&#34;}&#10;Inspect the generated search index.&#10;&#64;end&#10;&#10;&#64;variant{name=&#34;react&#34;}&#10;Content selected at build time.&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-audience" data-audience="developer">
+<p>Extend the pipeline in Go.</p>
+</div>
+<div class="mpress-audience" data-audience="writer">
+<p>Write plain text documentation.</p>
+</div>
+<div class="mpress-conditional" data-param="framework" data-value="plain" data-default="true" id="mpress-if-framework-plain">
+<p>Framework-neutral guidance.</p>
+</div>
+<div class="mpress-conditional" data-param="framework" data-value="go" id="mpress-if-framework-go">
+<p>Guidance for Go users.</p>
+</div>
+<div class="mpress-reactive-input" data-reactive-name="projects"><label class="mpress-reactive-label">Projects<span class="mpress-reactive-range-wrap"><input type="range" class="mpress-reactive-control" data-reactive="projects" min="1" max="20" value="4"><span class="mpress-reactive-range-value" data-reactive-display="projects">4</span></span></label></div>
+<div class="mpress-reactive-input" data-reactive-name="seats"><label class="mpress-reactive-label">Editors<input type="number" class="mpress-reactive-control" data-reactive="seats" value="3"></label></div>
+<span class="mpress-reactive-computed" data-reactive-expr="projects * seats" data-reactive-deps="projects,seats" data-reactive-format="%d"><span class="mpress-reactive-computed-label">Project seats: </span><span class="mpress-reactive-computed-value">…</span></span>
+<div class="mpress-api-playground" id="api-pg-3038366364333539" data-method="GET" data-path="/search-index.json" data-base-url="http://127.0.0.1:4174">
+  <div class="mpress-api-header">
+    <span class="mpress-api-method" style="background:#0d9488">GET</span>
+    <code class="mpress-api-path">/search-index.json</code>
+  </div>
+  <div class="mpress-api-description">
+<p>Inspect the generated search index.</p>
+  </div>
+  <div class="mpress-api-pg-body">
+    <div class="mpress-api-pg-url">
+      <label>URL</label>
+      <input type="text" class="mpress-api-pg-url-input" value="http://127.0.0.1:4174/search-index.json" />
+    </div>
+    <details class="mpress-api-pg-section">
+      <summary><span class="mpress-disclosure-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><span>Headers</span></summary>
+      <div class="mpress-api-pg-headers">
+        <div class="mpress-api-pg-header-row">
+          <input type="text" placeholder="Content-Type" value="Content-Type" />
+          <input type="text" placeholder="application/json" value="application/json" />
+        </div>
+        <div class="mpress-api-pg-header-row">
+          <input type="text" placeholder="Header name" />
+          <input type="text" placeholder="Header value" />
+        </div>
+      </div>
+    </details>
+    <div class="mpress-api-pg-actions">
+      <button class="mpress-api-pg-send" style="background:#0d9488">Send Request</button>
+      <span class="mpress-api-pg-status"></span>
+    </div>
+    <div class="mpress-api-pg-response" hidden>
+      <div class="mpress-api-pg-response-header">
+        <span class="mpress-api-pg-response-status"></span>
+        <span class="mpress-api-pg-response-time"></span>
+      </div>
+      <pre tabindex="0" class="mpress-api-pg-response-body"><code></code></pre>
+    </div>
+  </div>
+</div>
+<p>Content selected at build time.</p>
+</div></div></article><article class="mpd-fixture" id="fixture-components-layout" data-category="components" data-level="top" data-search="layout and landing components components/layout layout-components"><header class="mpd-fixture-heading"><div><p>Components · top</p><h2>Layout and landing components</h2></div><a href="#fixture-components-layout" aria-label="Link to Layout and landing components">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code># Layout components&#10;&#10;&#64;section variant=&#34;hero&#34;&#10;  &#64;columns variant=&#34;hero&#34;&#10;    &#64;column variant=&#34;hero-copy&#34;&#10;      &#64;headline&#10;        Modern docs.&#10;        Plain text.&#10;      &#64;end&#10;&#10;      Build rich documentation without a runtime.&#10;&#10;      &#64;actions&#10;        &#64;button href=&#34;/start/&#34; variant=&#34;primary&#34;&#10;          Start&#10;        &#64;end&#10;        &#64;button href=&#34;/guide/&#34; variant=&#34;secondary&#34;&#10;          Read the guide&#10;        &#64;end&#10;      &#64;end&#10;    &#64;end&#10;    &#64;column&#10;      &#64;docs-preview eyebrow=&#34;Documentation&#34; title=&#34;Create a project&#34; description=&#34;One command creates the site.&#34;&#10;        $ mpress new docs&#10;      &#64;end&#10;    &#64;end&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;container display=&#34;grid&#34; columns=2 gap=&#34;1rem&#34;&#10;  &#64;callout title=&#34;Static&#34; icon=&#34;zap&#34;&#10;    The complete layout exists in generated HTML.&#10;  &#64;end&#10;  &#64;callout title=&#34;Responsive&#34; icon=&#34;monitor&#34;&#10;    Dense layouts collapse on small screens.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;cards cols=2&#10;  &#64;card href=&#34;/start/&#34; title=&#34;Start a project&#34;&#10;    Install one binary.&#10;  &#64;end&#10;  &#64;card href=&#34;/configure/&#34; title=&#34;Configure the site&#34;&#10;    Use one YAML file.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;preview-tabs&#10;  &#64;tab label=&#34;Markdown&#34;&#10;    Write plain text.&#10;  &#64;end&#10;  &#64;tab label=&#34;Output&#34;&#10;    Publish static HTML.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;file-tabs&#10;  &#64;tab label=&#34;index.md&#34;&#10;    ```markdown&#10;    # Hello world&#10;    ```&#10;  &#64;end&#10;  &#64;tab label=&#34;mpress.yaml&#34;&#10;    ```yaml&#10;    site:&#10;      title: Hello world&#10;    ```&#10;  &#64;end&#10;  &#64;tab label=&#34;Output&#34;&#10;    Static HTML.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;carousel label=&#34;Accessibility options&#34;&#10;  &#64;note type=&#34;info&#34; title=&#34;Reading&#34;&#10;    Increase text size and choose a comfortable content width.&#10;  &#64;end&#10;  ---&#10;  &#64;note type=&#34;tip&#34; title=&#34;Focus&#34;&#10;    Reduce motion and hide distracting interface elements.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;accessibility-demo title=&#34;Reader controls&#34;&#10;&#64;end&#10;&#10;&#64;timeline&#10;  &#64;event title=&#34;Write&#34;&#10;    Create the source.&#10;  &#64;end&#10;  &#64;event title=&#34;Build&#34;&#10;    Generate the site.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;capabilities&#10;  &#64;capability name=&#34;Accessible&#34;&#10;    Use semantic output.&#10;  &#64;end&#10;  &#64;capability name=&#34;Fast&#34;&#10;    Build in milliseconds.&#10;  &#64;end&#10;&#64;end&#10;&#10;&#64;resources&#10;  &#64;resource href=&#34;/tutorial/&#34; label=&#34;Tutorial&#34; title=&#34;Build a site&#34;&#10;    Learn by doing.&#10;  &#64;end&#10;  &#64;resource href=&#34;/reference/&#34; label=&#34;Reference&#34; title=&#34;See every option&#34;&#10;    Look up details.&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code># Layout components&#10;&#10;&#64;section{variant=&#34;hero&#34;}&#10;&#64;columns{variant=&#34;hero&#34;}&#10;&#64;column{variant=&#34;hero-copy&#34;}&#10;&#64;headline&#10;Modern docs.&#10;Plain text.&#10;&#64;end&#10;&#10;Build rich documentation without a runtime.&#10;&#10;&#64;actions&#10;&#64;button{href=&#34;/start/&#34; variant=&#34;primary&#34;}&#10;Start&#10;&#64;end&#10;&#64;button{href=&#34;/guide/&#34; variant=&#34;secondary&#34;}&#10;Read the guide&#10;&#64;end&#10;&#64;end&#10;&#64;end&#10;&#64;column&#10;&#64;docs-preview{eyebrow=&#34;Documentation&#34; title=&#34;Create a project&#34; description=&#34;One command creates the site.&#34;}&#10;$ mpress new docs&#10;&#64;end&#10;&#64;end&#10;&#64;end&#10;&#64;end&#10;&#10;&#64;container{display=&#34;grid&#34; columns=&#34;2&#34; gap=&#34;1rem&#34;}&#10;&#64;callout{title=&#34;Static&#34; icon=&#34;zap&#34;}&#10;The complete layout exists in generated HTML.&#10;&#64;end&#10;&#64;callout{title=&#34;Responsive&#34; icon=&#34;monitor&#34;}&#10;Dense layouts collapse on small screens.&#10;&#64;end&#10;&#64;end&#10;&#10;&#64;cards{cols=&#34;2&#34;}&#10;[Start a project](/start/)&#10;Install one binary.&#10;---&#10;[Configure the site](/configure/)&#10;Use one YAML file.&#10;&#64;end&#10;&#10;&#64;preview-tabs&#10;[Markdown]&#10;Write plain text.&#10;&#10;[Output]&#10;Publish static HTML.&#10;&#64;end&#10;&#10;&#64;file-tabs&#10;[index.md]&#10;```markdown&#10;# Hello world&#10;```&#10;&#10;[mpress.yaml]&#10;```yaml&#10;site:&#10;  title: Hello world&#10;```&#10;&#10;[Output]&#10;Static HTML.&#10;&#64;end&#10;&#10;&#64;carousel{label=&#34;Accessibility options&#34;}&#10;&#64;note{type=&#34;info&#34; title=&#34;Reading&#34;}&#10;Increase text size and choose a comfortable content width.&#10;&#64;end&#10;---&#10;&#64;note{type=&#34;tip&#34; title=&#34;Focus&#34;}&#10;Reduce motion and hide distracting interface elements.&#10;&#64;end&#10;&#64;end&#10;&#10;&#64;accessibility-demo{title=&#34;Reader controls&#34;}&#10;&#64;end&#10;&#10;&#64;timeline&#10;1. **Write** Create the source.&#10;2. **Build** Generate the site.&#10;&#64;end&#10;&#10;&#64;capabilities&#10;- **Accessible** Use semantic output.&#10;- **Fast** Build in milliseconds.&#10;&#64;end&#10;&#10;&#64;resources&#10;[Tutorial](/tutorial/)&#10;### Build a site&#10;Learn by doing.&#10;---&#10;[Reference](/reference/)&#10;### See every option&#10;Look up details.&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><section class="mpress-section mpress-section-hero mp-home-hero"><div class="mpress-section-inner mp-home-shell"><div class="mpress-columns mpress-columns-hero mp-home-hero-grid"><div class="mpress-column mpress-column-hero-copy mp-home-hero-copy"><h1 class="mpress-headline">Modern docs.<br>Plain text.</h2>
+<p>Build rich documentation without a runtime.</p>
+<div class="mpress-actions mp-home-actions"><a class="mpress-button mpress-button-primary" href="/start/">Start</a>
+<a class="mpress-button mpress-button-secondary" href="/guide/">Read the guide</a></div></div>
+<div class="mpress-column"><div class="mpress-doc-preview mpress-doc-preview-compact mp-home-product"><div class="mp-home-docbar"><span class="mp-home-docmark">M</span><strong>Product docs</strong><span class="mp-home-docsearch">Search documentation</span><span class="mp-home-docmode">System</span></div><div class="mp-home-docbody"><nav></nav><article><p>$ mpress new docs</p>
+</article></div><div class="mp-home-terminal"><span class="prompt">$</span> mpress build --strict <span class="result">Built 12 pages · 0 errors</span><strong>site/</strong></div></div></div></div></div></section>
+<div class="mpress-container" style="grid-template-columns:repeat(2,minmax(0,1fr));display:grid;gap:1rem">
+<aside class="mpress-compact-callout"><strong>Static</strong><div><p>The complete layout exists in generated HTML.</p>
+</div></aside>
+<aside class="mpress-compact-callout"><strong>Responsive</strong><div><p>Dense layouts collapse on small screens.</p>
+</div></aside>
+</div>
+<div class="mpress-card-grid mpress-cards mpress-cards-2">
+  <a href="/start/" class="mpress-card">
+    <div class="mpress-card-title">Start a project</div>
+<div class="mpress-card-desc">
+<p>Install one binary.</p>
+</div>
+  </a>
+  <a href="/configure/" class="mpress-card">
+    <div class="mpress-card-title">Configure the site</div>
+<div class="mpress-card-desc">
+<p>Use one YAML file.</p>
+</div>
+  </a>
+</div>
+<ot-tabs class="mpress-preview-tabs" id="mpress-tabs-84c3f4ae">
+<div class="mp-home-demo-tabs" role="tablist">
+<button id="mpress-tabs-84c3f4ae-tab-1" role="tab" type="button" aria-selected="true" aria-controls="mpress-tabs-84c3f4ae-panel-1">Markdown</button>
+<button id="mpress-tabs-84c3f4ae-tab-2" role="tab" type="button" aria-selected="false" aria-controls="mpress-tabs-84c3f4ae-panel-2" tabindex="-1">Output</button>
+</div>
+<div id="mpress-tabs-84c3f4ae-panel-1" role="tabpanel" aria-labelledby="mpress-tabs-84c3f4ae-tab-1">
+<p>Write plain text.</p>
+</div>
+<div id="mpress-tabs-84c3f4ae-panel-2" role="tabpanel" aria-labelledby="mpress-tabs-84c3f4ae-tab-2" hidden>
+<p>Publish static HTML.</p>
+</div>
+</ot-tabs>
+<ot-tabs class="mpress-tabs mpress-file-tabs" id="mpress-tabs-8118cc10">
+<div role="tablist">
+<button id="mpress-tabs-8118cc10-tab-1" role="tab" type="button" aria-selected="true" aria-controls="mpress-tabs-8118cc10-panel-1">index.md</button>
+<button id="mpress-tabs-8118cc10-tab-2" role="tab" type="button" aria-selected="false" aria-controls="mpress-tabs-8118cc10-panel-2" tabindex="-1">mpress.yaml</button>
+<button id="mpress-tabs-8118cc10-tab-3" role="tab" type="button" aria-selected="false" aria-controls="mpress-tabs-8118cc10-panel-3" tabindex="-1">Output</button>
+</div>
+<div id="mpress-tabs-8118cc10-panel-1" role="tabpanel" aria-labelledby="mpress-tabs-8118cc10-tab-1">
+<pre tabindex="0"><code class="language-markdown"># Hello world&#10;</code></pre>
+</div>
+<div id="mpress-tabs-8118cc10-panel-2" role="tabpanel" aria-labelledby="mpress-tabs-8118cc10-tab-2" hidden>
+<pre tabindex="0"><code class="language-yaml">site:&#10;  title: Hello world&#10;</code></pre>
+</div>
+<div id="mpress-tabs-8118cc10-panel-3" role="tabpanel" aria-labelledby="mpress-tabs-8118cc10-tab-3" hidden>
+<p>Static HTML.</p>
+</div>
+</ot-tabs>
+<section id="mpress-carousel-29fe02377d" class="mpress-carousel" aria-roledescription="carousel" aria-label="Accessibility options" data-carousel><div class="mpress-carousel-viewport" aria-live="polite"><article class="mpress-carousel-slide" data-carousel-slide aria-label="1 of 2"><aside aria-label="Reading" class="mpress-admonition mpress-admonition-info">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-info" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> <span>Reading</span></p>
+<div class="mpress-admonition-body">
+<p>Increase text size and choose a comfortable content width.</p>
+</div>
+</aside></article><article class="mpress-carousel-slide" data-carousel-slide aria-label="2 of 2" hidden><aside aria-label="Focus" class="mpress-admonition mpress-admonition-tip" data-variant="tip">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.87 12.87 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> <span>Focus</span></p>
+<div class="mpress-admonition-body">
+<p>Reduce motion and hide distracting interface elements.</p>
+</div>
+</aside></article></div><footer class="mpress-carousel-controls"><button type="button" data-carousel-previous aria-label="Previous slide"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-left" aria-hidden="true"><path d="m15 18-6-6 6-6"/></svg></button><span data-carousel-status>1 / 2</span><div class="mpress-carousel-dots" role="group" aria-label="Choose a slide"><button type="button" data-carousel-dot="0" aria-label="Show slide 1" aria-current="true"></button><button type="button" data-carousel-dot="1" aria-label="Show slide 2"></button></div><button type="button" data-carousel-next aria-label="Next slide"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg></button></footer></section>
+<section class="mpress-accessibility-demo" data-a11y-demo aria-label="Accessibility reader controls">
+<header><div><span>Reader controls</span><strong>Make this page work for you</strong></div><button type="button" data-open-accessibility>All settings</button></header>
+<div class="mpress-accessibility-tabs" role="tablist" aria-label="Reader control categories">
+<button type="button" role="tab" aria-selected="true" data-a11y-demo-tab="reading">Reading</button>
+<button type="button" role="tab" aria-selected="false" data-a11y-demo-tab="focus">Focus</button>
+<button type="button" role="tab" aria-selected="false" data-a11y-demo-tab="vision">Vision</button>
+</div>
+<div class="mpress-accessibility-section" data-a11y-demo-panel="reading">
+<h3>Text size</h3><div class="mpress-a11y-choice" role="radiogroup" aria-label="Demo text size"><button type="button" role="radio" data-a11y-choice="text" data-value="default">Default</button><button type="button" role="radio" data-a11y-choice="text" data-value="large">Large</button><button type="button" role="radio" data-a11y-choice="text" data-value="larger">Larger</button></div>
+<h3>Site layout</h3><div class="mpress-a11y-width-mode" role="radiogroup" aria-label="Demo site layout"><button type="button" role="radio" data-a11y-choice="siteWidth" data-value="full">Full width</button><button type="button" role="radio" data-a11y-choice="siteWidth" data-value="fixed">Fixed width</button></div>
+<label class="mpress-a11y-toggle"><span><strong>Readable font</strong><small>Use a clear, widely spaced font stack.</small></span><input type="checkbox" data-a11y-toggle="readable"></label>
+</div>
+<div class="mpress-accessibility-section" data-a11y-demo-panel="focus" hidden>
+<label class="mpress-a11y-toggle"><span><strong>Focus mode</strong><small>Dim navigation until you point to it.</small></span><input type="checkbox" data-a11y-toggle="focus"></label>
+<label class="mpress-a11y-toggle"><span><strong>Reduce motion</strong><small>Stop non-essential animation.</small></span><input type="checkbox" data-a11y-toggle="motion"></label>
+</div>
+<div class="mpress-accessibility-section" data-a11y-demo-panel="vision" hidden>
+<label class="mpress-a11y-toggle"><span><strong>High contrast</strong><small>Increase text and border contrast.</small></span><input type="checkbox" data-a11y-toggle="contrast"></label>
+<label class="mpress-a11y-toggle"><span><strong>Underline links</strong><small>Show links with more than colour.</small></span><input type="checkbox" data-a11y-toggle="links"></label>
+</div>
+</section>
+<ol class="mpress-timeline mp-home-timeline"><li class="mpress-timeline-entry mpress-step"><span class="mpress-timeline-marker mpress-step-number">1</span><div class="mpress-timeline-body mpress-step-body"><h3 class="mpress-step-title">Write</h3><div class="mpress-step-content"><p>Create the source.</p></div></div></li><li class="mpress-timeline-entry mpress-step"><span class="mpress-timeline-marker mpress-step-number">2</span><div class="mpress-timeline-body mpress-step-body"><h3 class="mpress-step-title">Build</h3><div class="mpress-step-content"><p>Generate the site.</p></div></div></li></ol>
+<dl class="mp-home-capabilities"><div><dt>Accessible</dt><dd>Use semantic output.</dd></div><div><dt>Fast</dt><dd>Build in milliseconds.</dd></div></dl>
+<div class="mp-home-resources"><a href="/tutorial/"><span>Tutorial</span><strong>Build a site</strong><em>Learn by doing.</em></a><a href="/reference/"><span>Reference</span><strong>See every option</strong><em>Look up details.</em></a></div>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-details-note" data-category="nesting" data-level="nested" data-search="details containing a note nesting/details-note component-in-component"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Details containing a note</h2></div><a href="#fixture-nesting-details-note" aria-label="Link to Details containing a note">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;details title=&#34;Read the requirement&#34; open=true&#10;  The disclosure starts with ordinary prose.&#10;&#10;  &#64;note type=&#34;important&#34; title=&#34;Required&#34;&#10;    Nested components keep their full behavior.&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;details{title=&#34;Read the requirement&#34; open=&#34;true&#34;}&#10;The disclosure starts with ordinary prose.&#10;&#10;&#64;note{type=&#34;important&#34; title=&#34;Required&#34;}&#10;Nested components keep their full behavior.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><details class="mpress-details" open>
+  <summary><span class="mpress-disclosure-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><span>Read the requirement</span></summary>
+<div class="mpress-details-content">
+<p>The disclosure starts with ordinary prose.</p>
+<aside aria-label="Required" class="mpress-admonition mpress-admonition-important" data-variant="warning">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-star" aria-hidden="true"><path d="M11.525 2.295a.53.53 0 0 1 .95 0l2.31 4.679a2.12 2.12 0 0 0 1.595 1.16l5.164.75a.53.53 0 0 1 .294.904l-3.736 3.638a2.12 2.12 0 0 0-.61 1.88l.882 5.14a.53.53 0 0 1-.771.56l-4.618-2.428a2.12 2.12 0 0 0-1.97 0l-4.618 2.428a.53.53 0 0 1-.77-.56l.881-5.139a2.12 2.12 0 0 0-.611-1.879L2.162 9.79a.53.53 0 0 1 .294-.906l5.165-.75a2.12 2.12 0 0 0 1.594-1.16z"/></svg> <span>Required</span></p>
+<div class="mpress-admonition-body">
+<p>Nested components keep their full behavior.</p>
+</div>
+</aside>
+</div>
+</details>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-note-details" data-category="nesting" data-level="nested" data-search="note containing disclosure details nesting/note-details component-in-admonition metadata-reference-in-component"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Note containing disclosure details</h2></div><a href="#fixture-nesting-note-details" aria-label="Link to Note containing disclosure details">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>---&#10;schema = 1&#10;title = &#34;Nested metadata&#34;&#10;---&#10;&#10;&#64;note type=&#34;info&#34; title=&#34;Layered guidance&#34;&#10;  The main instruction remains visible.&#10;&#10;  &#64;details title=&#34;Why this matters&#34;&#10;    The supporting explanation for &#64;metadata[title] is available on demand.&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;note{type=&#34;info&#34; title=&#34;Layered guidance&#34;}&#10;The main instruction remains visible.&#10;&#10;&#64;details{title=&#34;Why this matters&#34;}&#10;The supporting explanation for Nested metadata is available on demand.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><aside aria-label="Layered guidance" class="mpress-admonition mpress-admonition-info">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-info" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> <span>Layered guidance</span></p>
+<div class="mpress-admonition-body">
+<p>The main instruction remains visible.</p>
+<details class="mpress-details">
+  <summary><span class="mpress-disclosure-icon"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-right" aria-hidden="true"><path d="m9 18 6-6-6-6"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-chevron-down" aria-hidden="true"><path d="m6 9 6 6 6-6"/></svg></span><span>Why this matters</span></summary>
+<div class="mpress-details-content">
+<p>The supporting explanation for Nested metadata is available on demand.</p>
+</div>
+</details>
+</div>
+</aside>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-tabs-rich" data-category="nesting" data-level="nested" data-search="tabs containing notes and terminals nesting/tabs-rich component-in-tab multiple-child-types"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Tabs containing notes and terminals</h2></div><a href="#fixture-nesting-tabs-rich" aria-label="Link to Tabs containing notes and terminals">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;tabs&#10;  &#64;tab label=&#34;Guidance&#34;&#10;    &#64;note type=&#34;tip&#34;&#10;      Use the strict build before publishing.&#10;    &#64;end&#10;  &#64;end&#10;  &#64;tab label=&#34;Command&#34;&#10;    &#64;terminal title=&#34;Strict build&#34; prompt=&#34;$&#34; comment=&#34;#&#34;&#10;      $ mpress build --strict&#10;      Built 12 pages.&#10;    &#64;end&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;tabs&#10;[Guidance]&#10;&#64;note{type=&#34;tip&#34;}&#10;Use the strict build before publishing.&#10;&#64;end&#10;&#10;[Command]&#10;&#64;terminal{title=&#34;Strict build&#34; prompt=&#34;$&#34; comment=&#34;#&#34;}&#10;$ mpress build --strict&#10;Built 12 pages.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><ot-tabs class="mpress-tabs" id="mpress-tabs-446774e7">
+<div role="tablist">
+<button id="mpress-tabs-446774e7-tab-1" role="tab" type="button" aria-selected="true" aria-controls="mpress-tabs-446774e7-panel-1">Guidance</button>
+<button id="mpress-tabs-446774e7-tab-2" role="tab" type="button" aria-selected="false" aria-controls="mpress-tabs-446774e7-panel-2" tabindex="-1">Command</button>
+</div>
+<div id="mpress-tabs-446774e7-panel-1" role="tabpanel" aria-labelledby="mpress-tabs-446774e7-tab-1">
+<aside aria-label="Tip" class="mpress-admonition mpress-admonition-tip" data-variant="tip">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.87 12.87 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> <span>Tip</span></p>
+<div class="mpress-admonition-body">
+<p>Use the strict build before publishing.</p>
+</div>
+</aside>
+</div>
+<div id="mpress-tabs-446774e7-panel-2" role="tabpanel" aria-labelledby="mpress-tabs-446774e7-tab-2" hidden>
+<div class="mpress-terminal mpress-terminal-macos" data-prompt="$" data-comment="#">
+  <div class="mpress-terminal-title"><span>Strict build</span><button type="button" class="mpress-copy" aria-label="Copy commands" title="Copy commands" data-copy-label="Copy commands" data-copied-label="Copied"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="sr-only" data-copy-status aria-live="polite">Copy commands</span></button></div>
+  <pre tabindex="0" data-commands="mpress build --strict"><code><span class="mpress-prompt">$</span> <span class="mpress-cmd">mpress build <span class="mpress-token-operator">--</span>strict</span>
+<span class="mpress-output">Built 12 pages.</span>
+</code></pre>
+</div>
+</div>
+</ot-tabs>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-steps-content" data-category="nesting" data-level="nested" data-search="steps containing rich components nesting/steps-content component-in-step"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Steps containing rich components</h2></div><a href="#fixture-nesting-steps-content" aria-label="Link to Steps containing rich components">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;steps&#10;  &#64;step title=&#34;Inspect the project&#34;&#10;    &#64;filetree&#10;      docs/&#10;        index.md  Home page&#10;      mpress.yaml  Configuration&#10;    &#64;end&#10;  &#64;end&#10;  &#64;step title=&#34;Build safely&#34;&#10;    &#64;note type=&#34;warning&#34;&#10;      Resolve validation errors before deployment.&#10;    &#64;end&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;steps&#10;### Inspect the project&#10;&#64;filetree&#10;docs/&#10;  index.md  Home page&#10;mpress.yaml  Configuration&#10;&#64;end&#10;&#10;### Build safely&#10;&#64;note{type=&#34;warning&#34;}&#10;Resolve validation errors before deployment.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-timeline mpress-steps">
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">1</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Inspect the project</h3>
+<div class="mpress-step-content">
+<div class="mpress-filetree">
+  <ul>
+    <li class="mpress-filetree-dir"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-folder" aria-hidden="true"><path d="M20 20a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.9a2 2 0 0 1-1.69-.9L9.6 3.9A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2Z"/></svg></span><span class="mpress-filetree-name">docs</span></span>
+      <ul>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file-text" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/><line x1="10" x2="8" y1="9" y2="9"/></svg></span><span class="mpress-filetree-name">index.md</span><span class="mpress-filetree-desc">Home page</span></span></li>
+      </ul>
+    </li>
+    <li class="mpress-filetree-file"><span class="mpress-filetree-row"><span class="mpress-filetree-icon"><svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-file" aria-hidden="true"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg></span><span class="mpress-filetree-name">mpress.yaml</span><span class="mpress-filetree-desc">Configuration</span></span></li>
+  </ul>
+</div>
+</div>
+    </div>
+  </div>
+  <div class="mpress-timeline-entry mpress-step">
+    <div class="mpress-timeline-marker mpress-step-number">2</div>
+    <div class="mpress-timeline-body mpress-step-body">
+      <h3 class="mpress-step-title">Build safely</h3>
+<div class="mpress-step-content">
+<aside aria-label="Warning" class="mpress-admonition mpress-admonition-warning" data-variant="warning">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> <span>Warning</span></p>
+<div class="mpress-admonition-body">
+<p>Resolve validation errors before deployment.</p>
+</div>
+</aside>
+</div>
+    </div>
+  </div>
+</div>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-container-terminal" data-category="nesting" data-level="nested" data-search="container containing terminal output nesting/container-terminal component-in-container"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Container containing terminal output</h2></div><a href="#fixture-nesting-container-terminal" aria-label="Link to Container containing terminal output">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;container display=&#34;grid&#34; columns=1 gap=&#34;1rem&#34;&#10;  Run the production command inside a constrained layout.&#10;&#10;  &#64;terminal title=&#34;Production build&#34; frame=&#34;plain&#34; prompt=&#34;$&#34; comment=&#34;#&#34;&#10;    $ mpress build --strict&#10;    Built 42 pages.&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;container{display=&#34;grid&#34; columns=&#34;1&#34; gap=&#34;1rem&#34;}&#10;Run the production command inside a constrained layout.&#10;&#10;&#64;terminal{title=&#34;Production build&#34; frame=&#34;plain&#34; prompt=&#34;$&#34; comment=&#34;#&#34;}&#10;$ mpress build --strict&#10;Built 42 pages.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-container" style="grid-template-columns:repeat(1,minmax(0,1fr));display:grid;gap:1rem">
+<p>Run the production command inside a constrained layout.</p>
+<div class="mpress-terminal mpress-terminal-plain" data-prompt="$" data-comment="#">
+  <div class="mpress-terminal-title"><span>Production build</span><button type="button" class="mpress-copy" aria-label="Copy commands" title="Copy commands" data-copy-label="Copy commands" data-copied-label="Copied"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-copy" aria-hidden="true"><rect width="14" height="14" x="8" y="8" rx="2" ry="2"/><path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2"/></svg><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg><span class="sr-only" data-copy-status aria-live="polite">Copy commands</span></button></div>
+  <pre tabindex="0" data-commands="mpress build --strict"><code><span class="mpress-prompt">$</span> <span class="mpress-cmd">mpress build <span class="mpress-token-operator">--</span>strict</span>
+<span class="mpress-output">Built 42 pages.</span>
+</code></pre>
+</div>
+</div>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-audience-note" data-category="nesting" data-level="nested" data-search="audience block containing guidance nesting/audience-note component-in-audience"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Audience block containing guidance</h2></div><a href="#fixture-nesting-audience-note" aria-label="Link to Audience block containing guidance">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;audience role=&#34;writer&#34;&#10;  &#64;note type=&#34;tip&#34; title=&#34;For writers&#34;&#10;    Preview the page before you submit it.&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;audience{role=&#34;writer&#34;}&#10;&#64;note{type=&#34;tip&#34; title=&#34;For writers&#34;}&#10;Preview the page before you submit it.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-audience" data-audience="writer">
+<aside aria-label="For writers" class="mpress-admonition mpress-admonition-tip" data-variant="tip">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-rocket" aria-hidden="true"><path d="M4.5 16.5c-1.5 1.26-2 5-2 5s3.74-.5 5-2c.71-.84.7-2.13-.09-2.91a2.18 2.18 0 0 0-2.91-.09z"/><path d="m12 15-3-3a22 22 0 0 1 2-3.95A12.87 12.87 0 0 1 22 2c0 2.72-.78 7.5-6 11a22.35 22.35 0 0 1-4 2z"/><path d="M9 12H4s.55-3.03 2-4c1.62-1.08 5 0 5 0"/><path d="M12 15v5s3.03-.55 4-2c1.08-1.62 0-5 0-5"/></svg> <span>For writers</span></p>
+<div class="mpress-admonition-body">
+<p>Preview the page before you submit it.</p>
+</div>
+</aside>
+</div>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-conditional-note" data-category="nesting" data-level="nested" data-search="conditional block containing guidance nesting/conditional-note component-in-condition"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Conditional block containing guidance</h2></div><a href="#fixture-nesting-conditional-note" aria-label="Link to Conditional block containing guidance">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;if param=&#34;platform&#34; value=&#34;linux&#34; default=true&#10;  &#64;note type=&#34;info&#34; title=&#34;Linux&#34;&#10;    Use the package provided for your distribution.&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;if{param=&#34;platform&#34; value=&#34;linux&#34; default=&#34;true&#34;}&#10;&#64;note{type=&#34;info&#34; title=&#34;Linux&#34;}&#10;Use the package provided for your distribution.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-conditional" data-param="platform" data-value="linux" data-default="true" id="mpress-if-platform-linux">
+<aside aria-label="Linux" class="mpress-admonition mpress-admonition-info">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-circle-info" aria-hidden="true"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg> <span>Linux</span></p>
+<div class="mpress-admonition-body">
+<p>Use the package provided for your distribution.</p>
+</div>
+</aside>
+</div>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-tutorial-note" data-category="nesting" data-level="nested" data-search="tutorial lesson containing guidance nesting/tutorial-note component-in-tutorial"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Tutorial lesson containing guidance</h2></div><a href="#fixture-nesting-tutorial-note" aria-label="Link to Tutorial lesson containing guidance">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;tutorial title=&#34;Publish safely&#34;&#10;  &#64;lesson title=&#34;Validate&#34;&#10;    &#64;note type=&#34;warning&#34;&#10;      Fix every broken internal link.&#10;    &#64;end&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;tutorial{title=&#34;Publish safely&#34;}&#10;### Validate&#10;&#64;note{type=&#34;warning&#34;}&#10;Fix every broken internal link.&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><div class="mpress-tutorial" data-tutorial-id="tutorial-e762c945">
+<div class="mpress-tutorial-header">
+<h3 class="mpress-tutorial-title">Publish safely</h3>
+<div class="mpress-tutorial-progress"><div class="mpress-tutorial-progress-bar" style="width: 0%"></div></div>
+<span class="mpress-tutorial-count">0/1 completed</span>
+</div>
+<div class="mpress-tutorial-steps">
+<div class="mpress-tutorial-step" data-step="0">
+<div class="mpress-tutorial-step-header"><label class="mpress-tutorial-check"><input type="checkbox" data-step-id="tutorial-e762c945-step-0" aria-label="Mark step 1 as complete"><span class="mpress-tutorial-checkmark"><svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-check" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg></span></label><span class="mpress-tutorial-step-num">1</span><span class="mpress-tutorial-step-title">Validate</span></div>
+<div class="mpress-tutorial-step-content">
+<aside aria-label="Warning" class="mpress-admonition mpress-admonition-warning" data-variant="warning">
+  <p class="mpress-admonition-titlebar" aria-hidden="true"><svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-triangle-alert" aria-hidden="true"><path d="m21.73 18-8-14a2 2 0 0 0-3.46 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3"/><path d="M12 9v4"/><path d="M12 17h.01"/></svg> <span>Warning</span></p>
+<div class="mpress-admonition-body">
+<p>Fix every broken internal link.</p>
+</div>
+</aside>
+</div>
+</div>
+</div>
+<div class="mpress-tutorial-footer"><button class="mpress-tutorial-reset" aria-label="Reset tutorial progress">Reset progress</button></div>
+</div>
+</div></div></article><article class="mpd-fixture" id="fixture-nesting-layout-deep" data-category="nesting" data-level="nested" data-search="deep landing-page composition nesting/layout-deep deep-nesting sibling-components"><header class="mpd-fixture-heading"><div><p>Nesting · nested</p><h2>Deep landing-page composition</h2></div><a href="#fixture-nesting-layout-deep" aria-label="Link to Deep landing-page composition">#</a></header><div class="mpd-source"><div class="mpd-source-tabs" role="tablist"><button type="button" role="tab" aria-selected="true" data-source-tab="mpd">MPD</button><button type="button" role="tab" aria-selected="false" data-source-tab="markdown">Markdown</button></div><pre tabindex="0" data-source-panel="mpd"><code>&#64;section variant=&#34;hero&#34;&#10;  &#64;columns variant=&#34;hero&#34;&#10;    &#64;column variant=&#34;hero-copy&#34;&#10;      &#64;headline&#10;        Compose deeply.&#10;        Stay readable.&#10;      &#64;end&#10;      &#64;actions&#10;        &#64;button href=&#34;/start/&#34; variant=&#34;primary&#34;&#10;          Start now&#10;        &#64;end&#10;      &#64;end&#10;    &#64;end&#10;    &#64;column&#10;      &#64;callout title=&#34;Native composition&#34; icon=&#34;layers&#34;&#10;        Every child remains a regular component node.&#10;      &#64;end&#10;    &#64;end&#10;  &#64;end&#10;&#64;end</code></pre><pre tabindex="0" data-source-panel="markdown" hidden><code>&#64;section{variant=&#34;hero&#34;}&#10;&#64;columns{variant=&#34;hero&#34;}&#10;&#64;column{variant=&#34;hero-copy&#34;}&#10;&#64;headline&#10;Compose deeply.&#10;Stay readable.&#10;&#64;end&#10;&#64;actions&#10;&#64;button{href=&#34;/start/&#34; variant=&#34;primary&#34;}&#10;Start now&#10;&#64;end&#10;&#64;end&#10;&#64;end&#10;&#64;column&#10;&#64;callout{title=&#34;Native composition&#34; icon=&#34;layers&#34;}&#10;Every child remains a regular component node.&#10;&#64;end&#10;&#64;end&#10;&#64;end&#10;&#64;end</code></pre></div><div class="mpd-preview"><p class="mpd-preview-label">Expected HTML</p><div class="mpd-preview-body"><section class="mpress-section mpress-section-hero mp-home-hero"><div class="mpress-section-inner mp-home-shell"><div class="mpress-columns mpress-columns-hero mp-home-hero-grid"><div class="mpress-column mpress-column-hero-copy mp-home-hero-copy"><h1 class="mpress-headline">Compose deeply.<br>Stay readable.</h2>
+<div class="mpress-actions mp-home-actions"><a class="mpress-button mpress-button-primary" href="/start/">Start now</a></div></div>
+<div class="mpress-column"><aside class="mpress-compact-callout"><strong>Native composition</strong><div><p>Every child remains a regular component node.</p>
+</div></aside></div></div></div></section>
+</div></div></article></div><p class="mpd-empty" hidden>No fixtures match these filters.</p></div><script>
+(() => {
+  const root = document.querySelector('.mpd-viewer');
+  if (!root) return;
+  const fixtures = [...root.querySelectorAll('.mpd-fixture')];
+  const query = root.querySelector('[data-fixture-search]');
+  const status = root.querySelector('.mpd-result-count');
+  const empty = root.querySelector('.mpd-empty');
+  let category = 'all';
+  let level = 'all';
+  const filter = () => {
+    const needle = query.value.trim().toLowerCase();
+    let visible = 0;
+    fixtures.forEach(fixture => {
+      const show = (category === 'all' || fixture.dataset.category === category) && (level === 'all' || fixture.dataset.level === level) && (!needle || fixture.dataset.search.includes(needle));
+      fixture.hidden = !show;
+      if (show) visible++;
+    });
+    status.textContent = visible + (visible === 1 ? ' fixture' : ' fixtures');
+    empty.hidden = visible !== 0;
+  };
+  query.addEventListener('input', filter);
+  root.querySelectorAll('[data-category]').forEach(button => button.addEventListener('click', () => {
+    category = button.dataset.category;
+    root.querySelectorAll('[data-category]').forEach(item => item.classList.toggle('active', item === button));
+    filter();
+  }));
+  root.querySelectorAll('[data-level]').forEach(button => button.addEventListener('click', () => {
+    level = button.dataset.level;
+    root.querySelectorAll('[data-level]').forEach(item => item.classList.toggle('active', item === button));
+    filter();
+  }));
+  root.querySelectorAll('[data-preview-theme]').forEach(button => button.addEventListener('click', () => {
+    const wanted = button.dataset.previewTheme;
+    const theme = document.querySelector('#theme');
+    for (let attempt = 0; theme && document.documentElement.dataset.theme !== wanted && attempt < 3; attempt++) theme.click();
+    root.querySelectorAll('[data-preview-theme]').forEach(item => item.classList.toggle('active', item.dataset.previewTheme === document.documentElement.dataset.theme));
+  }));
+  root.querySelectorAll('.mpd-source').forEach(source => source.querySelectorAll('[data-source-tab]').forEach(button => button.addEventListener('click', () => {
+    const selected = button.dataset.sourceTab;
+    source.querySelectorAll('[data-source-tab]').forEach(item => item.setAttribute('aria-selected', String(item === button)));
+    source.querySelectorAll('[data-source-panel]').forEach(panel => panel.hidden = panel.dataset.sourcePanel !== selected);
+  })));
+  const selectedTheme = document.documentElement.dataset.theme || 'system';
+  root.querySelector('[data-preview-theme="' + selectedTheme + '"]')?.classList.add('active');
+  filter();
+})();
+</script></main><footer><a class="mpress-footer-credit" href="https://m-press.me">Built with <strong>M-Press</strong></a><span>Markdown in. Beautiful docs out.</span></footer><script src="./assets/mpress.js?v=370e2204bf3a" defer></script></body></html>

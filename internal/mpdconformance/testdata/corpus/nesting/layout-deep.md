@@ -1,0 +1,20 @@
+@section{variant="hero"}
+@columns{variant="hero"}
+@column{variant="hero-copy"}
+@headline
+Compose deeply.
+Stay readable.
+@end
+@actions
+@button{href="/start/" variant="primary"}
+Start now
+@end
+@end
+@end
+@column
+@callout{title="Native composition" icon="layers"}
+Every child remains a regular component node.
+@end
+@end
+@end
+@end

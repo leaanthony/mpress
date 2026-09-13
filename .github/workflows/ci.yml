@@ -1,0 +1,44 @@
+name: CI
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  public-tests:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go test -race ./...
+      - run: go vet ./...
+      - run: go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
+      - run: go build ./cmd/mpress
+      - run: go run ./cmd/mpress build --strict
+      - run: go run ./cmd/mpress check
+      - run: bash scripts/collect-release-licenses.sh "$RUNNER_TEMP/mpress-licenses"
+
+  private-conformance:
+    if: vars.PRIVATE_CONFORMANCE == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: leaanthony/mpress-tests
+          path: private-tests
+          token: ${{ secrets.MPRESS_TESTS_TOKEN }}
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - run: go build -o "$RUNNER_TEMP/mpress" ./cmd/mpress
+      - run: MPRESS_BIN="$RUNNER_TEMP/mpress" MPRESS_SOURCE="$GITHUB_WORKSPACE" go test ./...
+        working-directory: private-tests

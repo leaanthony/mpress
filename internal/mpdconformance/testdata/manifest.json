@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "fixtures": [
+    {"id":"document/minimal","title":"Minimal document","category":"document","level":"top","features":["default-schema","paragraph","no-preamble"]},
+    {"id":"document/structure","title":"Metadata values and namespaces","category":"document","level":"top","features":["metadata","schema","reserved-key","custom-namespace","string","number","boolean","null","array","object"]},
+    {"id":"document/metadata-reference","title":"Metadata references as text","category":"document","level":"top","features":["metadata-reference","reserved-key-reference","custom-key-reference","string-value","number-value","boolean-value","null-value","array-value","object-value","heading-reference","paragraph-reference"]},
+    {"id":"text/blocks","title":"Paragraphs, continuation, headings, and rules","category":"text","level":"top","features":["paragraph","line-continuation","hard-break","heading-1","heading-2","heading-3","heading-4","heading-5","heading-6","hr","escape","entity"]},
+    {"id":"text/inline","title":"Inline formatting, roles, and emoji","category":"text","level":"top","features":["emphasis","strong","strong-emphasis","code-span","mark","delete","subscript","superscript","keyboard","emoji-shortcode","emoji-unknown","emoji-escaped","emoji-literal-code"]},
+    {"id":"links/all","title":"Links, images, and references","category":"links","level":"top","features":["inline-link","titled-link","reference-link","automatic-link","email-link","image","reference-definition"]},
+    {"id":"lists/all","title":"Ordered, unordered, task, and nested lists","category":"lists","level":"top","features":["unordered-list","ordered-list","task-list","nested-list","multi-block-item"]},
+    {"id":"blocks/all","title":"Quotes, code, raw HTML, and comments","category":"blocks","level":"top","features":["quote","nested-quote","code-fence","long-code-fence","literal-directive-in-code","short-fence-in-code","raw-html","comment"]},
+    {"id":"tables/all","title":"Tables and alignment","category":"tables","level":"top","features":["table","header-row","alignment","escaped-pipe","inline-cell-content"]},
+    {"id":"tables/interactive","title":"Searchable, filterable, sortable, paginated table","category":"tables","level":"top","features":["table","boolean-shorthand","search","column-filter","styled-filter-menu","column-separators","stable-sort","numeric-sort","pagination","page-size","combined-controls","accessible-status"],"components":["table"]},
+    {"id":"footnotes/all","title":"Footnote references and definitions","category":"footnotes","level":"top","features":["footnote-reference","footnote-definition","multiple-paragraphs"]},
+    {"id":"imports/all","title":"Imports, includes, formats, and modes","category":"imports","level":"top","features":["include","markdown-import","openapi-import","fragment-mode","document-mode","data-mode"]},
+    {"id":"components/content","title":"Content and navigation components","category":"components","level":"top","features":["content-components"],"components":["badge","button","details","image","linkcard","note"]},
+    {"id":"components/media","title":"Native video","category":"components","level":"top","features":["video","native-controls","mime-inference","base-path","poster","safe-defaults"],"components":["video"]},
+    {"id":"components/code","title":"Code and API components","category":"components","level":"top","features":["code-components","double-digit-steps","deep-file-tree","file-tree-siblings","file-tree-last-child"],"components":["api","diff","explained","filetree","steps","tabs","terminal"]},
+    {"id":"components/data","title":"Data and product components","category":"components","level":"top","features":["data-components"],"components":["calendar","changelog","matrix","pricing","qr","release","status","testimonials","tutorial"]},
+    {"id":"components/interactive","title":"Interactive and reactive components","category":"components","level":"top","features":["interactive-components"],"components":["api-playground","audience","computed","if","input","variant"]},
+    {"id":"components/layout","title":"Layout and landing components","category":"components","level":"top","features":["layout-components"],"components":["accessibility-demo","actions","callout","capabilities","cards","carousel","column","columns","container","docs-preview","file-tabs","headline","preview-tabs","resources","section","timeline"]},
+    {"id":"nesting/details-note","title":"Details containing a note","category":"nesting","level":"nested","features":["component-in-component"],"parentComponent":"details","nestedComponents":["note"]},
+    {"id":"nesting/note-details","title":"Note containing disclosure details","category":"nesting","level":"nested","features":["component-in-admonition","metadata-reference-in-component"],"parentComponent":"note","nestedComponents":["details"]},
+    {"id":"nesting/tabs-rich","title":"Tabs containing notes and terminals","category":"nesting","level":"nested","features":["component-in-tab","multiple-child-types"],"parentComponent":"tabs","nestedComponents":["note","terminal"]},
+    {"id":"nesting/steps-content","title":"Steps containing rich components","category":"nesting","level":"nested","features":["component-in-step"],"parentComponent":"steps","nestedComponents":["note","filetree"]},
+    {"id":"nesting/container-terminal","title":"Container containing terminal output","category":"nesting","level":"nested","features":["component-in-container"],"parentComponent":"container","nestedComponents":["terminal"]},
+    {"id":"nesting/audience-note","title":"Audience block containing guidance","category":"nesting","level":"nested","features":["component-in-audience"],"parentComponent":"audience","nestedComponents":["note"]},
+    {"id":"nesting/conditional-note","title":"Conditional block containing guidance","category":"nesting","level":"nested","features":["component-in-condition"],"parentComponent":"if","nestedComponents":["note"]},
+    {"id":"nesting/tutorial-note","title":"Tutorial lesson containing guidance","category":"nesting","level":"nested","features":["component-in-tutorial"],"parentComponent":"tutorial","nestedComponents":["note"]},
+    {"id":"nesting/layout-deep","title":"Deep landing-page composition","category":"nesting","level":"nested","features":["deep-nesting","sibling-components"],"parentComponent":"section","nestedComponents":["columns","column","headline","actions","button","callout"]}
+  ]
+}

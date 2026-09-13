@@ -1,0 +1,157 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  conformance:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+        with:
+          repository: leaanthony/mpress-tests
+          path: private-tests
+          token: ${{ secrets.MPRESS_TESTS_TOKEN }}
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Public tests and security gate
+        run: |
+          go test -race ./...
+          go vet ./...
+          go run golang.org/x/vuln/cmd/govulncheck@v1.6.0 ./...
+          go run ./cmd/mpress build --strict
+          go run ./cmd/mpress check
+          bash scripts/collect-release-licenses.sh "$RUNNER_TEMP/mpress-licenses"
+      - name: Build release candidate
+        run: go build -o "$RUNNER_TEMP/mpress" ./cmd/mpress
+      - name: Private conformance
+        run: MPRESS_BIN="$RUNNER_TEMP/mpress" MPRESS_SOURCE="$GITHUB_WORKSPACE" go test ./...
+        working-directory: private-tests
+
+  archives:
+    needs: conformance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build release archives
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p dist
+          version="${GITHUB_REF_NAME#v}"
+          for target in linux/amd64 linux/arm64 darwin/amd64 darwin/arm64 windows/amd64 windows/arm64; do
+            os="${target%/*}"
+            arch="${target#*/}"
+            stage="$RUNNER_TEMP/mpress-$os-$arch"
+            mkdir -p "$stage"
+            binary="mpress"
+            if [[ "$os" == "windows" ]]; then binary="mpress.exe"; fi
+            CGO_ENABLED=0 GOOS="$os" GOARCH="$arch" go build \
+              -trimpath \
+              -ldflags="-s -w -X main.version=$version" \
+              -o "$stage/$binary" \
+              ./cmd/mpress
+            cp LICENSE THIRD_PARTY_NOTICES.md "$stage/"
+            bash scripts/collect-release-licenses.sh "$stage/third_party_licenses"
+            if [[ "$os" == "windows" ]]; then
+              (cd "$stage" && zip -qr "$GITHUB_WORKSPACE/dist/mpress-$os-$arch.zip" "$binary" LICENSE THIRD_PARTY_NOTICES.md third_party_licenses)
+            else
+              tar -czf "dist/mpress-$os-$arch.tar.gz" -C "$stage" "$binary" LICENSE THIRD_PARTY_NOTICES.md third_party_licenses
+            fi
+          done
+          (cd dist && sha256sum mpress-* > checksums.txt)
+      - name: Upload release archives for native verification
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        with:
+          name: release-archives
+          path: dist/*
+          if-no-files-found: error
+
+  smoke:
+    needs: archives
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - runner: ubuntu-latest
+            target: linux-amd64
+          - runner: macos-latest
+            target: darwin-arm64
+          - runner: windows-latest
+            target: windows-amd64
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-archives
+          path: dist
+      - name: Verify checksums and exercise the native release binary
+        shell: python
+        env:
+          MPRESS_TARGET: ${{ matrix.target }}
+        run: |
+          import hashlib
+          import os
+          from pathlib import Path
+          import subprocess
+          import tarfile
+          import zipfile
+
+          dist = Path("dist").resolve()
+          for line in (dist / "checksums.txt").read_text().splitlines():
+              expected, name = line.split()
+              actual = hashlib.sha256((dist / name).read_bytes()).hexdigest()
+              if actual != expected:
+                  raise SystemExit(f"Checksum mismatch: {name}")
+          target = os.environ["MPRESS_TARGET"]
+          windows = target.startswith("windows-")
+          suffix = ".zip" if windows else ".tar.gz"
+          archive = dist / ("mpress-" + target + suffix)
+          unpacked = dist / "native"
+          if windows:
+              with zipfile.ZipFile(archive) as package:
+                  package.extractall(unpacked)
+          else:
+              with tarfile.open(archive) as package:
+                  package.extractall(unpacked, filter="data")
+          binary = unpacked / ("mpress.exe" if windows else "mpress")
+          version = subprocess.check_output([str(binary), "version"], text=True).strip()
+          expected_version = "mpress " + os.environ["GITHUB_REF_NAME"].removeprefix("v")
+          if version != expected_version:
+              raise SystemExit(f"Unexpected version: {version!r}")
+          print(version)
+          subprocess.run([str(binary), "init", "smoke-site"], check=True)
+          subprocess.run([str(binary), "build", "--strict"], cwd="smoke-site", check=True)
+          subprocess.run([str(binary), "check"], cwd="smoke-site", check=True)
+
+  release:
+    needs: smoke
+    permissions:
+      contents: write
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4
+        with:
+          name: release-archives
+          path: dist
+      - name: Publish GitHub release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh release create "$GITHUB_REF_NAME" dist/* --verify-tag --generate-notes --title "$GITHUB_REF_NAME"

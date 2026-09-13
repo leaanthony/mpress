@@ -1,0 +1,1101 @@
+[
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "MPD Fixture Viewer",
+    "text": "MPress Document · conformance corpus"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Every construct, rendered.",
+    "headingPath": [
+      "Every construct, rendered."
+    ],
+    "text": "Review the native MPD source, its Markdown interchange form, and the production HTML contract. Every preview uses the current MPress CSS and runtime. Fixtures 27 Top level 18 Nested 9 Categories 10 Find a fixture All Top level Nested System Light Dark All Blocks Components Document Footnotes Imports Links Lists Nesting Tables Text Document · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Minimal document",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Minimal document"
+    ],
+    "text": "# MPD Markdown Hello world. Hello world. Expected HTML Hello world. Document · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Metadata values and namespaces",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Metadata values and namespaces"
+    ],
+    "text": "# MPD Markdown --- schema = 1 title = \"Fixture page\" description = \"Every metadata value has a deterministic representation.\" order = 12 draft = false tags = [\"reference\", \"format\"] wails.redirect = null wails.owner = {\"name\":\"MPress\",\"team\":\"docs\"} --- # Fixture page The metadata selects schema 1. Metadata does not add visible content. # Fixture page The metadata selects schema 1. Metadata does not add visible content. Expected HTML The metadata selects schema 1. Metadata does not add visible content. Document · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Metadata references as text",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Metadata references as text"
+    ],
+    "text": "# MPD Markdown --- schema = 1 title = \"Metadata references\" draft = false order = 25 tags = [\"reference\",\"format\"] wails.redirect = null wails.owner = {\"name\":\"MPress\",\"team\":\"docs\"} --- # @metadata[title] Schema @metadata[schema] renders this page at order @metadata[order]. Draft is @metadata[draft]. Tags are @metadata[tags]. The previous location is @metadata[wails.redirect]. The owner is @metadata[wails.owner]. # Metadata references Schema 1 renders this page at order 25. Draft is false. Tags are [\u0026quot;reference\u0026quot;,\u0026quot;format\u0026quot;]. The previous location is null. The owner is {\u0026quot;name\u0026quot;:\u0026quot;MPress\u0026quot;,\u0026quot;team\u0026quot;:\u0026quot;docs\u0026quot;}. Expected HTML Schema 1 renders this page at order 25. Draft is false. Tags are [\"reference\",\"format\"]. The previous location is null. The owner is {\"name\":\"MPress\",\"team\":\"docs\"}. Text · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Paragraphs, continuation, headings, and rules",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Paragraphs, continuation, headings, and rules"
+    ],
+    "text": "# MPD Markdown # Heading one ## Heading two ### Heading three #### Heading four ##### Heading five ###### Heading six The first line ends here. This line starts after a hard break. This sentence is \\ continued without a rendered line break. Escaped \\*asterisks\\* stay literal. An entity such as \u0026copy; remains meaningful. @hr Text follows the thematic break. # Heading one ## Heading two ### Heading three #### Heading four ##### Heading five ###### Heading six The first line ends here.\\ This line starts after a hard break. This sentence is continued without a rendered line break. Escaped \\*asterisks\\* stay literal. An entity such as \u0026copy; remains meaningful. --- Text follows the thematic break. Expected HTML"
+  },
+  {
+    "id": "4f8175ba1eb83a738ae05e9d",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/4f8175ba1eb83a738ae05e9d",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/#heading-six",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Heading six",
+    "headingId": "heading-six",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Heading two",
+      "Heading three",
+      "Heading four",
+      "Heading five",
+      "Heading six"
+    ],
+    "text": "The first line ends here. This line starts after a hard break. This sentence is continued without a rendered line break. Escaped *asterisks* stay literal. An entity such as © remains meaningful. Text follows the thematic break. Text · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Inline formatting, roles, and emoji",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Inline formatting, roles, and emoji"
+    ],
+    "text": "# MPD Markdown Use _emphasis_, *strong text*, and *_strong emphasis_* with `inline code`. Roles include @mark[marked], @delete[removed], @sub[2], @sup[n], and @key[Command K]. Ship :rocket: with :sparkles:. Unknown :not_an_emoji: and escaped \\:rocket: remain text. Code `:rocket:` remains literal. Use *emphasis*, **strong text**, and ***strong emphasis*** with `inline code`. Roles include \u003cmark\u003emarked\u003c/mark\u003e, ~~removed~~, H\u003csub\u003e2\u003c/sub\u003eO, x\u003csup\u003en\u003c/sup\u003e, and \u003ckbd\u003eCommand K\u003c/kbd\u003e. Ship 🚀 with ✨. Unknown :not_an_emoji: and escaped :rocket: remain text. Code `:rocket:` remains literal. Expected HTML Use emphasis , strong text , and strong emphasis with inline code . Roles include marked , removed , H 2 O, x n , and Command K . Ship 🚀 with ✨. Unknown :not_an_emoji: and escaped :rocket: remain text. Code :rocket: remains literal. Links · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Links, images, and references",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Links, images, and references"
+    ],
+    "text": "# MPD Markdown Open the [guide](/guide), the [titled guide](/guide \"Read the guide\"), or [Go downloads][go]. Automatic links include \u003chttps://m-press.me\u003e and \u003cdocs@example.com\u003e. ![MPress mark](/assets/logo.svg \"MPress\") @link id=\"go\" destination=\"https://go.dev/dl/\" title=\"Download Go\" Open the [guide](/guide), the [titled guide](/guide \"Read the guide\"), or [Go downloads][go]. Automatic links include \u003chttps://m-press.me\u003e and \u003cdocs@example.com\u003e. ![MPress mark](/assets/logo.svg \"MPress\") [go]: https://go.dev/dl/ \"Download Go\" Expected HTML Open the guide , the titled guide , or Go downloads . Automatic links include https://m-press.me and docs@example.com . Lists · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Ordered, unordered, task, and nested lists",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Ordered, unordered, task, and nested lists"
+    ],
+    "text": "# MPD Markdown - First item - Second item - Nested item - Another nested item 3. Preserve the starting number. 4. Continue in order. - [ ] Write the guide. - [x] Run the checks. - First paragraph in a rich item. Second paragraph in the same item. @note type=\"tip\" Components can appear in list items. @end - First item - Second item - Nested item - Another nested item 3. Preserve the starting number. 4. Continue in order. - [ ] Write the guide. - [x] Run the checks. - First paragraph in a rich item. Second paragraph in the same item. @note{type=\"tip\"} Components can appear in list items. @end Expected HTML First item Second item Nested item Another nested item Preserve the starting number. Continue in order. Write the guide. Run the checks. First paragraph in a rich item. Second paragraph in the same item. Tip Components can appear in list items. Blocks · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Quotes, code, raw HTML, and comments",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Quotes, code, raw HTML, and comments"
+    ],
+    "text": "# MPD Markdown \u003e Documentation is part of the product. \u003e \u003e \u003e Clear examples make adoption easier. ````go {title=\"Build the site\" lineNumbers=true} site, err := mpress.Build(config) @end ``` ```` @rawHTML \u003cdetails\u003e\u003csummary\u003eRendered HTML\u003c/summary\u003e\u003cp\u003eRaw HTML is explicit.\u003c/p\u003e\u003c/details\u003e @end @comment This retained author note is not rendered. @end \u003e Documentation is part of the product. \u003e \u003e \u003e Clear examples make adoption easier. ````go {title=\"Build the site\" lineNumbers=true} site, err := mpress.Build(config) @end ``` ```` \u003cdetails\u003e\u003csummary\u003eRendered HTML\u003c/summary\u003e\u003cp\u003eRaw HTML is explicit.\u003c/p\u003e\u003c/details\u003e \u003c!-- This retained author note is not rendered. --\u003e Expected HTML Documentation is part of the product. Clear examples make adoption easier. Build the site go Copy code site, err := mpress. Build (config) @end `` ` Rendered HTML Raw HTML is explicit. Tables · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Tables and alignment",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Tables and alignment"
+    ],
+    "text": "# MPD Markdown @table header=true align=[\"left\",\"center\",\"right\"] | Capability | Support | Time | | Plain text | *Complete* | `4 ms` | | Escaped \\| pipe | [Built in](/guide) | `8 ms` | @end | Capability | Support | Time | | :--- | :---: | ---: | | Plain text | *Complete* | `4 ms` | | Escaped \\| pipe | [Built in](/guide) | `8 ms` | Expected HTML Capability Support Time Plain text Complete 4 ms Escaped | pipe Built in 8 ms Tables · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Searchable, filterable, sortable, paginated table",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Searchable, filterable, sortable, paginated table"
+    ],
+    "text": "# MPD Markdown @table header search filter sort paginate column-separators page-size=2 | Package | Platform | Downloads | | Core | Linux | 1840 | | Studio | macOS | 920 | | Core | Windows | 1260 | | CLI | Linux | 640 | @end @table{header search filter sort paginate column-separators page-size=2} | Package | Platform | Downloads | | Core | Linux | 1840 | | Studio | macOS | 920 | | Core | Windows | 1260 | | CLI | Linux | 640 | @end Expected HTML Search table Package All CLI Core Studio Platform All Linux macOS Windows Downloads All 640 920 1260 1840 Core Linux 1840 Studio macOS 920 Core Windows 1260 CLI Linux 640 4 rows Page 1 of 2 Footnotes · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Footnote references and definitions",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Footnote references and definitions"
+    ],
+    "text": "# MPD Markdown MPress keeps source ranges stable.[^ranges] One note can be cited twice.[^ranges] @footnote id=\"ranges\" Stable ranges make precise edits possible. The definition can contain more than one paragraph. @end MPress keeps source ranges stable.[^ranges] One note can be cited twice.[^ranges] [^ranges]: Stable ranges make precise edits possible. The definition can contain more than one paragraph. Expected HTML MPress keeps source ranges stable. 1 One note can be cited twice. 1 Stable ranges make precise edits possible. The definition can contain more than one paragraph. ↩︎ ↩︎ Imports · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Imports, includes, formats, and modes",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Imports, includes, formats, and modes"
+    ],
+    "text": "# MPD Markdown # Import forms @include src=\"shared/introduction.mpd\" mode=\"fragment\" @import src=\"README.md\" format=\"markdown\" profile=\"gfm\" mode=\"document\" @import src=\"api/openapi.yaml\" format=\"openapi\" mode=\"data\" as=\"api\" # Import forms Imports are resolved before Markdown export. This portable reference records the three supported forms without executing them. - Include an MPD fragment from `shared/introduction.mpd`. - Import a complete GFM document from `README.md`. - Load `api/openapi.yaml` as structured OpenAPI data named `api`. Expected HTML Imports are resolved before Markdown export. This portable reference records the three supported forms without executing them. Include an MPD fragment from shared/introduction.mpd . Import a complete GFM document from README.md . Load api/openapi.yaml as structured OpenAPI data named api . Components · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Content and navigation components",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Content and navigation components"
+    ],
+    "text": "# MPD Markdown # Content components @note type=\"info\" title=\"Information\" Information uses ordinary *inline formatting*. @end @note type=\"tip\" A useful tip. @end @note type=\"warning\" Check this condition. @end @note type=\"caution\" Proceed with care. @end @note type=\"danger\" Do not continue. @end @note type=\"important\" Keep this requirement. @end @details title=\"Closed details\" Hidden until the reader opens it. @end @details title=\"Open details\" open=true Visible on first render. @end @badge type=\"default\" Default @end @badge type=\"success\" Stable @end @badge type=\"warning\" Beta @end @badge type=\"danger\" Breaking @end @linkcard title=\"Authoring guide\" href=\"/authoring/\" icon=\"book-open\" description=\"Write portable documentation.\" @button href=\"/start/\" variant=\"primary\" icon=\"play\" Get started @end @button href=\"/reference/\" variant=\"secondary\" Reference @end @image light=\"/assets/example-light.svg\" dark=\"/assets/example-dark.svg\" alt=\"Theme-aware example\" # Content components @note{type=\"info\" title=\"Information\"} Information uses ordinary *inline formatting*. @end @note{type=\"tip\"} A useful tip. @end @note{type=\"warning\"} Check this condition. @end @note{type=\"caution\"} Proceed with care. @end @note{type=\"danger\"} Do not continue. @end @note{type=\"important\"} Keep this requirement. @end @details{title=\"Closed details\"} Hidden until the reader opens it. @end @details{title=\"Open details\" open=\"true\"} Visible on first render. @end @badge{type=\"default\"} Default @end @badge{type=\"success\"} Stable @end @badge{type=\"warning\"} Beta @end @badge{type=\"danger\"} Breaking @end @linkcard{title=\"Authoring guide\" href=\"/authoring/\" icon=\"book-open\" description=\"Write portable documentation.\"} @button{href=\"/start/\" variant=\"primary\" icon=\"play\"} Get started @end @button{href=\"/reference/\" variant=\"secondary\"} Reference @end @image{light=\"/assets/example-light.svg\" dark=\"/assets/example-dark.svg\" alt=\"Theme-aware example\"} Expected HTML Information Information uses ordinary inline formatting . Tip A useful tip. Warning Check this condition. Warning Proceed with care. Danger Do not continue. Important Keep this requirement. Closed details Hidden until the reader opens it. Open details Visible on first render. Default Stable Beta Breaking Authoring guide Write portable documentation. Get started Reference Components · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Native video",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Native video"
+    ],
+    "text": "# MPD Markdown # Video @video src=\"/assets/mp4.mp4\" @video base=\"/assets\" src=\"mp4.mp4\" poster=\"mp4.webp\" title=\"Video with a poster\" # Video @video{src=\"/assets/mp4.mp4\"} @video{base=\"/assets\" src=\"mp4.mp4\" poster=\"mp4.webp\" title=\"Video with a poster\"} Expected HTML Your browser cannot play this video. Open the video file . Your browser cannot play this video. Open the video file . Video with a poster Components · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Code and API components",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components"
+    ],
+    "text": "# MPD Markdown # Code components @tabs @tab label=\"Go\" Run `go test ./...`. @end @tab label=\"Shell\" Run `mpress check`. @end @end @terminal title=\"Build\" frame=\"macos\" prompt=\"$\" comment=\"#\" # Validate the site before publishing. $ # Comments are visible but are not copied. $ mpress check No issues found. @end @api method=\"POST\" path=\"/v1/builds\" Creates a build. | Field | Type | | ref | string | @end @steps @step title=\"Write\" Add a Markdown file. @end @step title=\"Build\" Run the compiler. @end @step title=\"Configure\" Set the project options. @end @step title=\"Add navigation\" Arrange the pages. @end @step title=\"Add components\" Enrich the documentation. @end @step title=\"Check links\" Validate every destination. @end @step title=\"Test themes\" Check light and dark modes. @end @step title=\"Test mobile\" Use a narrow viewport. @end @step title=\"Inspect output\" Review the generated HTML. @end @step title=\"Package\" Create the deployment archive. @end @step title=\"Publish\" Upload the static output. @end @step title=\"Verify deployment\" Open the production site. @end @end @diff title=\"mpress.yaml\" mode=\"inline\" search: false --- search: true @end @filetree docs/ index.md Home page guide/ installation.md Install MPress deployment.md Publish the site reference/ configuration.md Configuration keys components.md Component catalogue assets/ logo.svg Site mark screenshots/ home.png Landing page blog/ index.md Blog landing page mpress.yaml Configuration @end @explained ```go func main() { // (1) site.Build() // (2) } ``` (1) Start with the entry point. (2) Build the static site. @end # Code components @tabs [Go] Run `go test ./...`. [Shell] Run `mpress check`. @end @terminal{title=\"Build\" frame=\"macos\" prompt=\"$\" comment=\"#\"} # Validate the site before publishing. $ # Comments are visible but are not copied. $ mpress check No issues found. @end @api{method=\"POST\" path=\"/v1/builds\"} Creates a build. | Field | Type | | --- | --- | | `ref` | string | @end @steps ### Write Add a Markdown file. ### Build Run the compiler. ### Configure Set the project options. ### Add navigation Arrange the pages. ### Add components Enrich the documentation. ### Check links Validate every destination. ### Test themes Check light and dark modes. ### Test mobile Use a narrow viewport. ### Inspect output Review the generated HTML. ### Package Create the deployment archive. ### Publish Upload the static output. ### Verify deployment Open the production site. @end @diff{title=\"mpress.yaml\" mode=\"inline\"} search: false --- search: true @end @filetree docs/ index.md Home page guide/ installation.md Install MPress deployment.md Publish the site reference/ configuration.md Configuration keys components.md Component catalogue assets/ logo.svg Site mark screenshots/ home.png Landing page blog/ index.md Blog landing page mpress.yaml Configuration @end @explained ```go func main() { // (1) site.Build() // (2) } ``` (1) Start with the entry point. (2) Build the static site. @end Expected HTML Go Shell Run go test ./... . Run mpress check . Build Copy commands # Validate the site before publishing. $ # Comments are visible but are not copied. $ mpress check No issues found. POST /v1/builds Creates a build. Field Type ref string 1"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Write",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Write"
+    ],
+    "text": "Add a Markdown file. 2"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Build",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Build"
+    ],
+    "text": "Run the compiler. 3"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Configure",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Configure"
+    ],
+    "text": "Set the project options. 4"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Add navigation",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Add navigation"
+    ],
+    "text": "Arrange the pages. 5"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Add components",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Add components"
+    ],
+    "text": "Enrich the documentation. 6"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Check links",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Check links"
+    ],
+    "text": "Validate every destination. 7"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Test themes",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Test themes"
+    ],
+    "text": "Check light and dark modes. 8"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Test mobile",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Test mobile"
+    ],
+    "text": "Use a narrow viewport. 9"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Inspect output",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Inspect output"
+    ],
+    "text": "Review the generated HTML. 10"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Package",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Package"
+    ],
+    "text": "Create the deployment archive. 11"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Publish",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Publish"
+    ],
+    "text": "Upload the static output. 12"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Verify deployment",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Code and API components",
+      "Verify deployment"
+    ],
+    "text": "Open the production site. mpress.yaml − search: false + search: true docs index.md Home page guide installation.md Install MPress deployment.md Publish the site reference configuration.md Configuration keys components.md Component catalogue assets logo.svg Site mark screenshots home.png Landing page blog index.md Blog landing page mpress.yaml Configuration func main() { site.Build() } 1 Start with the entry point. 2 Build the static site. Components · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Data and product components",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components"
+    ],
+    "text": "# MPD Markdown # Data components @matrix highlight=\"MPress\" | Capability | MPress | Other | | Single binary | Yes | No | | Runtime | No | Yes | @end @status service=\"Build service\" state=\"operational\" All systems normal @end @status service=\"Translation queue\" state=\"degraded\" Jobs may take longer @end @calendar month=\"2026-08\" style=\"compact\" today=\"2026-08-11\" Release dates @end @changelog ## v2.0.0 (2026-08-12) ### Added - Native MPD rendering - Accessible reader controls ### Breaking changes - Removed the legacy component preamble ## v1.4.0 (2026-08-01) ### Improved - Faster document compilation ### Fixed - Stable fixture output ### Documentation - Expanded the authoring reference @end @release version=\"1.1.0\" title=\"The Conformance Update\" date=\"2026-08-01\" type=\"minor\" latest=true ## What's changed - A complete conformance corpus. ## Bug Fixes - Deterministic fixtures. ## Assets - [Source code (zip)](/downloads/mpress-v1.1.0.zip) - [Source code (tar.gz)](/downloads/mpress-v1.1.0.tar.gz) @end @pricing cols=\"2\" @plan ## Starter $0 [Start](/start/) - One project @end @plan recommended=true ## Team $15 [Upgrade](/team/) - Shared projects @end @end @testimonials @testimonial author=\"Documentation author\" The source stays portable. @end @testimonial author=\"Platform engineer\" The output is static. @end @end @qr url=\"https://m-press.me\" size=120 label=\"MPress website\" @tutorial title=\"Publish a site\" @lesson title=\"Check\" Run `mpress check`. @end @lesson title=\"Build\" Run `mpress build`. @end @end # Data components @matrix{highlight=\"MPress\"} | Capability | MPress | Other | | --- | --- | --- | | Single binary | Yes | No | | Runtime | No | Yes | @end @status{service=\"Build service\" state=\"operational\"} All systems normal @end @status{service=\"Translation queue\" state=\"degraded\"} Jobs may take longer @end @calendar{month=\"2026-08\" style=\"compact\" today=\"2026-08-11\"} Release dates @end @changelog ### v2.0.0 (2026-08-12) #### Added - Native MPD rendering - Accessible reader controls #### Breaking changes - Removed the legacy component preamble ### v1.4.0 (2026-08-01) #### Improved - Faster document compilation #### Fixed - Stable fixture output #### Documentation - Expanded the authoring reference @end @release{version=\"1.1.0\" title=\"The Conformance Update\" date=\"2026-08-01\" type=\"minor\" latest=true} ### What's changed - A complete conformance corpus. ### Bug Fixes - Deterministic fixtures. ### Assets - [Source code (zip)](/downloads/mpress-v1.1.0.zip) - [Source code (tar.gz)](/downloads/mpress-v1.1.0.tar.gz) @end @pricing{cols=\"2\"} ### Starter $0 [Start](/start/) - ✓ One project --- ### Team $15 [Upgrade](/team/) recommended - ✓ Shared projects @end @testimonials “The source stays portable.” Documentation author --- “The output is static.” Platform engineer @end @qr{url=\"https://m-press.me\" size=\"120\" label=\"MPress website\"} @tutorial{title=\"Publish a site\"} ### Check Run `mpress check`. ### Build Run `mpress build`. @end Expected HTML Capability MPress Other Single binary Runtime Build service Operational All systems normal Translation queue Degraded Jobs may take longer August 2026 Mon Tue Wed Thu Fri Sat Sun 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30 31 Release dates v2.0.0 2026-08-12"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Added",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Added"
+    ],
+    "text": "Native MPD rendering Accessible reader controls"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Breaking changes",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Breaking changes"
+    ],
+    "text": "Removed the legacy component preamble v1.4.0 2026-08-01"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Improved",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Improved"
+    ],
+    "text": "Faster document compilation"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Fixed",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Fixed"
+    ],
+    "text": "Stable fixture output"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Documentation",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Documentation"
+    ],
+    "text": "Expanded the authoring reference Latest release"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "v1.1.0 The Conformance Update",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "v1.1.0 The Conformance Update"
+    ],
+    "text": "Released 2026-08-01"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "What's changed",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "v1.1.0 The Conformance Update",
+      "What's changed"
+    ],
+    "text": "A complete conformance corpus."
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Bug Fixes",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "v1.1.0 The Conformance Update",
+      "Bug Fixes"
+    ],
+    "text": "Deterministic fixtures."
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Assets",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "v1.1.0 The Conformance Update",
+      "Assets"
+    ],
+    "text": "Source code (zip) Source code (tar.gz)"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Starter",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Starter"
+    ],
+    "text": "$0 Start One project Recommended"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Team",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Team"
+    ],
+    "text": "$15 Upgrade Shared projects “The source stays portable. Documentation author” “The output is static. Platform engineer” MPress website"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Publish a site",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Data and product components",
+      "Publish a site"
+    ],
+    "text": "0/2 completed 1 Check Run mpress check . 2 Build Run mpress build . Reset progress Components · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Interactive and reactive components",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Interactive and reactive components"
+    ],
+    "text": "# MPD Markdown # Interactive components @audience role=\"developer\" Extend the pipeline in Go. @end @audience role=\"writer\" Write plain text documentation. @end @if param=\"framework\" value=\"plain\" default=true Framework-neutral guidance. @end @if param=\"framework\" value=\"go\" Guidance for Go users. @end @input name=\"projects\" type=\"range\" min=1 max=20 value=4 label=\"Projects\" @input name=\"seats\" type=\"number\" value=3 label=\"Editors\" @computed expr=\"projects * seats\" deps=[\"projects\",\"seats\"] label=\"Project seats\" format=\"%d\" @api-playground method=\"GET\" path=\"/search-index.json\" baseUrl=\"http://127.0.0.1:4174\" Inspect the generated search index. @end @variant name=\"react\" Content selected at build time. @end # Interactive components @audience{role=\"developer\"} Extend the pipeline in Go. @end @audience{role=\"writer\"} Write plain text documentation. @end @if{param=\"framework\" value=\"plain\" default=\"true\"} Framework-neutral guidance. @end @if{param=\"framework\" value=\"go\"} Guidance for Go users. @end @input{name=\"projects\" type=\"range\" min=\"1\" max=\"20\" value=\"4\" label=\"Projects\"} @input{name=\"seats\" type=\"number\" value=\"3\" label=\"Editors\"} @computed{expr=\"projects * seats\" deps=\"projects,seats\" label=\"Project seats\" format=\"%d\"} @api-playground{method=\"GET\" path=\"/search-index.json\" baseUrl=\"http://127.0.0.1:4174\"} Inspect the generated search index. @end @variant{name=\"react\"} Content selected at build time. @end Expected HTML Extend the pipeline in Go. Write plain text documentation. Framework-neutral guidance. Guidance for Go users. Projects 4 Editors Project seats: … GET /search-index.json Inspect the generated search index. URL Headers Send Request Content selected at build time. Components · top"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Layout and landing components",
+    "headingPath": [
+      "Every construct, rendered.",
+      "Layout and landing components"
+    ],
+    "text": "# MPD Markdown # Layout components @section variant=\"hero\" @columns variant=\"hero\" @column variant=\"hero-copy\" @headline Modern docs. Plain text. @end Build rich documentation without a runtime. @actions @button href=\"/start/\" variant=\"primary\" Start @end @button href=\"/guide/\" variant=\"secondary\" Read the guide @end @end @end @column @docs-preview eyebrow=\"Documentation\" title=\"Create a project\" description=\"One command creates the site.\" $ mpress new docs @end @end @end @end @container display=\"grid\" columns=2 gap=\"1rem\" @callout title=\"Static\" icon=\"zap\" The complete layout exists in generated HTML. @end @callout title=\"Responsive\" icon=\"monitor\" Dense layouts collapse on small screens. @end @end @cards cols=2 @card href=\"/start/\" title=\"Start a project\" Install one binary. @end @card href=\"/configure/\" title=\"Configure the site\" Use one YAML file. @end @end @preview-tabs @tab label=\"Markdown\" Write plain text. @end @tab label=\"Output\" Publish static HTML. @end @end @file-tabs @tab label=\"index.md\" ```markdown # Hello world ``` @end @tab label=\"mpress.yaml\" ```yaml site: title: Hello world ``` @end @tab label=\"Output\" Static HTML. @end @end @carousel label=\"Accessibility options\" @note type=\"info\" title=\"Reading\" Increase text size and choose a comfortable content width. @end --- @note type=\"tip\" title=\"Focus\" Reduce motion and hide distracting interface elements. @end @end @accessibility-demo title=\"Reader controls\" @end @timeline @event title=\"Write\" Create the source. @end @event title=\"Build\" Generate the site. @end @end @capabilities @capability name=\"Accessible\" Use semantic output. @end @capability name=\"Fast\" Build in milliseconds. @end @end @resources @resource href=\"/tutorial/\" label=\"Tutorial\" title=\"Build a site\" Learn by doing. @end @resource href=\"/reference/\" label=\"Reference\" title=\"See every option\" Look up details. @end @end # Layout components @section{variant=\"hero\"} @columns{variant=\"hero\"} @column{variant=\"hero-copy\"} @headline Modern docs. Plain text. @end Build rich documentation without a runtime. @actions @button{href=\"/start/\" variant=\"primary\"} Start @end @button{href=\"/guide/\" variant=\"secondary\"} Read the guide @end @end @end @column @docs-preview{eyebrow=\"Documentation\" title=\"Create a project\" description=\"One command creates the site.\"} $ mpress new docs @end @end @end @end @container{display=\"grid\" columns=\"2\" gap=\"1rem\"} @callout{title=\"Static\" icon=\"zap\"} The complete layout exists in generated HTML. @end @callout{title=\"Responsive\" icon=\"monitor\"} Dense layouts collapse on small screens. @end @end @cards{cols=\"2\"} [Start a project](/start/) Install one binary. --- [Configure the site](/configure/) Use one YAML file. @end @preview-tabs [Markdown] Write plain text. [Output] Publish static HTML. @end @file-tabs [index.md] ```markdown # Hello world ``` [mpress.yaml] ```yaml site: title: Hello world ``` [Output] Static HTML. @end @carousel{label=\"Accessibility options\"} @note{type=\"info\" title=\"Reading\"} Increase text size and choose a comfortable content width. @end --- @note{type=\"tip\" title=\"Focus\"} Reduce motion and hide distracting interface elements. @end @end @accessibility-demo{title=\"Reader controls\"} @end @timeline 1. **Write** Create the source. 2. **Build** Generate the site. @end @capabilities - **Accessible** Use semantic output. - **Fast** Build in milliseconds. @end @resources [Tutorial](/tutorial/) ### Build a site Learn by doing. --- [Reference](/reference/) ### See every option Look up details. @end Expected HTML"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Modern docs. Plain text.",
+    "headingPath": [
+      "Modern docs. Plain text."
+    ],
+    "text": "Build rich documentation without a runtime. Start Read the guide M Product docs Search documentation System $ mpress new docs $ mpress build --strict Built 12 pages · 0 errors site/ Static The complete layout exists in generated HTML. Responsive Dense layouts collapse on small screens. Start a project Install one binary. Configure the site Use one YAML file. Markdown Output Write plain text. Publish static HTML. index.md mpress.yaml Output # Hello world site: title: Hello world Static HTML. Reading Increase text size and choose a comfortable content width. Focus Reduce motion and hide distracting interface elements. 1 / 2 Reader controls Make this page work for you All settings Reading Focus Vision"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Text size",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Text size"
+    ],
+    "text": "Default Large Larger"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Site layout",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Site layout"
+    ],
+    "text": "Full width Fixed width Readable font Use a clear, widely spaced font stack. Focus mode Dim navigation until you point to it. Reduce motion Stop non-essential animation. High contrast Increase text and border contrast. Underline links Show links with more than colour. 1"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Write",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Write"
+    ],
+    "text": "Create the source. 2"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Build",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Build"
+    ],
+    "text": "Generate the site. Accessible Use semantic output. Fast Build in milliseconds. Tutorial Build a site Learn by doing. Reference See every option Look up details. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Details containing a note",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Details containing a note"
+    ],
+    "text": "# MPD Markdown @details title=\"Read the requirement\" open=true The disclosure starts with ordinary prose. @note type=\"important\" title=\"Required\" Nested components keep their full behavior. @end @end @details{title=\"Read the requirement\" open=\"true\"} The disclosure starts with ordinary prose. @note{type=\"important\" title=\"Required\"} Nested components keep their full behavior. @end @end Expected HTML Read the requirement The disclosure starts with ordinary prose. Required Nested components keep their full behavior. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Note containing disclosure details",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Note containing disclosure details"
+    ],
+    "text": "# MPD Markdown --- schema = 1 title = \"Nested metadata\" --- @note type=\"info\" title=\"Layered guidance\" The main instruction remains visible. @details title=\"Why this matters\" The supporting explanation for @metadata[title] is available on demand. @end @end @note{type=\"info\" title=\"Layered guidance\"} The main instruction remains visible. @details{title=\"Why this matters\"} The supporting explanation for Nested metadata is available on demand. @end @end Expected HTML Layered guidance The main instruction remains visible. Why this matters The supporting explanation for Nested metadata is available on demand. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Tabs containing notes and terminals",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Tabs containing notes and terminals"
+    ],
+    "text": "# MPD Markdown @tabs @tab label=\"Guidance\" @note type=\"tip\" Use the strict build before publishing. @end @end @tab label=\"Command\" @terminal title=\"Strict build\" prompt=\"$\" comment=\"#\" $ mpress build --strict Built 12 pages. @end @end @end @tabs [Guidance] @note{type=\"tip\"} Use the strict build before publishing. @end [Command] @terminal{title=\"Strict build\" prompt=\"$\" comment=\"#\"} $ mpress build --strict Built 12 pages. @end @end Expected HTML Guidance Command Tip Use the strict build before publishing. Strict build Copy commands $ mpress build -- strict Built 12 pages. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Steps containing rich components",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Steps containing rich components"
+    ],
+    "text": "# MPD Markdown @steps @step title=\"Inspect the project\" @filetree docs/ index.md Home page mpress.yaml Configuration @end @end @step title=\"Build safely\" @note type=\"warning\" Resolve validation errors before deployment. @end @end @end @steps ### Inspect the project @filetree docs/ index.md Home page mpress.yaml Configuration @end ### Build safely @note{type=\"warning\"} Resolve validation errors before deployment. @end @end Expected HTML 1"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Inspect the project",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Steps containing rich components",
+      "Inspect the project"
+    ],
+    "text": "docs index.md Home page mpress.yaml Configuration 2"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Build safely",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Steps containing rich components",
+      "Build safely"
+    ],
+    "text": "Warning Resolve validation errors before deployment. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Container containing terminal output",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Container containing terminal output"
+    ],
+    "text": "# MPD Markdown @container display=\"grid\" columns=1 gap=\"1rem\" Run the production command inside a constrained layout. @terminal title=\"Production build\" frame=\"plain\" prompt=\"$\" comment=\"#\" $ mpress build --strict Built 42 pages. @end @end @container{display=\"grid\" columns=\"1\" gap=\"1rem\"} Run the production command inside a constrained layout. @terminal{title=\"Production build\" frame=\"plain\" prompt=\"$\" comment=\"#\"} $ mpress build --strict Built 42 pages. @end @end Expected HTML Run the production command inside a constrained layout. Production build Copy commands $ mpress build -- strict Built 42 pages. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Audience block containing guidance",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Audience block containing guidance"
+    ],
+    "text": "# MPD Markdown @audience role=\"writer\" @note type=\"tip\" title=\"For writers\" Preview the page before you submit it. @end @end @audience{role=\"writer\"} @note{type=\"tip\" title=\"For writers\"} Preview the page before you submit it. @end @end Expected HTML For writers Preview the page before you submit it. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Conditional block containing guidance",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Conditional block containing guidance"
+    ],
+    "text": "# MPD Markdown @if param=\"platform\" value=\"linux\" default=true @note type=\"info\" title=\"Linux\" Use the package provided for your distribution. @end @end @if{param=\"platform\" value=\"linux\" default=\"true\"} @note{type=\"info\" title=\"Linux\"} Use the package provided for your distribution. @end @end Expected HTML Linux Use the package provided for your distribution. Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Tutorial lesson containing guidance",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Tutorial lesson containing guidance"
+    ],
+    "text": "# MPD Markdown @tutorial title=\"Publish safely\" @lesson title=\"Validate\" @note type=\"warning\" Fix every broken internal link. @end @end @end @tutorial{title=\"Publish safely\"} ### Validate @note{type=\"warning\"} Fix every broken internal link. @end @end Expected HTML"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Publish safely",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Tutorial lesson containing guidance",
+      "Publish safely"
+    ],
+    "text": "0/1 completed 1 Validate Warning Fix every broken internal link. Reset progress Nesting · nested"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Deep landing-page composition",
+    "headingPath": [
+      "Modern docs. Plain text.",
+      "Deep landing-page composition"
+    ],
+    "text": "# MPD Markdown @section variant=\"hero\" @columns variant=\"hero\" @column variant=\"hero-copy\" @headline Compose deeply. Stay readable. @end @actions @button href=\"/start/\" variant=\"primary\" Start now @end @end @end @column @callout title=\"Native composition\" icon=\"layers\" Every child remains a regular component node. @end @end @end @end @section{variant=\"hero\"} @columns{variant=\"hero\"} @column{variant=\"hero-copy\"} @headline Compose deeply. Stay readable. @end @actions @button{href=\"/start/\" variant=\"primary\"} Start now @end @end @end @column @callout{title=\"Native composition\" icon=\"layers\"} Every child remains a regular component node. @end @end @end @end Expected HTML"
+  },
+  {
+    "id": "72a39cad201bbf3e29aa397c",
+    "pageId": "e52b18549e3809ae37f486f5",
+    "resourceUri": "mpress://knowledge/section/72a39cad201bbf3e29aa397c",
+    "language": "en",
+    "version": "current",
+    "route": "/",
+    "url": "/",
+    "source": "index.md",
+    "pageTitle": "MPD Fixture Viewer",
+    "title": "Compose deeply. Stay readable.",
+    "headingPath": [
+      "Compose deeply. Stay readable."
+    ],
+    "text": "Start now Native composition Every child remains a regular component node. No fixtures match these filters."
+  }
+]

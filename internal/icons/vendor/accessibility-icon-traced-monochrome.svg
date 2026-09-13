@@ -1,0 +1,36 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-labelledby="title desc">
+  <title id="title">Monochrome accessibility icon</title>
+  <desc id="desc">A white human figure with outstretched arms inside a solid black circle.</desc>
+
+  <!-- Monochrome vector trace based on the supplied reference image. -->
+  <circle cx="256" cy="256" r="220" fill="#111"/>
+
+  <g transform="translate(0 -14)">
+  <circle cx="256" cy="139" r="35" fill="#fff"/>
+
+  <path
+    fill="#fff"
+    d="M144 184
+       C166 191 193 199 219 203
+       C243 207 269 207 293 203
+       C319 199 346 191 368 184
+       C381 180 393 188 397 201
+       C401 214 393 227 380 232
+       L311 256
+       C303 259 299 266 300 275
+       C304 314 313 359 322 407
+       C325 424 315 437 300 439
+       C285 441 274 432 271 417
+       L259 354
+       C258 348 257 344 256 344
+       C255 344 254 348 253 354
+       L241 417
+       C238 432 227 441 212 439
+       C197 437 187 424 190 407
+       C199 359 208 314 212 275
+       C213 266 209 259 201 256
+       L132 232
+       C119 227 111 214 115 201
+       C119 188 131 180 144 184 Z"/>
+  </g>
+</svg>

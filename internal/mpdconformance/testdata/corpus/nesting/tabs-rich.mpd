@@ -1,0 +1,13 @@
+@tabs
+@tab label="Guidance"
+@note type="tip"
+Use the strict build before publishing.
+@end
+@end
+@tab label="Command"
+@terminal title="Strict build" prompt="$" comment="#"
+$ mpress build --strict
+Built 12 pages.
+@end
+@end
+@end

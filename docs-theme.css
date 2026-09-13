@@ -1,0 +1,20 @@
+.theme-logo {
+  flex-basis: 32px;
+  width: 32px;
+  height: 24px;
+  opacity: .72;
+  transition: opacity 140ms ease;
+}
+
+.brand:hover .theme-logo,
+.brand:focus-visible .theme-logo {
+  opacity: 1;
+}
+
+@media (max-width: 760px) {
+  .theme-logo {
+    flex-basis: 30px;
+    width: 30px;
+    height: 23px;
+  }
+}

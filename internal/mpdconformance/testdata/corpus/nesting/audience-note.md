@@ -1,0 +1,5 @@
+@audience{role="writer"}
+@note{type="tip" title="For writers"}
+Preview the page before you submit it.
+@end
+@end

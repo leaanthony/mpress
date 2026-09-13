@@ -1,0 +1,7 @@
+@table header search filter sort paginate column-separators page-size=2
+| Package | Platform | Downloads |
+| Core | Linux | 1840 |
+| Studio | macOS | 920 |
+| Core | Windows | 1260 |
+| CLI | Linux | 640 |
+@end

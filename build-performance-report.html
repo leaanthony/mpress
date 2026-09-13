@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>M-Press cold build performance</title>
+    <style>
+      :root { color-scheme: dark; --bg: #111318; --panel: #191d25; --line: #303847; --text: #f2f5f9; --muted: #a8b2c3; --blue: #8aa4ff; --green: #55d39b; }
+      * { box-sizing: border-box; }
+      body { margin: 0; background: var(--bg); color: var(--text); font: 16px/1.5 Inter, ui-sans-serif, system-ui, sans-serif; }
+      main { width: min(920px, calc(100% - 40px)); margin: 56px auto; }
+      .eyebrow { color: var(--blue); font-size: 12px; font-weight: 700; letter-spacing: .12em; text-transform: uppercase; }
+      h1 { margin: 8px 0 10px; font-size: clamp(30px, 5vw, 48px); letter-spacing: -.04em; line-height: 1.08; }
+      p { color: var(--muted); margin: 0; }
+      .summary { margin: 34px 0 24px; padding: 20px 22px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+      .summary strong { color: var(--green); font-size: 28px; font-weight: 650; }
+      .summary span { color: var(--muted); margin-left: 8px; }
+      h2 { margin: 38px 0 16px; font-size: 18px; }
+      .chart { display: grid; gap: 18px; }
+      .row { display: grid; grid-template-columns: 125px minmax(0, 1fr) 72px; align-items: center; gap: 14px; }
+      .label { font-weight: 600; }
+      .track { height: 36px; padding: 5px; border: 1px solid var(--line); border-radius: 8px; background: #10141b; }
+      .bar { height: 100%; min-width: 4px; border-radius: 4px; background: var(--blue); }
+      .bar.fast { background: var(--green); }
+      .value { text-align: right; font-variant-numeric: tabular-nums; font-weight: 650; }
+      table { width: 100%; border-collapse: collapse; overflow: hidden; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); }
+      th, td { padding: 13px 16px; text-align: left; border-bottom: 1px solid var(--line); }
+      tr:last-child td { border-bottom: 0; }
+      th { color: var(--muted); font-size: 13px; font-weight: 600; }
+      td { font-variant-numeric: tabular-nums; }
+      .note { margin-top: 18px; font-size: 14px; }
+      @media (max-width: 580px) { main { width: min(100% - 28px, 920px); margin: 32px auto; } .row { grid-template-columns: 88px minmax(0, 1fr) 58px; gap: 8px; } th, td { padding: 11px; } }
+    </style>
+  </head>
+  <body>
+    <main>
+      <div class="eyebrow">Wails v3 migration benchmark</div>
+      <h1>Cold and warm build performance</h1>
+      <p>501 rendered pages, 511 cached source pages. Every run generates a fresh static site with the Glint cache enabled.</p>
+
+      <section class="summary" aria-label="Speedup summary">
+        <strong>3.98× faster</strong><span>for a cache-cold build with eight CPU workers instead of one</span>
+      </section>
+
+      <section aria-labelledby="wall-time">
+        <h2 id="wall-time">Cache-cold wall-clock time</h2>
+        <div class="chart" role="img" aria-label="Cache-cold build wall time: one CPU 2.31 seconds, eight CPUs 0.58 seconds">
+          <div class="row"><span class="label">1 CPU</span><div class="track"><div class="bar" style="width: 100%"></div></div><span class="value">2.31 s</span></div>
+          <div class="row"><span class="label">8 CPUs</span><div class="track"><div class="bar fast" style="width: 25.1%"></div></div><span class="value">0.58 s</span></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="warm-wall-time">
+        <h2 id="warm-wall-time">Warm-cache wall-clock time</h2>
+        <div class="chart" role="img" aria-label="Warm-cache build wall time: one CPU 0.24 seconds, eight CPUs 0.28 seconds">
+          <div class="row"><span class="label">1 CPU</span><div class="track"><div class="bar fast" style="width: 100%"></div></div><span class="value">0.24 s</span></div>
+          <div class="row"><span class="label">8 CPUs</span><div class="track"><div class="bar fast" style="width: 85.7%"></div></div><span class="value">0.28 s</span></div>
+        </div>
+      </section>
+
+      <section aria-labelledby="details">
+        <h2 id="details">Run details</h2>
+        <table>
+          <thead><tr><th>Metric</th><th>1 cold</th><th>1 warm</th><th>8 cold</th><th>8 warm</th></tr></thead>
+          <tbody>
+            <tr><td>Wall time</td><td>2.31 s</td><td>0.24 s</td><td>0.58 s</td><td>0.28 s</td></tr>
+            <tr><td>M-Press build time</td><td>2.264 s</td><td>197 ms</td><td>542 ms</td><td>236 ms</td></tr>
+            <tr><td>Total CPU time</td><td>2.28 s</td><td>0.23 s</td><td>2.92 s</td><td>0.36 s</td></tr>
+            <tr><td>Peak RSS</td><td>76 MB</td><td>75 MB</td><td>69 MB</td><td>64 MB</td></tr>
+            <tr><td>Glint cache entries</td><td>511</td><td>511</td><td>511</td><td>511</td></tr>
+          </tbody>
+        </table>
+        <p class="note">Each warm run removed only <code>site/</code>, then rebuilt it from the retained parse cache. These are strict build-only measurements, so link validation is excluded.</p>
+      </section>
+
+      <section aria-labelledby="template">
+        <h2 id="template">Fresh default tutorial template</h2>
+        <p>Three pages, no generated site, no cache. The process startup cost is larger than the build itself at this scale.</p>
+        <div class="chart" role="img" aria-label="Default template wall time: one CPU cold 70 milliseconds, cold output with warm cache 40 milliseconds, one CPU warm 40 milliseconds, eight CPUs cold 80 milliseconds">
+          <div class="row"><span class="label">1 CPU cold</span><div class="track"><div class="bar" style="width: 100%"></div></div><span class="value">70 ms</span></div>
+          <div class="row"><span class="label">Cold output, cache warm</span><div class="track"><div class="bar fast" style="width: 57.1%"></div></div><span class="value">40 ms</span></div>
+          <div class="row"><span class="label">1 CPU warm</span><div class="track"><div class="bar fast" style="width: 57.1%"></div></div><span class="value">40 ms</span></div>
+          <div class="row"><span class="label">8 CPUs cold</span><div class="track"><div class="bar" style="width: 100%"></div></div><span class="value">80 ms</span></div>
+        </div>
+        <p class="note">The cold build reported 33 to 35 ms inside M-Press. Removing only <code>site/</code> while retaining the cache reported 2 ms, matching a fully warm build. Three Glint cache entries totalled 79 KB.</p>
+      </section>
+    </main>
+  </body>
+</html>

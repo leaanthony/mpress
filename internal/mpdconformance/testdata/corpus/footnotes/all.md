@@ -1,0 +1,5 @@
+MPress keeps source ranges stable.[^ranges] One note can be cited twice.[^ranges]
+
+[^ranges]: Stable ranges make precise edits possible.
+
+    The definition can contain more than one paragraph.

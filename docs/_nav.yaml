@@ -1,0 +1,65 @@
+- label: Home
+  link: /
+- label: Learn
+  items:
+    - label: Build your first site
+      link: /tutorials/first-site/
+- label: How-to guides
+  items:
+    - label: Markdown landing page
+      link: /how-to/custom-landing-page/
+    - label: Enable contributions
+      link: /contributing/
+    - label: Offer accessibility controls
+      link: /accessibility/
+    - label: Add a language
+      link: /translation/
+    - label: Publish versioned docs
+      link: /versioning/
+    - label: Deploy a site
+      link: /deployment/
+    - label: Move from Starlight
+      link: /starlight/
+- label: Reference
+  items:
+    - label: M-Press features
+      link: /features/
+    - label: Authoring format
+      link: /authoring/
+    - label: M-Press Flavoured Markdown specification
+      link: /mpress-document/
+    - label: Configuration
+      link: /configuration/
+    - label: Command line
+      link: /cli/
+    - label: MCP knowledge base
+      link: /knowledge/
+    - label: Navigation
+      link: /navigation/
+    - label: Content components
+      link: /components/
+    - label: Code and terminal
+      link: /code-components/
+    - label: Data and product
+      link: /data-components/
+    - label: Interactive
+      link: /interactive-components/
+    - label: Markdown forms
+      link: /forms/
+- label: Understand M-Press
+  collapsed: true
+  items:
+    - label: Why M-Press exists
+      link: /explanation/why-mpress/
+    - label: Why M-Press is fast
+      link: /explanation/performance/
+    - label: Why M-Press Flavoured Markdown is strict
+      link: /explanation/mpress-document-design/
+    - label: Architecture
+      link: /architecture/
+    - label: Writing standard
+      link: /writing-standard/
+    - label: MVP scope
+      link: /mvp/
+    - label: What remains
+      link: /roadmap/

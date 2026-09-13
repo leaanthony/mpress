@@ -1,0 +1,15 @@
+---
+schema = 1
+title = "Metadata references"
+draft = false
+order = 25
+tags = ["reference","format"]
+wails.redirect = null
+wails.owner = {"name":"MPress","team":"docs"}
+---
+
+# @metadata[title]
+
+Schema @metadata[schema] renders this page at order @metadata[order]. Draft is
+@metadata[draft]. Tags are @metadata[tags]. The previous location is
+@metadata[wails.redirect]. The owner is @metadata[wails.owner].

@@ -1,0 +1,5 @@
+Use _emphasis_, *strong text*, and *_strong emphasis_* with `inline code`.
+
+Roles include @mark[marked], @delete[removed], @sub[2], @sup[n], and @key[Command K].
+
+Ship :rocket: with :sparkles:. Unknown :not_an_emoji: and escaped \:rocket: remain text. Code `:rocket:` remains literal.

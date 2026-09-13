@@ -1,0 +1,30 @@
+{
+  "schema": 1,
+  "title": "MPD Fixture Viewer",
+  "description": "MPress Document conformance fixtures rendered with the current MPress theme.",
+  "defaultLanguage": "en",
+  "languages": [
+    "en"
+  ],
+  "currentVersion": "current",
+  "digest": "2be6679d18ebbef8486d159a2fc7458f1b6f8b3ffe818edc523f7837314a559c",
+  "pages": [
+    {
+      "id": "e52b18549e3809ae37f486f5",
+      "resourceUri": "mpress://knowledge/page/e52b18549e3809ae37f486f5",
+      "language": "en",
+      "version": "current",
+      "route": "/",
+      "url": "/",
+      "source": "index.md",
+      "title": "MPD Fixture Viewer",
+      "description": "Visual conformance corpus for MPress Document.",
+      "chunkCount": 63
+    }
+  ],
+  "artifacts": {
+    "pages": "pages.json",
+    "chunks": "chunks.json",
+    "index": "index.json"
+  }
+}

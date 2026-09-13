@@ -1,0 +1,9 @@
+/mpress
+/site/
+/.mpress/
+*.test
+coverage.out
+/.codex-audit/
+/.stitch/
+/audits/
+.env.local

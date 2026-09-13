@@ -1,0 +1,51 @@
+# Content components
+
+@note type="info" title="Information"
+Information uses ordinary *inline formatting*.
+@end
+@note type="tip"
+A useful tip.
+@end
+@note type="warning"
+Check this condition.
+@end
+@note type="caution"
+Proceed with care.
+@end
+@note type="danger"
+Do not continue.
+@end
+@note type="important"
+Keep this requirement.
+@end
+
+@details title="Closed details"
+Hidden until the reader opens it.
+@end
+@details title="Open details" open=true
+Visible on first render.
+@end
+
+@badge type="default"
+Default
+@end
+@badge type="success"
+Stable
+@end
+@badge type="warning"
+Beta
+@end
+@badge type="danger"
+Breaking
+@end
+
+@linkcard title="Authoring guide" href="/authoring/" icon="book-open" description="Write portable documentation."
+
+@button href="/start/" variant="primary" icon="play"
+Get started
+@end
+@button href="/reference/" variant="secondary"
+Reference
+@end
+
+@image light="/assets/example-light.svg" dark="/assets/example-dark.svg" alt="Theme-aware example"

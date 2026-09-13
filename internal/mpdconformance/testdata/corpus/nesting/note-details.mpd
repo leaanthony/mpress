@@ -1,0 +1,12 @@
+---
+schema = 1
+title = "Nested metadata"
+---
+
+@note type="info" title="Layered guidance"
+The main instruction remains visible.
+
+@details title="Why this matters"
+The supporting explanation for @metadata[title] is available on demand.
+@end
+@end
