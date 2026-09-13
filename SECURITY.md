@@ -1,7 +1,7 @@
 # Security policy
 
 Security fixes target the latest stable M-Press release. Upgrade to the latest
-release before reporting an issue that may already be fixed.
+release before reporting a vulnerability that may already be fixed.
 
 Contact [the maintainer](https://github.com/leaanthony) privately using the
 contact information on their profile to report suspected vulnerabilities.

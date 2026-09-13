@@ -1,0 +1,109 @@
+---
+title: Contribute from a published page
+description: Move from a published documentation page to a safe local checkout, then submit a reviewed change.
+order: 35
+---
+
+Site owners can let readers start a contribution from any published page. The
+reader does not need to find the source repository or the matching Markdown
+file.
+
+## Start from the page
+
+1. Select the edit icon in the documentation navbar.
+2. Select **Open the project**.
+3. Copy the command selected for your operating system.
+4. Run the command in a terminal.
+
+The command includes the current page URL. M-Press uses the generated page
+metadata to find the repository, branch, route, and source file.
+
+If M-Press is installed, the command runs it directly. Otherwise, the generated
+shell or PowerShell script downloads the matching release and verifies its
+checksum before it starts.
+
+@note{type="info" title="The published site does not receive your changes"}
+The command creates a local checkout and a private contribution branch. Nothing
+is uploaded while you edit or run checks.
+@end
+
+## Choose the contribution
+
+The local site opens the contribution wizard automatically. Choose one outcome:
+
+- **Improve this page** opens the exact source file for the published page.
+- **Translate documentation** opens the guided translation workflow.
+- **Improve the site setup** opens the project configuration.
+- **Check the project** validates the current checkout before you edit.
+
+If the project contains a configured contributor guide, M-Press shows it before
+you start editing.
+
+## Improve the selected page
+
+M-Press shows the relative source path and the local checkout. Copy the path,
+open it in your editor, and save the Markdown file. The development server
+rebuilds the site and reloads the browser when the changed page is ready.
+
+Select **Run checks when finished**. M-Press rebuilds every page and validates
+internal links and generated assets.
+
+## Submit the contribution
+
+After validation, select **Review changes**. M-Press shows the changed files and
+the source diff before it runs any Git command.
+
+1. Write a short commit message and select **Commit changes**.
+2. Select **Push contribution branch**.
+3. Select **Open draft pull request**.
+
+M-Press first tries the configured origin. If that repository rejects the push
+and GitHub CLI is authenticated, M-Press prepares the contributor's fork and
+pushes the branch there. If automatic submission is unavailable, the wizard
+shows exact commands that the contributor can copy.
+
+## Safety and authentication
+
+The published page contains the repository URL, source branch, page route, and
+source path. It does not contain credentials.
+
+Public repositories clone without authentication. Private repositories use the
+reader's existing Git credential helper or GitHub CLI login. M-Press refuses to
+reuse an unrelated directory. It also refuses a dirty existing checkout unless
+that checkout is already on an M-Press contribution branch.
+
+Commits, pushes, and pull requests are separate explicit actions. A validation
+run never uploads work.
+
+## Configure contributor instructions
+
+Add contribution settings to `mpress.yaml`:
+
+```yaml
+contribution:
+  enabled: true
+  repository: https://github.com/example/docs.git
+  branch: main
+  guide: CONTRIBUTING.md
+```
+
+The guide path must stay inside the project. If `guide` is not set, M-Press
+looks for `CONTRIBUTING.md`, `CONTRIBUTORS.md`, and
+`.github/CONTRIBUTING.md`.
+
+You can also configure these values in development mode. Open the M-Press
+project editor, select **Navigation and links**, and enable reader
+contributions.
+
+## Generated installation scripts
+
+The production build includes `/mpress-contribute.sh` and
+`/mpress-contribute.ps1`. Each script contains the configured repository and
+branch.
+
+The POSIX script supports Linux and macOS on AMD64 and ARM64. It tries `curl`
+and then `wget`, downloads the matching archive from the latest GitHub release,
+and verifies it against `checksums.txt`. The Windows script uses PowerShell and
+applies the same SHA-256 check.
+
+Both scripts use `mpress` directly when it is already available on the path.

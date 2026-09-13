@@ -55,7 +55,7 @@ contribution:
     repository: https://github.com/leaanthony/mpress.git
     branch: main
     quickEdit: false
-    guide: docs/contributing.md
+    guide: CONTRIBUTING.md
 social:
     github: https://github.com/leaanthony/mpress
     discord: ""

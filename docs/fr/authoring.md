@@ -36,7 +36,7 @@ Un site publié peut offrir un flux lecteur encore plus court. L'action **Contri
 donne au lecteur une commande unique qui télécharge M-Press et exécute
 `mpress contribute <page-url>`. M-Press trouve le dépôt et le fichier source,
 prépare une branche locale, ouvre la page correspondante et demande ce que le lecteur souhaite
-améliorer. Voir [Contribuer depuis une page publiée](/contributing/).
+améliorer. Voir [Contribuer depuis une page publiée](/how-to/enable-site-contributions/).
 
 La configuration s'ouvre dans un panneau vitré déplaçable sur bureau et dans une feuille contenue
 sur mobile. La page reste visible et défilable derrière. Le titre du site, le schéma de couleur,

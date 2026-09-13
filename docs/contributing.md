@@ -1,109 +1,63 @@
 ---
-title: Contribute from a published page
-description: Move from a published documentation page to a safe local checkout, then submit a reviewed change.
+title: Contribute to M-Press
+description: Open a pull request with a test that demonstrates a gap in M-Press. A fix is welcome too.
 order: 35
 ---
 
-Site owners can let readers start a contribution from any published page. The
-reader does not need to find the source repository or the matching Markdown
-file.
+M-Press contributions start with a pull request and a test that demonstrates a
+gap. We do not accept issues. If something is broken or missing, show the
+expected behaviour in a reproducible test.
 
-## Start from the page
+If you can fix it too, brilliant. A PR with only a failing test is also welcome:
+it gives us a concrete example to work from.
 
-1. Select the edit icon in the documentation navbar.
-2. Select **Open the project**.
-3. Copy the command selected for your operating system.
-4. Run the command in a terminal.
+## Demonstrate the gap
 
-The command includes the current page URL. M-Press uses the generated page
-metadata to find the repository, branch, route, and source file.
+1. Fork [M-Press](https://github.com/leaanthony/mpress) and create a branch from `main`.
+2. Add the smallest test that demonstrates the missing or incorrect behaviour.
+   Put it beside the relevant code in a `*_test.go` file and use the existing
+   package's test helpers and fixtures.
+3. Run the test against the current implementation. Confirm it fails because of
+   the gap, rather than a setup error.
+4. If you can, fix the implementation and confirm the same test passes.
 
-If M-Press is installed, the command runs it directly. Otherwise, the generated
-shell or PowerShell script downloads the matching release and verifies its
-checksum before it starts.
+Use the Go version specified in `go.mod` or newer. The public tests run entirely
+from this repository; contributors do not need access to private test suites.
 
-@note{type="info" title="The published site does not receive your changes"}
-The command creates a local checkout and a private contribution branch. Nothing
-is uploaded while you edit or run checks.
-@end
+## Open the pull request
 
-## Choose the contribution
+Include:
 
-The local site opens the contribution wizard automatically. Choose one outcome:
+- What you expected and what happens instead.
+- The test that demonstrates the gap and the exact command to run it.
+- The observed failure before a fix, and the result afterwards if you included one.
 
-- **Improve this page** opens the exact source file for the published page.
-- **Translate documentation** opens the guided translation workflow.
-- **Improve the site setup** opens the project configuration.
-- **Check the project** validates the current checkout before you edit.
+Keep the PR focused on one gap. If you are submitting only the failing test,
+open a **draft PR** and say that a fix is still needed. The failing check is the
+reproduction; the PR can become ready to merge once the gap is fixed and checks
+pass.
 
-If the project contains a configured contributor guide, M-Press shows it before
-you start editing.
+For an implementation fix, run the affected package tests, then the public checks:
 
-## Improve the selected page
-
-M-Press shows the relative source path and the local checkout. Copy the path,
-open it in your editor, and save the Markdown file. The development server
-rebuilds the site and reloads the browser when the changed page is ready.
-
-Select **Run checks when finished**. M-Press rebuilds every page and validates
-internal links and generated assets.
-
-## Submit the contribution
-
-After validation, select **Review changes**. M-Press shows the changed files and
-the source diff before it runs any Git command.
-
-1. Write a short commit message and select **Commit changes**.
-2. Select **Push contribution branch**.
-3. Select **Open draft pull request**.
-
-M-Press first tries the configured origin. If that repository rejects the push
-and GitHub CLI is authenticated, M-Press prepares the contributor's fork and
-pushes the branch there. If automatic submission is unavailable, the wizard
-shows exact commands that the contributor can copy.
-
-## Safety and authentication
-
-The published page contains the repository URL, source branch, page route, and
-source path. It does not contain credentials.
-
-Public repositories clone without authentication. Private repositories use the
-reader's existing Git credential helper or GitHub CLI login. M-Press refuses to
-reuse an unrelated directory. It also refuses a dirty existing checkout unless
-that checkout is already on an M-Press contribution branch.
-
-Commits, pushes, and pull requests are separate explicit actions. A validation
-run never uploads work.
-
-## Configure contributor instructions
-
-Add contribution settings to `mpress.yaml`:
-
-```yaml
-contribution:
-  enabled: true
-  repository: https://github.com/example/docs.git
-  branch: main
-  guide: CONTRIBUTING.md
+```sh
+go test -race ./...
+go vet ./...
 ```
 
-The guide path must stay inside the project. If `guide` is not set, M-Press
-looks for `CONTRIBUTING.md`, `CONTRIBUTORS.md`, and
-`.github/CONTRIBUTING.md`.
+If the change affects documentation or generated output, also run:
 
-You can also configure these values in development mode. Open the M-Press
-project editor, select **Navigation and links**, and enable reader
-contributions.
+```sh
+go run ./cmd/mpress build --strict
+go run ./cmd/mpress check
+```
 
-## Generated installation scripts
+## Security reports
 
-The production build includes `/mpress-contribute.sh` and
-`/mpress-contribute.ps1`. Each script contains the configured repository and
-branch.
+Report suspected vulnerabilities privately using the
+[security policy](https://github.com/leaanthony/mpress/blob/main/SECURITY.md).
+Do not put credentials or exploit details in a public PR.
 
-The POSIX script supports Linux and macOS on AMD64 and ARM64. It tries `curl`
-and then `wget`, downloads the matching archive from the latest GitHub release,
-and verifies it against `checksums.txt`. The Windows script uses PowerShell and
-applies the same SHA-256 check.
+## Contributions to a documentation site
 
-Both scripts use `mpress` directly when it is already available on the path.
+To enable reader contributions on a site you build with M-Press, see
+[Enable site contributions](/how-to/enable-site-contributions/).

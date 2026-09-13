@@ -8,8 +8,8 @@
   items:
     - label: Markdown landing page
       link: /how-to/custom-landing-page/
-    - label: Enable contributions
-      link: /contributing/
+    - label: Enable site contributions
+      link: /how-to/enable-site-contributions/
     - label: Offer accessibility controls
       link: /accessibility/
     - label: Add a language
@@ -63,3 +63,5 @@
       link: /mvp/
     - label: What remains
       link: /roadmap/
+- label: Contribute to M-Press
+  link: /contributing/

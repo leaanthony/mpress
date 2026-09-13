@@ -127,7 +127,7 @@ branche source à cloner et par défaut `main`.
 
 La page générée publie les métadonnées du dépôt et des fichiers source. Elle ne
 publie jamais les identifiants. Les dépôts privés utilisent l'authentification Git existante du lecteur.
-l'authentification. Voir [Contribuer depuis une page publiée](/contributing/) pour le
+l'authentification. Voir [Contribuer depuis une page publiée](/how-to/enable-site-contributions/) pour le
 flux de travail du lecteur et les règles de sécurité du checkout.
 
 ## Blog

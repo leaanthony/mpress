@@ -83,6 +83,11 @@ The [initial MVP contract](docs/mvp.md) records the original project scope. The 
 shape and private/public test split are documented in
 [Architecture](docs/architecture.md).
 
+## Contributing
+
+No issues: open a PR with tests that demonstrate a gap. A fix is welcome too;
+if you only have the failing test, submit a draft PR. See [CONTRIBUTING.md](CONTRIBUTING.md).
+
 ## Security
 
 See [SECURITY.md](SECURITY.md) for reporting vulnerabilities privately.

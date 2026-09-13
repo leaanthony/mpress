@@ -173,7 +173,7 @@ edits a local checkout.
 
 The generated page publishes repository and source-file metadata. It never
 publishes credentials. Private repositories use the reader's existing Git
-authentication. See [Contribute from a published page](/contributing/) for the
+authentication. See [Contribute from a published page](/how-to/enable-site-contributions/) for the
 reader workflow and checkout safety rules.
 
 ## MCP knowledge base

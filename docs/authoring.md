@@ -36,7 +36,7 @@ A published site can provide an even shorter reader workflow. The **Contribute**
 action gives the reader one command that downloads M-Press and runs
 `mpress contribute <page-url>`. M-Press finds the repository and source file,
 prepares a local branch, opens the matching page, and asks what the reader wants
-to improve. See [Contribute from a published page](/contributing/).
+to improve. See [Contribute from a published page](/how-to/enable-site-contributions/).
 
 Configuration opens in a draggable glass panel on desktop and a contained sheet
 on mobile. The page stays visible and scrollable behind it. Site title, colour
