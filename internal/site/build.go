@@ -199,7 +199,7 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 		themeCSS += accessibilityCSS
 	}
 	cssAsset := themeCSS
-	jsAsset := defaultThemeJS
+	jsAsset := readerLocaleJS + defaultThemeJS
 	if cfg.Accessibility.Enabled {
 		jsAsset += accessibilityJS
 	}
@@ -330,6 +330,13 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 			}
 			data := templateData{Config: cfg, Page: page, Nav: nav, CompiledNav: compiledNav, Root: root, LangLinks: links, VersionLinks: versions, Prev: prev, Next: next, SearchURL: searchURL, CSSVersion: cssVersion, JSVersion: jsVersion, Blog: blogs[page], BlogArticle: blogArticles[page], QuickEdit: quickEdit,
 				CanonicalURL: sitePageURL(cfg, lang, page.URLPath), Alternates: alternateLinks(cfg, page.URLPath, routesByLang), CurrentRoutes: routesByLang[lang]}
+			localizedPage := *page
+			localizedHTML, localizeErr := localizePageLinks(cfg, page, defaultRoutes, routesByLang[lang])
+			if localizeErr != nil {
+				return "", templateData{}, localizeErr
+			}
+			localizedPage.HTML = localizedHTML
+			data.Page = &localizedPage
 			return pageOut, data, nil
 		})
 		if renderErr != nil {
@@ -392,7 +399,7 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 	if opts.MinifyAssets || opts.PurgeUnusedCSS {
 		startTiming("optimize", "Optimize CSS and JavaScript")
 		cssAsset = themeCSS
-		jsAsset = defaultThemeJS
+		jsAsset = readerLocaleJS + defaultThemeJS
 		if cfg.Accessibility.Enabled {
 			jsAsset += accessibilityJS
 		}

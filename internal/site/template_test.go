@@ -79,12 +79,12 @@ func TestRTLLanguagesSetDocumentDirection(t *testing.T) {
 
 func TestPageEditSourcePrefersOnlySafeImportedPaths(t *testing.T) {
 	page := &content.Page{SourcePath: "guide.mpd", Meta: content.Frontmatter{SourcePath: "guide.mdx"}}
-	if got, want := pageEditSource(page), "guide.mdx"; got != want {
+	if got, want := pageEditSource(page, "en"), "guide.mdx"; got != want {
 		t.Fatalf("pageEditSource() = %q, want %q", got, want)
 	}
 	for _, unsafe := range []string{"../outside.md", "/absolute.md", ".."} {
 		page.Meta.SourcePath = unsafe
-		if got, want := pageEditSource(page), "guide.mpd"; got != want {
+		if got, want := pageEditSource(page, "en"), "guide.mpd"; got != want {
 			t.Errorf("pageEditSource() with %q = %q, want fallback %q", unsafe, got, want)
 		}
 	}
@@ -616,6 +616,20 @@ func BenchmarkTypedRendererDocumentation(b *testing.B) {
 	for index := 0; index < b.N; index++ {
 		if _, err := renderPage(data); err != nil {
 			b.Fatal(err)
+		}
+	}
+}
+
+func TestPageEditSourceTargetsTheTranslatedFile(t *testing.T) {
+	for _, test := range []struct{ lang, defaultLang, meta, want string }{
+		{"fr", "en", "guide.mpd", "fr/guide.mpd"},
+		{"fr", "en", "fr/guide.mpd", "fr/guide.mpd"},
+		{"ja", "ja", "guide.mpd", "guide.mpd"},
+		{"zh-tw", "en", "", "zh-tw/guide.mpd"},
+	} {
+		p := &content.Page{Language: test.lang, SourcePath: "guide.mpd", Meta: content.Frontmatter{SourcePath: test.meta}}
+		if got := pageEditSource(p, test.defaultLang); got != test.want {
+			t.Fatalf("got %q want %q", got, test.want)
 		}
 	}
 }

@@ -1,4 +1,15 @@
 
+const mpressUI = (() => {
+  const node = document.getElementById('mpress-ui-messages');
+  const messages = node ? JSON.parse(node.textContent) : {};
+  return (message, ...values) => {
+    const text = Object.prototype.hasOwnProperty.call(messages, message) ? messages[message] : message;
+    return text.replace(/\{(\d+)\}/g, (token, index) => values[index] === undefined ? token : String(values[index]));
+  };
+})();
+const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replace(/[&<>"']/g,
+  character => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));
+
 (() => {
   const doc = document.documentElement;
   const storage = {
@@ -37,7 +48,7 @@
   window.mpressKeyboard = Object.freeze({matches: shortcutMatches, aria: shortcutARIA, label: shortcutLabel, editableTarget: shortcutEditableTarget});
   const theme = document.querySelector('#theme');
   const themeModes = ['system', 'dark', 'light'];
-  const themeLabels = {system: 'System', dark: 'Dark', light: 'Light'};
+  const themeLabels = {system: mpressUI("System"), dark: mpressUI("Dark"), light: mpressUI("Light")};
   const stored = storage.get('mpress-theme');
   if (themeModes.includes(stored)) doc.dataset.theme = stored;
   if (!themeModes.includes(doc.dataset.theme)) doc.dataset.theme = 'system';
@@ -46,8 +57,8 @@
     const current = doc.dataset.theme;
     const next = themeModes[(themeModes.indexOf(current) + 1) % themeModes.length];
     theme.dataset.themeMode = current;
-    theme.setAttribute('aria-label', 'Theme: ' + themeLabels[current] + '. Switch to ' + themeLabels[next]);
-    theme.title = 'Theme: ' + themeLabels[current];
+    theme.setAttribute('aria-label', mpressUI("Theme: {0}. Switch to {1}", themeLabels[current], themeLabels[next]));
+    theme.title = mpressUI("Theme: {0}", themeLabels[current]);
   };
   syncThemeButton();
   theme?.addEventListener('click', () => {
@@ -106,13 +117,13 @@
 	const contributionIntro = contributeDialog.querySelector('[data-contribute-intro]');
 	const contributionChoices = contributeDialog.querySelector('[data-contribute-choices]');
 	const contributionSetup = contributeDialog.querySelector('[data-contribute-setup]');
-    const shellQuote = value => "'" + String(value).replaceAll("'", "'\"'\"'") + "'";
+    const shellQuote = value => "'" + String(value).replaceAll("'", '\'"\'"\'') + "'";
     const powerShellQuote = value => "'" + String(value).replaceAll("'", "''") + "'";
     const shellInstallerURL = new URL(contributeDialog.dataset.installerShell, location.href).href;
     const powerShellInstallerURL = new URL(contributeDialog.dataset.installerPowershell, location.href).href;
     const detectedPlatform = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent || '';
     const contributionPlatform = /Windows|Win32|Win64/i.test(detectedPlatform) ? 'powershell' : 'shell';
-    contributionPlatformLabel.textContent = contributionPlatform === 'powershell' ? 'Command for Windows PowerShell' : 'Command for macOS and Linux';
+    contributionPlatformLabel.textContent = contributionPlatform === 'powershell' ? mpressUI("Command for Windows PowerShell") : mpressUI("Command for macOS and Linux");
 	const quickEditDataElement = contributeDialog.querySelector('#mpress-quick-edit-data');
 	let quickEditData = null;
 	try { quickEditData = quickEditDataElement ? JSON.parse(quickEditDataElement.textContent || 'null') : null; } catch (_) {}
@@ -186,13 +197,13 @@
 	  contributionChoices.hidden = false;
 	  contributionSetup.hidden = true;
 	  contributionIntro.textContent = draftChanges().length
-		? 'Your browser draft is safe. Continue editing here, or move the changes to a local M-Press checkout.'
+		? mpressUI("Your browser draft is safe. Continue editing here, or move the changes to a local M-Press checkout.")
 		: quickEditData
-		? 'Fix this page in the local development preview, translate the documentation, or open the complete project.'
-		: 'Translate the documentation or open the complete project in a safe local contribution checkout.';
+		? mpressUI("Fix this page in the local development preview, translate the documentation, or open the complete project.")
+		: mpressUI("Translate the documentation or open the complete project in a safe local contribution checkout.");
 	  contributionStatus.textContent = draftChanges().length
-		? draftChanges().length + ' draft change' + (draftChanges().length === 1 ? '' : 's') + ' saved only in this browser.'
-		: 'Nothing is published until you choose to submit your work.';
+		? mpressUI("Draft changes saved only in this browser: {0}", draftChanges().length)
+		: mpressUI("Nothing is published until you choose to submit your work.");
 	};
 	const showContributionSetup = (goal = '') => {
 	  contributionGoal = goal;
@@ -200,15 +211,15 @@
 	  contributionChoices.hidden = true;
 	  contributionSetup.hidden = false;
 	  contributionIntro.textContent = goal === 'translate'
-		? 'Run this command once. M-Press will download the project, open the requested page, and take you directly to guided translation.'
+		? mpressUI("Run this command once. M-Press will download the project, open the requested page, and take you directly to guided translation.")
 		: draftChanges().length
-		? 'Run this command to check out the source and apply your browser draft to the exact Markdown page.'
-		: 'Run this command to check out the source and open this exact page in the M-Press development server.';
+		? mpressUI("Run this command to check out the source and apply your browser draft to the exact Markdown page.")
+		: mpressUI("Run this command to check out the source and open this exact page in the M-Press development server.");
 	  contributionStatus.textContent = goal === 'translate'
-		? 'Your work stays in a private local branch until you choose to submit it.'
+		? mpressUI("Your work stays in a private local branch until you choose to submit it.")
 		: draftFile
-		? 'Draft downloaded as ' + draftFile + '. Keep it in Downloads, then run the command.'
-		: 'Nothing is published until you choose to submit your work.';
+		? mpressUI("Draft downloaded as {0}. Keep it in Downloads, then run the command.", draftFile)
+		: mpressUI("Nothing is published until you choose to submit your work.");
 	  refreshContributionCommand();
 	};
 	const quickEditBar = document.querySelector('[data-quick-edit-bar]');
@@ -225,7 +236,7 @@
 	const updateQuickEditStatus = () => {
 	  if (!quickEditStatus) return;
 	  const count = draftChanges().length;
-	  quickEditStatus.textContent = count ? count + ' change' + (count === 1 ? '' : 's') + ' saved in this browser' : 'No changes yet';
+	  quickEditStatus.textContent = count ? mpressUI("Changes saved in this browser: {0}", count) : mpressUI("No changes yet");
 	};
 	const setDraftChange = change => {
 	  if (!quickEditDraft) return;
@@ -378,7 +389,7 @@
 	const openQuickEditLink = () => {
 	  const range = selectionInEditable() || savedEditRange;
 	  if (!activeEditable || !range || range.collapsed) {
-		if (quickEditStatus) quickEditStatus.textContent = 'Select text before adding a link';
+		if (quickEditStatus) quickEditStatus.textContent = mpressUI("Select text before adding a link");
 		return;
 	  }
 	  savedEditRange = range.cloneRange();
@@ -422,7 +433,7 @@
 	const applyQuickEditLink = value => {
 	  const link = safeQuickEditLink(value);
 	  if (!link || !activeEditable || !savedEditRange || savedEditRange.collapsed) {
-		if (quickEditStatus) quickEditStatus.textContent = link ? 'Select text before adding a link' : 'Enter a valid link address';
+		if (quickEditStatus) quickEditStatus.textContent = link ? mpressUI("Select text before adding a link") : mpressUI("Enter a valid link address");
 		return false;
 	  }
 	  const range = savedEditRange.cloneRange();
@@ -448,7 +459,7 @@
 	  element.contentEditable = 'true';
 	  element.spellcheck = true;
 	  element.setAttribute('role', 'textbox');
-	  element.setAttribute('aria-label', record.prefix ? 'Edit new paragraph' : 'Edit documentation text');
+	  element.setAttribute('aria-label', record.prefix ? mpressUI("Edit new paragraph") : mpressUI("Edit documentation text"));
 	  editableRecords.set(element, record);
 	  element.addEventListener('pointerdown', () => {
 		activeEditable = record;
@@ -600,10 +611,10 @@
 		await navigator.clipboard.writeText(command);
 		contributionCommand.textContent = command;
 		contributionStatus.textContent = draftFile
-		  ? 'Command copied. Keep ' + draftFile + ' in Downloads, then run it to apply the draft.'
-		  : 'Command copied. Paste it into a terminal to start contributing.';
+		  ? mpressUI("Command copied. Keep {0} in Downloads, then run it to apply the draft.", draftFile)
+		  : mpressUI("Command copied. Paste it into a terminal to start contributing.");
       } catch (_) {
-		contributionStatus.textContent = 'Select the command and copy it from this window.';
+		contributionStatus.textContent = mpressUI("Select the command and copy it from this window.");
       }
     });
 	quickEditFormatButtons.forEach(button => {
@@ -815,8 +826,8 @@
   }));
 
   document.querySelectorAll('.mpress-copy').forEach(button => {
-    const defaultLabel = button.dataset.copyLabel || button.getAttribute('aria-label') || 'Copy';
-    const copiedLabel = button.dataset.copiedLabel || 'Copied';
+    const defaultLabel = mpressUI(button.dataset.copyLabel || button.getAttribute('aria-label') || "Copy");
+    const copiedLabel = mpressUI(button.dataset.copiedLabel || "Copied");
     const status = button.querySelector('[data-copy-status]');
     const reset = () => {
       button.classList.remove('is-copied');
@@ -824,6 +835,7 @@
       button.setAttribute('title', defaultLabel);
       if (status) status.textContent = defaultLabel;
     };
+    reset();
     const confirmCopy = () => {
       clearTimeout(button._mpressCopyTimer);
       button.classList.add('is-copied');
@@ -851,8 +863,8 @@
         field.remove();
         if (copied) confirmCopy();
         else {
-          button.setAttribute('aria-label', 'Copy failed');
-          if (status) status.textContent = 'Copy failed';
+          button.setAttribute('aria-label', mpressUI("Copy failed"));
+          if (status) status.textContent = mpressUI("Copy failed");
           clearTimeout(button._mpressCopyTimer);
           button._mpressCopyTimer = setTimeout(reset, 3000);
         }
@@ -869,7 +881,7 @@
       const done = inputs.filter(input => input.checked).length;
       tutorial.querySelector('.mpress-tutorial-progress-bar')?.style.setProperty('width', (inputs.length ? done / inputs.length * 100 : 0) + '%');
       const count = tutorial.querySelector('.mpress-tutorial-count');
-      if (count) count.textContent = done + '/' + inputs.length + ' completed';
+      if (count) count.textContent = mpressUI("{0}/{1} completed", done, inputs.length);
       inputs.forEach(input => input.closest('.mpress-tutorial-step')?.classList.toggle('completed', input.checked));
       storage.set(key, JSON.stringify(inputs.filter(input => input.checked).map(input => input.dataset.stepId)));
     };
@@ -931,7 +943,7 @@
     const roles = [...new Set(audienceBlocks.map(block => block.dataset.audience))].sort();
     const selector = document.createElement('div');
     selector.className = 'mpress-audience-selector';
-    selector.innerHTML = '<label class="mpress-audience-label">Audience: <select class="mpress-audience-select" aria-label="Select audience role"><option value="all">All</option></select></label>';
+    selector.innerHTML = ('<label class="mpress-audience-label">' + mpressUIHTML("Audience:") + ' <select class="mpress-audience-select" aria-label="' + mpressUIHTML("Select audience role") + '"><option value="all">' + mpressUIHTML("All") + "</option></select></label>");
     const select = selector.querySelector('select');
     roles.forEach(role => select.add(new Option(role.charAt(0).toUpperCase() + role.slice(1), role)));
     const saved = storage.get('mpress-audience-role');
@@ -973,7 +985,7 @@
           result = format.replace(match[0], value);
         }
         target.textContent = String(result);
-      } catch (_) { target.textContent = 'Error'; }
+      } catch (_) { target.textContent = mpressUI("Error"); }
     });
     reactiveInputs.forEach(input => input.addEventListener('input', () => {
       store[input.dataset.reactive] = read(input);
@@ -1027,11 +1039,11 @@
       const visible = new Set(orderedMatches.slice(start, end));
       rows.forEach(row => row.hidden = !visible.has(row));
       if (status) {
-        if (!paginated) status.textContent = orderedMatches.length === rows.length ? rows.length + (rows.length === 1 ? ' row' : ' rows') : orderedMatches.length + ' of ' + rows.length + ' rows';
-        else if (!orderedMatches.length) status.textContent = 'No matching rows';
-        else status.textContent = (start + 1) + '–' + end + ' of ' + orderedMatches.length + (orderedMatches.length === rows.length ? ' rows' : ' matching rows');
+        if (!paginated) status.textContent = orderedMatches.length === rows.length ? mpressUI("Rows: {0}", rows.length) : mpressUI("Rows: {0} of {1}", orderedMatches.length, rows.length);
+        else if (!orderedMatches.length) status.textContent = mpressUI("No matching rows");
+        else status.textContent = mpressUI("Rows: {0}–{1} of {2}", start + 1, end, orderedMatches.length);
       }
-      if (pageStatus) pageStatus.textContent = 'Page ' + currentPage + ' of ' + totalPages;
+      if (pageStatus) pageStatus.textContent = mpressUI("Page {0} of {1}", currentPage, totalPages);
       if (previousPage) previousPage.disabled = currentPage <= 1;
       if (nextPage) nextPage.disabled = currentPage >= totalPages;
     };
@@ -1044,7 +1056,7 @@
       filter.querySelectorAll('[data-table-filter-value]').forEach(item => item.setAttribute('aria-current', String(item === choice)));
       const trigger = document.querySelector('[popovertarget="' + filter.id + '"]');
       trigger?.classList.toggle('active', Boolean(value));
-      trigger?.setAttribute('aria-label', value ? 'Filter ' + label + ': ' + choice.textContent.trim() : 'Filter ' + label);
+      trigger?.setAttribute('aria-label', value ? mpressUI("Filter {0}: {1}", label, choice.textContent.trim()) : mpressUI("Filter {0}", label));
       currentPage = 1;
       filter.hidePopover?.();
       apply();
@@ -1180,7 +1192,7 @@
         timing.textContent = Math.round(performance.now() - started) + ' ms';
         try { responseBody.textContent = JSON.stringify(JSON.parse(text), null, 2); } catch (_) { responseBody.textContent = text; }
       } catch (error) {
-        status.textContent = 'Request failed';
+        status.textContent = mpressUI("Request failed");
         responseBody.textContent = error.message;
       }
       responsePanel.hidden = false;
@@ -1191,6 +1203,17 @@
   document.querySelectorAll('.mpress-calendar').forEach(calendar => {
     const title = calendar.querySelector('.mpress-calendar-title');
     const grid = calendar.querySelector('.mpress-calendar-grid');
+    const locale = document.documentElement.lang || undefined;
+    const updateCalendarLabels = (year, month) => {
+      title.textContent = new Intl.DateTimeFormat(locale, {month: 'long', year: 'numeric'}).format(new Date(year, month, 1));
+      const weekday = new Intl.DateTimeFormat(locale, {weekday: 'short'});
+      grid.querySelectorAll('.mpress-calendar-day-header').forEach((header, index) => {
+        header.textContent = weekday.format(new Date(2024, 0, 1 + index));
+      });
+      calendar.querySelectorAll('.mpress-calendar-nav').forEach(button => {
+        button.setAttribute('aria-label', mpressUI(button.dataset.dir === 'next' ? "Next month" : "Previous month"));
+      });
+    };
     const localDate = date => [date.getFullYear(), String(date.getMonth() + 1).padStart(2, '0'), String(date.getDate()).padStart(2, '0')].join('-');
     const markToday = () => {
       const today = localDate(new Date());
@@ -1199,7 +1222,7 @@
     const draw = (year, month) => {
       calendar.dataset.year = year;
       calendar.dataset.month = month + 1;
-      title.textContent = new Intl.DateTimeFormat(undefined, {month: 'long', year: 'numeric'}).format(new Date(year, month, 1));
+      updateCalendarLabels(year, month);
       [...grid.querySelectorAll('.mpress-calendar-cell')].forEach(cell => cell.remove());
       const first = new Date(year, month, 1);
       const offset = (first.getDay() + 6) % 7;
@@ -1225,6 +1248,7 @@
       const date = new Date(Number(calendar.dataset.year), Number(calendar.dataset.month) - 1 + (button.dataset.dir === 'next' ? 1 : -1), 1);
       draw(date.getFullYear(), date.getMonth());
     }));
+    updateCalendarLabels(Number(calendar.dataset.year), Number(calendar.dataset.month) - 1);
     markToday();
   });
 
@@ -1253,7 +1277,7 @@
       const menuID = id + '-listbox';
       const label = select.labels?.[0];
       const directLabel = label?.querySelector(':scope > span');
-      const labelText = select.getAttribute('aria-label') || directLabel?.textContent?.trim() || select.name || 'Choose an option';
+      const labelText = select.getAttribute('aria-label') || directLabel?.textContent?.trim() || select.name || mpressUI("Choose an option");
       wrapper.className = 'mpress-ddlb';
       wrapper.dataset.open = 'false';
       trigger.type = 'button';
@@ -1402,7 +1426,7 @@
   if (query) {
     const shortcut = document.querySelector('.search-shortcut');
     const searchShortcut = document.body.dataset.shortcutSearch || 'Mod+K';
-    const searchPlaceholder = document.body.dataset.searchPlaceholder || 'Search documentation';
+    const searchPlaceholder = document.body.dataset.searchPlaceholder || mpressUI("Search documentation");
     const searchMaxResults = Math.max(4, Math.min(24, Number.parseInt(document.body.dataset.searchMaxResults || '12', 10) || 12));
     const rememberRecent = document.body.dataset.searchRecent !== 'false';
     if (shortcut) {
@@ -1436,7 +1460,7 @@
       if (indexPromise) return indexPromise;
       indexPromise = fetch(document.body.dataset.search)
         .then(response => {
-          if (!response.ok) throw new Error('Search index unavailable');
+          if (!response.ok) throw new Error(mpressUI("Search index unavailable"));
           return response.json();
         })
         .then(value => index = Array.isArray(value) ? value : [])
@@ -1539,9 +1563,9 @@
       overlay = document.createElement('div');
       overlay.className = 'mpress-search-overlay';
       overlay.innerHTML = '<section class="mpress-search-dialog" id="mpress-search-dialog" role="dialog" aria-modal="true" aria-label="' + escapeHTML(searchPlaceholder) + '">' +
-        '<div class="mpress-search-query">' + searchIcon('search') + '<input type="search" autocomplete="off" spellcheck="false" placeholder="' + escapeHTML(searchPlaceholder) + '" aria-label="' + escapeHTML(searchPlaceholder) + '" role="combobox" aria-expanded="false" aria-controls="mpress-search-listbox" aria-autocomplete="list"><button class="mpress-search-close" type="button" aria-label="Close search">ESC</button></div>' +
-        '<div class="mpress-search-meta"><span class="mpress-search-count" aria-live="polite">Type to search</span><span class="mpress-search-hint"><kbd>↑</kbd><kbd>↓</kbd> navigate · <kbd>Enter</kbd> open</span></div>' +
-        '<div class="mpress-search-list" id="mpress-search-listbox" role="listbox" aria-label="Search results"></div><aside class="mpress-search-preview" aria-label="Result preview"></aside></section>';
+        '<div class="mpress-search-query">' + searchIcon('search') + '<input type="search" autocomplete="off" spellcheck="false" placeholder="' + escapeHTML(searchPlaceholder) + '" aria-label="' + escapeHTML(searchPlaceholder) + ('" role="combobox" aria-expanded="false" aria-controls="mpress-search-listbox" aria-autocomplete="list"><button class="mpress-search-close" type="button" aria-label="' + mpressUIHTML("Close search") + '">ESC</button></div>') +
+        ('<div class="mpress-search-meta"><span class="mpress-search-count" aria-live="polite">' + mpressUIHTML("Type to search") + '</span><span class="mpress-search-hint"><kbd>↑</kbd><kbd>↓</kbd> ' + mpressUIHTML("navigate ·") + " <kbd>Enter</kbd> " + mpressUIHTML("open") + "</span></div>") +
+        ('<div class="mpress-search-list" id="mpress-search-listbox" role="listbox" aria-label="' + mpressUIHTML("Search results") + '"></div><aside class="mpress-search-preview" aria-label="' + mpressUIHTML("Result preview") + '"></aside></section>');
       document.body.append(overlay);
       dialog = overlay.querySelector('.mpress-search-dialog');
       overlayInput = overlay.querySelector('.mpress-search-query input');
@@ -1612,13 +1636,13 @@
       dialog.classList.remove('has-results');
       overlayInput.setAttribute('aria-expanded', 'false');
       overlayInput.removeAttribute('aria-activedescendant');
-      resultCount.textContent = recent.length ? 'Recent searches' : 'Type to search';
+      resultCount.textContent = recent.length ? mpressUI("Recent searches") : mpressUI("Type to search");
       preview.replaceChildren();
       if (!recent.length) {
-        resultList.innerHTML = '<div class="mpress-search-empty"><strong>Search this documentation</strong><span>Find pages, headings, concepts, and code terms.</span></div>';
+        resultList.innerHTML = ('<div class="mpress-search-empty"><strong>' + mpressUIHTML("Search this documentation") + "</strong><span>" + mpressUIHTML("Find pages, headings, concepts, and code terms.") + "</span></div>");
         return;
       }
-      resultList.innerHTML = '<div class="mpress-search-recent-heading"><span>Recent</span><button class="mpress-search-clear" type="button">Clear</button></div><div class="mpress-search-recent">' + recent.map((value, position) => '<button class="mpress-search-item" type="button" data-recent="' + position + '">' + searchIcon('clock') + '<span>' + escapeHTML(value) + '</span></button>').join('') + '</div>';
+      resultList.innerHTML = ('<div class="mpress-search-recent-heading"><span>' + mpressUIHTML("Recent") + '</span><button class="mpress-search-clear" type="button">' + mpressUIHTML("Clear") + '</button></div><div class="mpress-search-recent">') + recent.map((value, position) => '<button class="mpress-search-item" type="button" data-recent="' + position + '">' + searchIcon('clock') + '<span>' + escapeHTML(value) + '</span></button>').join('') + '</div>';
       resultList.querySelector('.mpress-search-clear').addEventListener('click', () => {
         try { localStorage.removeItem(recentKey); } catch (_) {}
         renderRecent();
@@ -1630,14 +1654,14 @@
     };
     const renderResults = (queryValue, words) => {
       const resultTotal = matches.length;
-      resultCount.textContent = resultTotal ? resultTotal + ' result' + (resultTotal === 1 ? '' : 's') : 'No results';
+      resultCount.textContent = resultTotal ? mpressUI("Results: {0}", resultTotal) : mpressUI("No results");
       dialog.classList.toggle('has-results', resultTotal > 0);
       overlayInput.setAttribute('aria-expanded', String(resultTotal > 0));
       if (!resultTotal) {
         active = -1;
         overlayInput.removeAttribute('aria-activedescendant');
         preview.replaceChildren();
-        resultList.innerHTML = '<div class="mpress-search-empty"><strong>No pages found for “' + escapeHTML(queryValue) + '”</strong><span>Try fewer words or check the spelling.</span></div>';
+        resultList.innerHTML = ('<div class="mpress-search-empty"><strong>' + mpressUIHTML("No pages found for “{0}”", queryValue)) + ("</strong><span>" + mpressUIHTML("Try fewer words or check the spelling.") + "</span></div>");
         return;
       }
       resultList.innerHTML = matches.map((match, position) => {

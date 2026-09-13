@@ -5,6 +5,8 @@ import (
 	"fmt"
 	"strconv"
 	"strings"
+	"unicode"
+	"unicode/utf8"
 )
 
 // Markdown renders a parsed MPress Document into the portable Markdown
@@ -132,13 +134,9 @@ func (r *markdownRenderer) inline(index uint32, node *Node) {
 			r.output.WriteString("  \n")
 		}
 	case KindEmphasis:
-		r.output.WriteByte('*')
-		r.inlineChildren(index)
-		r.output.WriteByte('*')
+		r.emphasis(index, node, "*", "em")
 	case KindStrong:
-		r.output.WriteString("**")
-		r.inlineChildren(index)
-		r.output.WriteString("**")
+		r.emphasis(index, node, "**", "strong")
 	case KindCodeSpan:
 		content := string(r.document.Text(node.Content))
 		marker := "`"
@@ -853,4 +851,20 @@ func (r *markdownRenderer) writeIndent(indent int) {
 	if indent > 0 {
 		r.output.WriteString(strings.Repeat(" ", indent))
 	}
+}
+
+// MPD permits emphasis immediately beside a word. Markdown's delimiter
+// flanking rules cannot represent every such span (notably a link followed by
+// a Korean particle), so use portable inline HTML at those boundaries.
+func (r *markdownRenderer) emphasis(index uint32, node *Node, marker, tag string) {
+	before, _ := utf8.DecodeLastRune(r.document.Source[:node.Source.Start])
+	after, _ := utf8.DecodeRune(r.document.Source[node.Source.End:])
+	adjacent := unicode.IsLetter(before) || unicode.IsNumber(before) || unicode.IsLetter(after) || unicode.IsNumber(after)
+	open, close := marker, marker
+	if adjacent {
+		open, close = "<"+tag+">", "</"+tag+">"
+	}
+	r.output.WriteString(open)
+	r.inlineChildren(index)
+	r.output.WriteString(close)
 }

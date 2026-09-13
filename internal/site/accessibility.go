@@ -191,7 +191,7 @@ const accessibilityJS = `
     const keyboard = window.mpressKeyboard;
     if (keyboard && accessibilityShortcut !== 'None') {
       accessibilityButton.setAttribute('aria-keyshortcuts', keyboard.aria(accessibilityShortcut));
-      accessibilityButton.title = 'Accessibility settings (' + keyboard.label(accessibilityShortcut) + ')';
+      accessibilityButton.title = mpressUI("Accessibility settings ({0})", keyboard.label(accessibilityShortcut));
     }
     const defaultAccessibility = {text: 'default', siteWidth: 'full', width: null, widthUnit: 'percent', spacing: false, readable: false, contrast: false, links: false, focus: false, guide: false, motion: false, colour: 'default', bionic: false};
     const loadAccessibility = () => {
@@ -291,7 +291,7 @@ const accessibilityJS = `
       if (accessibility.bionic) addBionic(); else removeBionic();
       const active = activeAccessibilityCount();
       accessibilityButton.dataset.active = String(active > 0);
-      accessibilityButton.setAttribute('aria-label', active ? 'Accessibility settings, ' + active + ' active' : 'Accessibility settings');
+      accessibilityButton.setAttribute('aria-label', active ? mpressUI("Accessibility settings, {0} active", active) : mpressUI("Accessibility settings"));
       if (save) storage.set('mpress-accessibility', JSON.stringify(accessibility));
     };
     const accessibilitySelects = [...accessibilityPanel.querySelectorAll('[data-a11y-select]')];
@@ -336,7 +336,7 @@ const accessibilityJS = `
         widthControl.step = unit === 'fixed' ? '10' : '1';
         widthControl.value = String(width === null ? (unit === 'fixed' ? Math.min(720, available) : 70) : Math.min(width, Number(widthControl.max)));
       }
-      if (widthOutput) widthOutput.textContent = width === null ? 'Default' : width + (unit === 'fixed' ? 'px' : '%');
+      if (widthOutput) widthOutput.textContent = width === null ? mpressUI("Default") : width + (unit === 'fixed' ? 'px' : '%');
       if (widthReset) widthReset.disabled = width === null;
       widthModes.forEach(mode => {
         const checked = mode.dataset.a11yWidthMode === unit;

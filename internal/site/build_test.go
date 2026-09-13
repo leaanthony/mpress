@@ -413,7 +413,7 @@ contribution:
 	if err != nil {
 		t.Fatal(err)
 	}
-	markup := string(page)
+	markup := regexp.MustCompile(`(?s)<script[^>]*>.*?</script>`).ReplaceAllString(string(page), "")
 	for _, want := range []string{
 		`name="mpress:repository" content="https://github.com/example/docs.git"`,
 		`name="mpress:branch" content="next"`,
@@ -423,7 +423,7 @@ contribution:
 		`data-mpress-contribute`,
 		`aria-labelledby="mpress-contribute-title"`,
 		`mpress-contribute-choices-public`,
-		`Translate documentation`,
+		readerMessage("fr", "Translate documentation"),
 		`data-contribute-translate`,
 		`mpress-contribute.sh`,
 		`mpress-contribute.ps1`,
@@ -432,7 +432,7 @@ contribution:
 			t.Errorf("contribution page missing %q", want)
 		}
 	}
-	for _, hiddenFromProduction := range []string{`id="mpress-quick-edit-data"`, `data-quick-edit-bar`, `data-contribute-quick-edit`, `Fix this page`, `Continue on computer`} {
+	for _, hiddenFromProduction := range []string{`id="mpress-quick-edit-data"`, `data-quick-edit-bar`, `data-contribute-quick-edit`, readerMessage("fr", "Fix this page"), readerMessage("fr", "Continue on computer")} {
 		if strings.Contains(markup, hiddenFromProduction) {
 			t.Errorf("production contribution page exposes local quick editing %q", hiddenFromProduction)
 		}
@@ -444,8 +444,8 @@ contribution:
 	if err != nil {
 		t.Fatal(err)
 	}
-	devMarkup := string(devPage)
-	for _, localOnly := range []string{`id="mpress-quick-edit-data"`, `data-quick-edit-bar`, `data-contribute-quick-edit`, `Fix this page`} {
+	devMarkup := regexp.MustCompile(`(?s)<script type="application/json" id="mpress-ui-messages">.*?</script>`).ReplaceAllString(string(devPage), "")
+	for _, localOnly := range []string{`id="mpress-quick-edit-data"`, `data-quick-edit-bar`, `data-contribute-quick-edit`, readerMessage("fr", "Fix this page")} {
 		if !strings.Contains(devMarkup, localOnly) {
 			t.Errorf("development contribution page is missing local quick editing %q", localOnly)
 		}
@@ -477,7 +477,7 @@ contribution:
 	if strings.Contains(markup, `data-contribute-platform="`) || !strings.Contains(markup, "data-contribute-platform-label") || strings.Count(markup, "data-contribute-copy") != 1 {
 		t.Fatalf("contribution dialog should show one detected platform and one copy action")
 	}
-	for _, want := range []string{"Edit this page locally", "What this command does", "View the macOS and Linux script", "View the Windows script", "Already installed?", "data-contribute-manual"} {
+	for _, want := range []string{readerMessage("fr", "Edit this page locally"), readerMessage("fr", "What this command does"), readerMessage("fr", "View the macOS and Linux script"), readerMessage("fr", "View the Windows script"), readerMessage("fr", "Already installed?"), "data-contribute-manual"} {
 		if !strings.Contains(markup, want) {
 			t.Errorf("contribution handoff is missing %q", want)
 		}
@@ -857,7 +857,7 @@ The latest article body contains enough words to calculate its reading time.
 	if err != nil {
 		t.Fatal(err)
 	}
-	markup := string(page)
+	markup := regexp.MustCompile(`(?s)<script[^>]*>.*?</script>`).ReplaceAllString(string(page), "")
 	for _, want := range []string{
 		`class="blog-index-page"`, `class="blog-layout" data-blog-landing-style="featured"`, `Product updates from the Wails team.`, `class="blog-hero"`, `A new foundation`,
 		`src="../images/latest.png"`, `2 August 2026`, `Lea Anthony, The Wails Team`,

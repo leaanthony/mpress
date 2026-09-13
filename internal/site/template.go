@@ -133,7 +133,11 @@ func (r *pageRenderer) render() {
 	default:
 		r.renderDocs()
 	}
-	r.raw(`<footer><a class="mpress-footer-credit" href="https://m-press.me">Built with <strong>M-Press</strong></a><span>Markdown in. Beautiful docs out.</span></footer><script src="`)
+	r.raw("<footer><a class=\"mpress-footer-credit\" href=\"https://m-press.me\">")
+	r.renderFooterCredit()
+	r.raw("</a><span>")
+	r.uiText("Markdown in. Beautiful docs out.")
+	r.raw("</span></footer><script src=\"")
 	r.url(r.data.Root + "assets/mpress.js")
 	if r.data.JSVersion != "" {
 		r.raw(`?v=`)
@@ -169,7 +173,7 @@ func (r *pageRenderer) renderHead() {
 	r.attr(d.Config.Site.Title)
 	r.raw(`"><meta property="og:type" content="`)
 	if d.BlogArticle != nil {
-		r.raw(`article`)
+		r.raw("article")
 	} else {
 		r.raw(`website`)
 	}
@@ -225,6 +229,7 @@ func (r *pageRenderer) renderHead() {
 			r.raw(`">`)
 		}
 	}
+	r.renderUIMessages()
 	r.raw(`<script>document.documentElement.classList.add('js');`)
 	r.raw(themeBootstrapJS)
 	if d.Config.Accessibility.Enabled {
@@ -261,7 +266,7 @@ func (r *pageRenderer) renderHead() {
 	r.raw(`" data-search="`)
 	r.url(d.SearchURL)
 	r.raw(`" data-search-placeholder="`)
-	r.attr(d.Config.Search.Placeholder)
+	r.uiText(d.Config.Search.Placeholder)
 	r.raw(`" data-search-max-results="`)
 	r.attr(strconv.Itoa(d.Config.Search.MaxResults))
 	r.raw(`" data-search-recent="`)
@@ -270,7 +275,9 @@ func (r *pageRenderer) renderHead() {
 	r.attr(d.Config.Search.Shortcut)
 	r.raw(`" data-shortcut-accessibility="`)
 	r.attr(d.Config.Accessibility.Shortcut)
-	r.raw(`"><a class="skip" href="#content">Skip to content</a>`)
+	r.raw("\"><a class=\"skip\" href=\"#content\">")
+	r.uiText("Skip to content")
+	r.raw("</a>")
 }
 
 func isRTLLanguage(language string) bool {
@@ -299,7 +306,9 @@ func (r *pageRenderer) socialImageURL() string {
 
 func (r *pageRenderer) renderHeader() {
 	d := r.data
-	r.raw(`<header><button id="menu" type="button" aria-label="Toggle navigation" aria-expanded="false" aria-controls="mpress-sidebar">`)
+	r.raw("<header><button id=\"menu\" type=\"button\" aria-label=\"")
+	r.uiText("Toggle navigation")
+	r.raw("\" aria-expanded=\"false\" aria-controls=\"mpress-sidebar\">")
 	r.icon("menu", 20)
 	r.raw(`</button><a class="brand" href="`)
 	r.url(r.pageURL("/"))
@@ -341,7 +350,9 @@ func (r *pageRenderer) renderHeader() {
 	}
 	r.raw(`</a>`)
 	if len(site.HeaderLinks) > 0 {
-		r.raw(`<nav class="primary-links" aria-label="Primary navigation">`)
+		r.raw("<nav class=\"primary-links\" aria-label=\"")
+		r.uiText("Primary navigation")
+		r.raw("\">")
 		for _, link := range site.HeaderLinks {
 			r.raw(`<a`)
 			if link.Type == "button" {
@@ -361,23 +372,31 @@ func (r *pageRenderer) renderHeader() {
 			r.raw(` href="`)
 			r.url(r.pageURL(link.URL))
 			r.raw(`">`)
-			r.text(link.Label)
+			r.uiText(link.Label)
 			r.raw(`</a>`)
 		}
 		r.raw(`</nav>`)
 	}
 	if d.Config.Search.Enabled {
-		r.raw(`<div class="search"><span>Search</span>`)
+		r.raw("<div class=\"search\"><span>")
+		r.uiText("Search")
+		r.raw("</span>")
 		r.icon("search", 18)
-		r.raw(`<button id="search" type="button" role="combobox" aria-label="Search" aria-autocomplete="list" aria-haspopup="dialog" aria-expanded="false" aria-controls="mpress-search-dialog">`)
-		r.text(d.Config.Search.Placeholder)
+		r.raw("<button id=\"search\" type=\"button\" role=\"combobox\" aria-label=\"")
+		r.uiText("Search")
+		r.raw("\" aria-autocomplete=\"list\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"mpress-search-dialog\">")
+		r.uiText(d.Config.Search.Placeholder)
 		r.raw(`</button><kbd class="search-shortcut" aria-hidden="true">Ctrl K</kbd></div>`)
 	} else {
 		r.raw(`<span class="header-spacer" aria-hidden="true"></span>`)
 	}
-	r.raw(`<nav class="header-links" aria-label="Documentation controls">`)
+	r.raw("<nav class=\"header-links\" aria-label=\"")
+	r.uiText("Documentation controls")
+	r.raw("\">")
 	r.renderSocialLinks()
-	r.raw(`<span class="header-utility-cluster" role="group" aria-label="Site preferences">`)
+	r.raw("<span class=\"header-utility-cluster\" role=\"group\" aria-label=\"")
+	r.uiText("Site preferences")
+	r.raw("\">")
 	if d.Config.Contribution.Enabled {
 		r.raw(`<div class="header-group contribution-header">`)
 		r.renderContributionTrigger("Edit this documentation", "header-contribute")
@@ -386,7 +405,11 @@ func (r *pageRenderer) renderHeader() {
 	r.renderAccessibilityButton()
 	r.renderLanguageMenu()
 	r.renderVersionMenu()
-	r.raw(`<button id="theme" class="header-group theme-toggle" type="button" data-theme-mode="system" aria-label="Theme: System. Switch to Dark" title="Theme: System">`)
+	r.raw("<button id=\"theme\" class=\"header-group theme-toggle\" type=\"button\" data-theme-mode=\"system\" aria-label=\"")
+	r.uiText("Theme: System. Switch to Dark")
+	r.raw("\" title=\"")
+	r.uiText("Theme: System")
+	r.raw("\">")
 	r.icon("monitor", 17)
 	r.icon("moon", 17)
 	r.icon("sun", 17)
@@ -396,10 +419,14 @@ func (r *pageRenderer) renderHeader() {
 func (r *pageRenderer) renderContributionTrigger(label, className string) {
 	r.raw(`<button class="mpress-contribute-trigger `)
 	r.attr(className)
-	r.raw(`" type="button" data-mpress-contribute aria-haspopup="dialog" aria-label="Edit this documentation" title="Edit this documentation">`)
+	r.raw("\" type=\"button\" data-mpress-contribute aria-haspopup=\"dialog\" aria-label=\"")
+	r.uiText("Edit this documentation")
+	r.raw("\" title=\"")
+	r.uiText("Edit this documentation")
+	r.raw("\">")
 	r.icon("pencil", 19)
 	r.raw(`<span>`)
-	r.text(label)
+	r.uiText(label)
 	r.raw(`</span></button>`)
 }
 
@@ -438,33 +465,85 @@ func (r *pageRenderer) renderContributionDialog() {
 	}
 	r.raw(`<header><div class="mpress-contribute-heading"><span class="mpress-contribute-mark" aria-hidden="true">`)
 	r.icon("pencil", 23)
-	r.raw(`</span><div><span class="mpress-contribute-eyebrow">Contribute</span><h2 id="mpress-contribute-title">Edit this documentation</h2></div></div><button type="button" class="mpress-contribute-close" data-contribute-close aria-label="Close contribution instructions">`)
+	r.raw("</span><div><span class=\"mpress-contribute-eyebrow\">")
+	r.uiText("Contribute")
+	r.raw("</span><h2 id=\"mpress-contribute-title\">")
+	r.uiText("Edit this documentation")
+	r.raw("</h2></div></div><button type=\"button\" class=\"mpress-contribute-close\" data-contribute-close aria-label=\"")
+	r.uiText("Close contribution instructions")
+	r.raw("\">")
 	r.icon("x", 18)
 	if r.data.QuickEdit != nil {
-		r.raw(`</button></header><p class="mpress-contribute-intro" data-contribute-intro>Improve this page, translate the documentation, or open the complete project on your computer.</p><div class="mpress-contribute-choices" data-contribute-choices><button type="button" data-contribute-quick-edit>`)
+		r.raw("</button></header><p class=\"mpress-contribute-intro\" data-contribute-intro>")
+		r.uiText("Improve this page, translate the documentation, or open the complete project on your computer.")
+		r.raw("</p><div class=\"mpress-contribute-choices\" data-contribute-choices><button type=\"button\" data-contribute-quick-edit>")
 		r.icon("pencil", 18)
-		r.raw(`<span><strong>Fix this page</strong><small>Change text here while the development server is running.</small></span></button>`)
+		r.raw("<span><strong>")
+		r.uiText("Fix this page")
+		r.raw("</strong><small>")
+		r.uiText("Change text here while the development server is running.")
+		r.raw("</small></span></button>")
 	} else {
-		r.raw(`</button></header><p class="mpress-contribute-intro" data-contribute-intro>Translate the documentation or open the complete project on your computer.</p><div class="mpress-contribute-choices mpress-contribute-choices-public" data-contribute-choices>`)
+		r.raw("</button></header><p class=\"mpress-contribute-intro\" data-contribute-intro>")
+		r.uiText("Translate the documentation or open the complete project on your computer.")
+		r.raw("</p><div class=\"mpress-contribute-choices mpress-contribute-choices-public\" data-contribute-choices>")
 	}
 	r.raw(`<button type="button" data-contribute-translate>`)
 	r.icon("languages", 18)
-	r.raw(`<span><strong>Translate documentation</strong><small>Choose a language and let M-Press prepare the best available workflow.</small></span></button><button type="button" data-contribute-computer>`)
+	r.raw("<span><strong>")
+	r.uiText("Translate documentation")
+	r.raw("</strong><small>")
+	r.uiText("Choose a language and let M-Press prepare the best available workflow.")
+	r.raw("</small></span></button><button type=\"button\" data-contribute-computer>")
 	r.icon("terminal", 18)
-	r.raw(`<span><strong>Edit this page locally</strong><small>Open this exact page in a safe local contribution checkout.</small></span></button></div><div data-contribute-setup hidden><div class="mpress-contribute-platform"><strong data-contribute-platform-label>Command for macOS and Linux</strong><span>Detected automatically</span></div><div class="mpress-contribute-command" tabindex="0" aria-label="Contribution command"><code data-contribute-command></code></div><button type="button" class="mpress-contribute-copy" data-contribute-copy>`)
+	r.raw("<span><strong>")
+	r.uiText("Edit this page locally")
+	r.raw("</strong><small>")
+	r.uiText("Open this exact page in a safe local contribution checkout.")
+	r.raw("</small></span></button></div><div data-contribute-setup hidden><div class=\"mpress-contribute-platform\"><strong data-contribute-platform-label>")
+	r.uiText("Command for macOS and Linux")
+	r.raw("</strong><span>")
+	r.uiText("Detected automatically")
+	r.raw("</span></div><div class=\"mpress-contribute-command\" tabindex=\"0\" aria-label=\"")
+	r.uiText("Contribution command")
+	r.raw("\"><code data-contribute-command></code></div><button type=\"button\" class=\"mpress-contribute-copy\" data-contribute-copy>")
 	r.icon("copy", 16)
-	r.raw(`<span>Copy command</span></button><details class="mpress-contribute-explainer"><summary>What this command does</summary><ol><li>Uses M-Press if it is already installed.</li><li>Otherwise downloads the official M-Press release for this computer.</li><li>Checks out the configured documentation repository on a private local branch.</li><li>Opens this exact page in the development server.</li></ol><p><a href="`)
+	r.raw("<span>")
+	r.uiText("Copy command")
+	r.raw("</span></button><details class=\"mpress-contribute-explainer\"><summary>")
+	r.uiText("What this command does")
+	r.raw("</summary><ol><li>")
+	r.uiText("Uses M-Press if it is already installed.")
+	r.raw("</li><li>")
+	r.uiText("Otherwise downloads the official M-Press release for this computer.")
+	r.raw("</li><li>")
+	r.uiText("Checks out the configured documentation repository on a private local branch.")
+	r.raw("</li><li>")
+	r.uiText("Opens this exact page in the development server.")
+	r.raw("</li></ol><p><a href=\"")
 	r.url(r.data.Root + "mpress-contribute.sh")
-	r.raw(`" target="_blank" rel="noopener">View the macOS and Linux script</a> · <a href="`)
+	r.raw("\" target=\"_blank\" rel=\"noopener\">")
+	r.uiText("View the macOS and Linux script")
+	r.raw("</a> · <a href=\"")
 	r.url(r.data.Root + "mpress-contribute.ps1")
-	r.raw(`" target="_blank" rel="noopener">View the Windows script</a></p><div class="mpress-contribute-manual"><strong>Already installed?</strong><code data-contribute-manual></code></div></details></div><p class="mpress-contribute-status" data-contribute-status aria-live="polite">Nothing is published until you choose to submit your work.</p></dialog>`)
+	r.raw("\" target=\"_blank\" rel=\"noopener\">")
+	r.uiText("View the Windows script")
+	r.raw("</a></p><div class=\"mpress-contribute-manual\"><strong>")
+	r.uiText("Already installed?")
+	r.raw("</strong><code data-contribute-manual></code></div></details></div><p class=\"mpress-contribute-status\" data-contribute-status aria-live=\"polite\">")
+	r.uiText("Nothing is published until you choose to submit your work.")
+	r.raw("</p></dialog>")
 }
 
 func (r *pageRenderer) renderImageLightbox() {
 	if !strings.Contains(r.data.Page.HTML, "mpress-image-expand") {
 		return
 	}
-	r.raw(`<dialog id="mpress-image-lightbox" class="mpress-image-lightbox" aria-label="Expanded image"><button type="button" class="mpress-image-lightbox-close" data-image-lightbox-close aria-label="Close expanded image">`)
+	r.raw("<dialog id=\"mpress-image-lightbox\" class=\"mpress-image-lightbox\" aria-label=\"")
+	r.uiText("Expanded image")
+	r.raw("\"><button type=\"button\" class=\"mpress-image-lightbox-close\" data-image-lightbox-close aria-label=\"")
+	r.uiText("Close expanded image")
+	r.raw("\">")
 	r.icon("x", 20)
 	r.raw(`</button><div class="mpress-image-lightbox-content" data-image-lightbox-content></div></dialog>`)
 }
@@ -496,17 +575,53 @@ func (r *pageRenderer) renderQuickEditBar() {
 	if !r.data.Config.Contribution.Enabled || !r.data.Config.Contribution.QuickEdit || r.data.QuickEdit == nil || len(r.data.QuickEdit.Segments) == 0 {
 		return
 	}
-	r.raw(`<section class="mpress-quick-edit-bar" data-quick-edit-bar hidden aria-label="Quick editing controls"><div class="mpress-quick-edit-state"><span class="mpress-quick-edit-mark" aria-hidden="true">M</span><span><strong>Quick editing</strong><small data-quick-edit-status>Draft saved in this browser</small></span></div><div class="mpress-quick-edit-actions"><button type="button" data-quick-edit-add>`)
+	r.raw("<section class=\"mpress-quick-edit-bar\" data-quick-edit-bar hidden aria-label=\"")
+	r.uiText("Quick editing controls")
+	r.raw("\"><div class=\"mpress-quick-edit-state\"><span class=\"mpress-quick-edit-mark\" aria-hidden=\"true\">M</span><span><strong>")
+	r.uiText("Quick editing")
+	r.raw("</strong><small data-quick-edit-status>")
+	r.uiText("Draft saved in this browser")
+	r.raw("</small></span></div><div class=\"mpress-quick-edit-actions\"><button type=\"button\" data-quick-edit-add>")
 	r.icon("plus", 15)
-	r.raw(`<span>Add paragraph</span></button><button type="button" data-quick-edit-discard>Discard</button><button type="button" class="primary" data-quick-edit-contribute>Continue on computer</button></div></section><div class="mpress-quick-edit-format" data-quick-edit-format role="toolbar" aria-label="Text formatting" hidden><button type="button" data-quick-edit-format-command="bold" aria-label="Bold" title="Bold (Ctrl or Command B)">`)
+	r.raw("<span>")
+	r.uiText("Add paragraph")
+	r.raw("</span></button><button type=\"button\" data-quick-edit-discard>")
+	r.uiText("Discard")
+	r.raw("</button><button type=\"button\" class=\"primary\" data-quick-edit-contribute>")
+	r.uiText("Continue on computer")
+	r.raw("</button></div></section><div class=\"mpress-quick-edit-format\" data-quick-edit-format role=\"toolbar\" aria-label=\"")
+	r.uiText("Text formatting")
+	r.raw("\" hidden><button type=\"button\" data-quick-edit-format-command=\"bold\" aria-label=\"")
+	r.uiText("Bold")
+	r.raw("\" title=\"")
+	r.uiText("Bold (Ctrl or Command B)")
+	r.raw("\">")
 	r.icon("bold", 16)
-	r.raw(`</button><button type="button" data-quick-edit-format-command="italic" aria-label="Italic" title="Italic (Ctrl or Command I)">`)
+	r.raw("</button><button type=\"button\" data-quick-edit-format-command=\"italic\" aria-label=\"")
+	r.uiText("Italic")
+	r.raw("\" title=\"")
+	r.uiText("Italic (Ctrl or Command I)")
+	r.raw("\">")
 	r.icon("italic", 16)
-	r.raw(`</button><button type="button" data-quick-edit-format-command="code" aria-label="Inline code" title="Inline code">`)
+	r.raw("</button><button type=\"button\" data-quick-edit-format-command=\"code\" aria-label=\"")
+	r.uiText("Inline code")
+	r.raw("\" title=\"")
+	r.uiText("Inline code")
+	r.raw("\">")
 	r.icon("code", 16)
-	r.raw(`</button><button type="button" data-quick-edit-format-command="link" aria-label="Add link" title="Add link (Ctrl or Command K)">`)
+	r.raw("</button><button type=\"button\" data-quick-edit-format-command=\"link\" aria-label=\"")
+	r.uiText("Add link")
+	r.raw("\" title=\"")
+	r.uiText("Add link (Ctrl or Command K)")
+	r.raw("\">")
 	r.icon("link", 16)
-	r.raw(`</button><form class="mpress-quick-edit-link-form" data-quick-edit-link-form hidden><label for="mpress-quick-edit-link">Link address</label><input id="mpress-quick-edit-link" data-quick-edit-link-input type="text" inputmode="url" autocomplete="url" placeholder="https://example.com"><button type="submit">Apply</button><button type="button" data-quick-edit-link-cancel aria-label="Cancel link">`)
+	r.raw("</button><form class=\"mpress-quick-edit-link-form\" data-quick-edit-link-form hidden><label for=\"mpress-quick-edit-link\">")
+	r.uiText("Link address")
+	r.raw("</label><input id=\"mpress-quick-edit-link\" data-quick-edit-link-input type=\"text\" inputmode=\"url\" autocomplete=\"url\" placeholder=\"https://example.com\"><button type=\"submit\">")
+	r.uiText("Apply")
+	r.raw("</button><button type=\"button\" data-quick-edit-link-cancel aria-label=\"")
+	r.uiText("Cancel link")
+	r.raw("\">")
 	r.icon("x", 15)
 	r.raw(`</button></form></div>`)
 }
@@ -515,7 +630,11 @@ func (r *pageRenderer) renderAccessibilityButton() {
 	if !r.data.Config.Accessibility.Enabled {
 		return
 	}
-	r.raw(`<div class="header-group utility-select accessibility-select"><button id="accessibility" class="utility-menu-trigger" type="button" popovertarget="mpress-accessibility-panel" aria-label="Accessibility settings" aria-haspopup="dialog" aria-expanded="false" title="Accessibility settings">`)
+	r.raw("<div class=\"header-group utility-select accessibility-select\"><button id=\"accessibility\" class=\"utility-menu-trigger\" type=\"button\" popovertarget=\"mpress-accessibility-panel\" aria-label=\"")
+	r.uiText("Accessibility settings")
+	r.raw("\" aria-haspopup=\"dialog\" aria-expanded=\"false\" title=\"")
+	r.uiText("Accessibility settings")
+	r.raw("\">")
 	r.raw(icons.Accessibility(19))
 	r.raw(`</button></div>`)
 }
@@ -524,29 +643,103 @@ func (r *pageRenderer) renderAccessibilityPanel() {
 	if !r.data.Config.Accessibility.Enabled {
 		return
 	}
-	r.raw(`<section id="mpress-accessibility-panel" class="utility-menu-panel mpress-accessibility-panel" popover role="dialog" aria-labelledby="mpress-accessibility-title" data-utility-panel><header class="mpress-accessibility-header"><div><h2 id="mpress-accessibility-title">Accessibility</h2><p>Adjust the site to make it easier to read and navigate.</p></div><button class="mpress-accessibility-close" type="button" data-a11y-close aria-label="Close accessibility settings">`)
+	r.raw("<section id=\"mpress-accessibility-panel\" class=\"utility-menu-panel mpress-accessibility-panel\" popover role=\"dialog\" aria-labelledby=\"mpress-accessibility-title\" data-utility-panel><header class=\"mpress-accessibility-header\"><div><h2 id=\"mpress-accessibility-title\">")
+	r.uiText("Accessibility")
+	r.raw("</h2><p>")
+	r.uiText("Adjust the site to make it easier to read and navigate.")
+	r.raw("</p></div><button class=\"mpress-accessibility-close\" type=\"button\" data-a11y-close aria-label=\"")
+	r.uiText("Close accessibility settings")
+	r.raw("\">")
 	r.icon("x", 18)
-	r.raw(`</button></header><div class="mpress-accessibility-tabs" role="tablist" aria-label="Accessibility categories"><button id="mpress-a11y-tab-reading" type="button" role="tab" aria-selected="true" aria-controls="mpress-a11y-panel-reading" data-a11y-tab="reading">Reading</button><button id="mpress-a11y-tab-focus" type="button" role="tab" aria-selected="false" aria-controls="mpress-a11y-panel-focus" data-a11y-tab="focus" tabindex="-1">Focus</button><button id="mpress-a11y-tab-vision" type="button" role="tab" aria-selected="false" aria-controls="mpress-a11y-panel-vision" data-a11y-tab="vision" tabindex="-1">Vision</button></div><div class="mpress-accessibility-body"><section id="mpress-a11y-panel-reading" class="mpress-accessibility-section" role="tabpanel" aria-labelledby="mpress-a11y-tab-reading" data-a11y-tabpanel="reading"><h3>Reading</h3><p>Change how text is shown in the main content.</p><div class="mpress-a11y-choice" role="radiogroup" aria-label="Text size"><button type="button" role="radio" data-a11y-choice="text" data-value="default">Default</button><button type="button" role="radio" data-a11y-choice="text" data-value="large">Large</button><button type="button" role="radio" data-a11y-choice="text" data-value="larger">Larger</button></div><div class="mpress-a11y-width"><div class="mpress-a11y-width-heading"><span>Site layout</span></div><div class="mpress-a11y-width-mode" role="radiogroup" aria-label="Site layout"><button type="button" role="radio" data-a11y-choice="siteWidth" data-value="full">Full width</button><button type="button" role="radio" data-a11y-choice="siteWidth" data-value="fixed">Fixed width</button></div><small>Choose whether navigation uses the full browser width.</small></div><div class="mpress-a11y-width"><div class="mpress-a11y-width-heading"><label for="mpress-a11y-width">Reading column</label><output for="mpress-a11y-width" data-a11y-width-output>Default</output></div><div class="mpress-a11y-width-mode" role="radiogroup" aria-label="Reading column unit"><button type="button" role="radio" aria-checked="true" data-a11y-width-mode="percent">Relative</button><button type="button" role="radio" aria-checked="false" data-a11y-width-mode="fixed">Fixed</button></div><input id="mpress-a11y-width" type="range" min="40" max="100" step="1" value="70" data-a11y-width aria-describedby="mpress-a11y-width-help"><div class="mpress-a11y-width-footer"><small id="mpress-a11y-width-help">Change the width of the article, not the site shell.</small><button type="button" data-a11y-width-reset disabled>Reset</button></div></div>`)
+	r.raw("</button></header><div class=\"mpress-accessibility-tabs\" role=\"tablist\" aria-label=\"")
+	r.uiText("Accessibility categories")
+	r.raw("\"><button id=\"mpress-a11y-tab-reading\" type=\"button\" role=\"tab\" aria-selected=\"true\" aria-controls=\"mpress-a11y-panel-reading\" data-a11y-tab=\"reading\">")
+	r.uiText("Reading")
+	r.raw("</button><button id=\"mpress-a11y-tab-focus\" type=\"button\" role=\"tab\" aria-selected=\"false\" aria-controls=\"mpress-a11y-panel-focus\" data-a11y-tab=\"focus\" tabindex=\"-1\">")
+	r.uiText("Focus")
+	r.raw("</button><button id=\"mpress-a11y-tab-vision\" type=\"button\" role=\"tab\" aria-selected=\"false\" aria-controls=\"mpress-a11y-panel-vision\" data-a11y-tab=\"vision\" tabindex=\"-1\">")
+	r.uiText("Vision")
+	r.raw("</button></div><div class=\"mpress-accessibility-body\"><section id=\"mpress-a11y-panel-reading\" class=\"mpress-accessibility-section\" role=\"tabpanel\" aria-labelledby=\"mpress-a11y-tab-reading\" data-a11y-tabpanel=\"reading\"><h3>")
+	r.uiText("Reading")
+	r.raw("</h3><p>")
+	r.uiText("Change how text is shown in the main content.")
+	r.raw("</p><div class=\"mpress-a11y-choice\" role=\"radiogroup\" aria-label=\"")
+	r.uiText("Text size")
+	r.raw("\"><button type=\"button\" role=\"radio\" data-a11y-choice=\"text\" data-value=\"default\">")
+	r.uiText("Default")
+	r.raw("</button><button type=\"button\" role=\"radio\" data-a11y-choice=\"text\" data-value=\"large\">")
+	r.uiText("Large")
+	r.raw("</button><button type=\"button\" role=\"radio\" data-a11y-choice=\"text\" data-value=\"larger\">")
+	r.uiText("Larger")
+	r.raw("</button></div><div class=\"mpress-a11y-width\"><div class=\"mpress-a11y-width-heading\"><span>")
+	r.uiText("Site layout")
+	r.raw("</span></div><div class=\"mpress-a11y-width-mode\" role=\"radiogroup\" aria-label=\"")
+	r.uiText("Site layout")
+	r.raw("\"><button type=\"button\" role=\"radio\" data-a11y-choice=\"siteWidth\" data-value=\"full\">")
+	r.uiText("Full width")
+	r.raw("</button><button type=\"button\" role=\"radio\" data-a11y-choice=\"siteWidth\" data-value=\"fixed\">")
+	r.uiText("Fixed width")
+	r.raw("</button></div><small>")
+	r.uiText("Choose whether navigation uses the full browser width.")
+	r.raw("</small></div><div class=\"mpress-a11y-width\"><div class=\"mpress-a11y-width-heading\"><label for=\"mpress-a11y-width\">")
+	r.uiText("Reading column")
+	r.raw("</label><output for=\"mpress-a11y-width\" data-a11y-width-output>")
+	r.uiText("Default")
+	r.raw("</output></div><div class=\"mpress-a11y-width-mode\" role=\"radiogroup\" aria-label=\"")
+	r.uiText("Reading column unit")
+	r.raw("\"><button type=\"button\" role=\"radio\" aria-checked=\"true\" data-a11y-width-mode=\"percent\">")
+	r.uiText("Relative")
+	r.raw("</button><button type=\"button\" role=\"radio\" aria-checked=\"false\" data-a11y-width-mode=\"fixed\">")
+	r.uiText("Fixed")
+	r.raw("</button></div><input id=\"mpress-a11y-width\" type=\"range\" min=\"40\" max=\"100\" step=\"1\" value=\"70\" data-a11y-width aria-describedby=\"mpress-a11y-width-help\"><div class=\"mpress-a11y-width-footer\"><small id=\"mpress-a11y-width-help\">")
+	r.uiText("Change the width of the article, not the site shell.")
+	r.raw("</small><button type=\"button\" data-a11y-width-reset disabled>")
+	r.uiText("Reset")
+	r.raw("</button></div></div>")
 	r.renderAccessibilityToggle("readable", "Readable font", "Use a simple, widely spaced font stack.")
 	r.renderAccessibilityToggle("spacing", "Relaxed spacing", "Add more line, word, and letter space.")
 	r.renderAccessibilityToggle("bionic", "Bionic reading", "Emphasise the start of longer words.")
-	r.raw(`</section><section id="mpress-a11y-panel-focus" class="mpress-accessibility-section" role="tabpanel" aria-labelledby="mpress-a11y-tab-focus" data-a11y-tabpanel="focus" hidden><h3>Focus and attention</h3><p>Reduce distraction and keep your place while reading.</p>`)
+	r.raw("</section><section id=\"mpress-a11y-panel-focus\" class=\"mpress-accessibility-section\" role=\"tabpanel\" aria-labelledby=\"mpress-a11y-tab-focus\" data-a11y-tabpanel=\"focus\" hidden><h3>")
+	r.uiText("Focus and attention")
+	r.raw("</h3><p>")
+	r.uiText("Reduce distraction and keep your place while reading.")
+	r.raw("</p>")
 	r.renderAccessibilityToggle("focus", "Focus mode", "Dim navigation until you point to it.")
 	r.renderAccessibilityToggle("guide", "Reading guide", "Follow the pointer with a horizontal guide.")
 	r.renderAccessibilityToggle("motion", "Reduce motion", "Stop non-essential animation and smooth scrolling.")
-	r.raw(`</section><section id="mpress-a11y-panel-vision" class="mpress-accessibility-section" role="tabpanel" aria-labelledby="mpress-a11y-tab-vision" data-a11y-tabpanel="vision" hidden><h3>Vision and colour</h3><p>Increase contrast or use a more distinct colour palette.</p><div class="mpress-a11y-field"><span id="mpress-a11y-colour-label">Colour profile</span><div class="mpress-a11y-select" data-a11y-select="colour"><button class="mpress-a11y-select-trigger" type="button" aria-haspopup="listbox" aria-expanded="false" aria-labelledby="mpress-a11y-colour-label mpress-a11y-colour-value"><span id="mpress-a11y-colour-value" data-a11y-select-value>Site colours</span>`)
+	r.raw("</section><section id=\"mpress-a11y-panel-vision\" class=\"mpress-accessibility-section\" role=\"tabpanel\" aria-labelledby=\"mpress-a11y-tab-vision\" data-a11y-tabpanel=\"vision\" hidden><h3>")
+	r.uiText("Vision and colour")
+	r.raw("</h3><p>")
+	r.uiText("Increase contrast or use a more distinct colour palette.")
+	r.raw("</p><div class=\"mpress-a11y-field\"><span id=\"mpress-a11y-colour-label\">")
+	r.uiText("Colour profile")
+	r.raw("</span><div class=\"mpress-a11y-select\" data-a11y-select=\"colour\"><button class=\"mpress-a11y-select-trigger\" type=\"button\" aria-haspopup=\"listbox\" aria-expanded=\"false\" aria-labelledby=\"mpress-a11y-colour-label mpress-a11y-colour-value\"><span id=\"mpress-a11y-colour-value\" data-a11y-select-value>")
+	r.uiText("Site colours")
+	r.raw("</span>")
 	r.icon("chevron-down", 15)
-	r.raw(`</button><div class="mpress-a11y-options" role="listbox" aria-labelledby="mpress-a11y-colour-label" hidden><button class="mpress-a11y-option" type="button" role="option" aria-selected="true" data-value="default">Site colours</button><button class="mpress-a11y-option" type="button" role="option" aria-selected="false" data-value="red-green" tabindex="-1">Red and green distinction</button><button class="mpress-a11y-option" type="button" role="option" aria-selected="false" data-value="blue-yellow" tabindex="-1">Blue and yellow distinction</button><button class="mpress-a11y-option" type="button" role="option" aria-selected="false" data-value="low" tabindex="-1">Low saturation</button></div></div></div>`)
+	r.raw("</button><div class=\"mpress-a11y-options\" role=\"listbox\" aria-labelledby=\"mpress-a11y-colour-label\" hidden><button class=\"mpress-a11y-option\" type=\"button\" role=\"option\" aria-selected=\"true\" data-value=\"default\">")
+	r.uiText("Site colours")
+	r.raw("</button><button class=\"mpress-a11y-option\" type=\"button\" role=\"option\" aria-selected=\"false\" data-value=\"red-green\" tabindex=\"-1\">")
+	r.uiText("Red and green distinction")
+	r.raw("</button><button class=\"mpress-a11y-option\" type=\"button\" role=\"option\" aria-selected=\"false\" data-value=\"blue-yellow\" tabindex=\"-1\">")
+	r.uiText("Blue and yellow distinction")
+	r.raw("</button><button class=\"mpress-a11y-option\" type=\"button\" role=\"option\" aria-selected=\"false\" data-value=\"low\" tabindex=\"-1\">")
+	r.uiText("Low saturation")
+	r.raw("</button></div></div></div>")
 	r.renderAccessibilityToggle("contrast", "High contrast", "Increase text and border contrast.")
 	r.renderAccessibilityToggle("links", "Underline links", "Show links with more than colour.")
-	r.raw(`</section></div><footer class="mpress-accessibility-footer"><small>Saved only in this browser.</small><button class="mpress-accessibility-reset" type="button" data-a11y-reset>Reset settings</button></footer></section>`)
+	r.raw("</section></div><footer class=\"mpress-accessibility-footer\"><small>")
+	r.uiText("Saved only in this browser.")
+	r.raw("</small><button class=\"mpress-accessibility-reset\" type=\"button\" data-a11y-reset>")
+	r.uiText("Reset settings")
+	r.raw("</button></footer></section>")
 }
 
 func (r *pageRenderer) renderAccessibilityToggle(name, label, description string) {
 	r.raw(`<label class="mpress-a11y-toggle"><span><strong>`)
-	r.text(label)
+	r.uiText(label)
 	r.raw(`</strong><small>`)
-	r.text(description)
+	r.uiText(description)
 	r.raw(`</small></span><input type="checkbox" data-a11y-toggle="`)
 	r.attr(name)
 	r.raw(`"></label>`)
@@ -558,12 +751,14 @@ func (r *pageRenderer) renderVersionMenu() {
 	if len(r.data.VersionLinks) == 0 {
 		return
 	}
-	r.raw(`<div class="header-group utility-select utility-menu version-select"><button class="utility-menu-trigger" type="button" popovertarget="mpress-version-menu" aria-label="Select version" aria-haspopup="menu" aria-expanded="false">`)
+	r.raw("<div class=\"header-group utility-select utility-menu version-select\"><button class=\"utility-menu-trigger\" type=\"button\" popovertarget=\"mpress-version-menu\" aria-label=\"")
+	r.uiText("Select version")
+	r.raw("\" aria-haspopup=\"menu\" aria-expanded=\"false\">")
 	r.icon("git-branch", 19)
 	r.raw(`<span class="utility-menu-current">`)
 	for _, version := range r.data.VersionLinks {
 		if version.Current {
-			r.text(version.Label)
+			r.renderVersionLabel(version.Label)
 		}
 	}
 	r.raw(`</span>`)
@@ -577,10 +772,12 @@ func (r *pageRenderer) renderVersionMenu() {
 			r.raw(` aria-current="true"`)
 		}
 		r.raw(`><span class="utility-version-label">`)
-		r.text(version.Label)
+		r.renderVersionLabel(version.Label)
 		r.raw(`</span>`)
 		if version.Current {
-			r.raw(`<small>Current documentation</small>`)
+			r.raw("<small>")
+			r.uiText("Current documentation")
+			r.raw("</small>")
 		}
 		r.raw(`</a></li>`)
 	}
@@ -609,9 +806,9 @@ func (r *pageRenderer) socialLink(href, label, iconName string, starlight bool) 
 	r.raw(`<a class="social-link" href="`)
 	r.url(href)
 	r.raw(`" aria-label="`)
-	r.attr(label)
+	r.uiText(label)
 	r.raw(`" title="`)
-	r.attr(label)
+	r.uiText(label)
 	r.raw(`">`)
 	if starlight {
 		r.starlightIcon(iconName, 16)
@@ -631,7 +828,9 @@ func (r *pageRenderer) renderLanguageMenu() {
 			r.text(language.Label)
 		}
 	}
-	r.raw(`" aria-haspopup="menu" aria-expanded="false" title="Change language">`)
+	r.raw("\" aria-haspopup=\"menu\" aria-expanded=\"false\" title=\"")
+	r.uiText("Change language")
+	r.raw("\">")
 	r.icon("languages", 19)
 	r.icon("chevron-down", 12)
 	r.raw(`</button><menu id="mpress-language-menu" class="utility-menu-panel utility-language-menu" popover data-utility-menu>`)
@@ -664,9 +863,17 @@ func (r *pageRenderer) renderBlogIndex() {
 	}
 	r.raw(`<div class="blog-layout" data-blog-landing-style="`)
 	r.attr(landingStyle)
-	r.raw(`"><aside class="blog-sidebar" aria-label="Blog archive"><div class="blog-sidebar-inner"><span class="blog-sidebar-label">Browse</span><button class="blog-filter active" type="button" data-blog-filter="" aria-pressed="true">All articles</button>`)
+	r.raw("\"><aside class=\"blog-sidebar\" aria-label=\"")
+	r.uiText("Blog archive")
+	r.raw("\"><div class=\"blog-sidebar-inner\"><span class=\"blog-sidebar-label\">")
+	r.uiText("Browse")
+	r.raw("</span><button class=\"blog-filter active\" type=\"button\" data-blog-filter=\"\" aria-pressed=\"true\">")
+	r.uiText("All articles")
+	r.raw("</button>")
 	if len(blog.Tags) > 0 {
-		r.raw(`<span class="blog-sidebar-label">Topics</span>`)
+		r.raw("<span class=\"blog-sidebar-label\">")
+		r.uiText("Topics")
+		r.raw("</span>")
 		for _, tag := range blog.Tags {
 			r.raw(`<button class="blog-filter" type="button" data-blog-filter="`)
 			r.attr(tag)
@@ -680,9 +887,13 @@ func (r *pageRenderer) renderBlogIndex() {
 		r.url(r.resourceURL(d.Config.Social.RSS))
 		r.raw(`">`)
 		r.icon("rss", 15)
-		r.raw(`<span>RSS feed</span></a>`)
+		r.raw("<span>")
+		r.uiText("RSS feed")
+		r.raw("</span></a>")
 	}
-	r.raw(`</div></aside><main class="blog-main" id="content"><header class="blog-intro"><span class="blog-kicker">News and releases</span><h1>`)
+	r.raw("</div></aside><main class=\"blog-main\" id=\"content\"><header class=\"blog-intro\"><span class=\"blog-kicker\">")
+	r.uiText("News and releases")
+	r.raw("</span><h1>")
 	r.text(d.Page.Title)
 	r.raw(`</h1>`)
 	tagline := strings.TrimSpace(d.Config.Blog.Tagline)
@@ -706,13 +917,12 @@ func (r *pageRenderer) renderBlogIndex() {
 	}
 	if len(archivePosts) > 0 {
 		r.raw(`<section class="blog-archive" aria-labelledby="blog-archive-heading"><div class="blog-archive-heading"><h2 id="blog-archive-heading">`)
-		r.text(archiveHeading)
+		r.uiText(archiveHeading)
 		r.raw(`</h2><span>`)
-		r.raw(strconv.Itoa(len(archivePosts)))
 		if len(archivePosts) == 1 {
-			r.raw(` article`)
+			r.uiTextf("{0} article", len(archivePosts))
 		} else {
-			r.raw(` articles`)
+			r.uiTextf("{0} articles", len(archivePosts))
 		}
 		r.raw(`</span></div><div class="blog-grid">`)
 		for _, post := range archivePosts {
@@ -791,7 +1001,9 @@ func (r *pageRenderer) renderBlogHero(post blogPostData) {
 		r.icon("newspaper", 42)
 		r.raw(`</span>`)
 	}
-	r.raw(`</a><div class="blog-hero-copy"><div class="blog-hero-label-row"><span class="blog-featured-label">Latest</span>`)
+	r.raw("</a><div class=\"blog-hero-copy\"><div class=\"blog-hero-label-row\"><span class=\"blog-featured-label\">")
+	r.uiText("Latest article")
+	r.raw("</span>")
 	r.renderBlogTags(post.Tags)
 	r.raw(`</div><h2><a href="`)
 	r.url(r.pageURL(post.Route))
@@ -806,7 +1018,9 @@ func (r *pageRenderer) renderBlogHero(post blogPostData) {
 	r.renderBlogMeta(post, true)
 	r.raw(`<a class="blog-read" href="`)
 	r.url(r.pageURL(post.Route))
-	r.raw(`"><span>Read article</span>`)
+	r.raw("\"><span>")
+	r.uiText("Read article")
+	r.raw("</span>")
 	r.icon("arrow-right", 16)
 	r.raw(`</a></div></article>`)
 }
@@ -866,7 +1080,7 @@ func (r *pageRenderer) renderBlogMeta(post blogPostData, expanded bool) {
 		r.raw(`<time datetime="`)
 		r.attr(post.Date)
 		r.raw(`">`)
-		r.text(post.DateDisplay)
+		r.renderBlogDate(post)
 		r.raw(`</time>`)
 	}
 	if expanded && post.Author != "" {
@@ -875,11 +1089,10 @@ func (r *pageRenderer) renderBlogMeta(post blogPostData, expanded bool) {
 		r.raw(`</span>`)
 	}
 	r.raw(`<span>`)
-	r.raw(strconv.Itoa(post.ReadingTime))
 	if expanded {
-		r.raw(` min read`)
+		r.uiTextf("{0} min read", post.ReadingTime)
 	} else {
-		r.raw(` min`)
+		r.uiTextf("{0} min", post.ReadingTime)
 	}
 	r.raw(`</span></div>`)
 }
@@ -887,11 +1100,15 @@ func (r *pageRenderer) renderBlogMeta(post blogPostData, expanded bool) {
 func (r *pageRenderer) renderBlogArticle() {
 	d := r.data
 	article := d.BlogArticle
-	r.raw(`<div class="blog-layout blog-article-layout"><aside class="blog-sidebar" aria-label="Blog archive"><div class="blog-sidebar-inner"><a class="blog-archive-home" href="`)
+	r.raw("<div class=\"blog-layout blog-article-layout\"><aside class=\"blog-sidebar\" aria-label=\"")
+	r.uiText("Blog archive")
+	r.raw("\"><div class=\"blog-sidebar-inner\"><a class=\"blog-archive-home\" href=\"")
 	r.url(r.pageURL(article.IndexRoute))
 	r.raw(`">`)
 	r.icon("arrow-left", 14)
-	r.raw(`<span>All articles</span></a>`)
+	r.raw("<span>")
+	r.uiText("All articles")
+	r.raw("</span></a>")
 	for _, period := range article.Periods {
 		r.raw(`<section class="blog-period"><span class="blog-sidebar-label">`)
 		r.text(period.Label)
@@ -900,7 +1117,8 @@ func (r *pageRenderer) renderBlogArticle() {
 			active := post.Route == d.Page.URLPath
 			r.raw(`<a class="blog-article-link`)
 			if active {
-				r.raw(` active`)
+				r.raw(" ")
+				r.raw("active")
 			}
 			r.raw(`"`)
 			if active {
@@ -915,7 +1133,7 @@ func (r *pageRenderer) renderBlogArticle() {
 				r.raw(`<time datetime="`)
 				r.attr(post.Date)
 				r.raw(`">`)
-				r.text(post.DateDisplay)
+				r.renderBlogDate(post)
 				r.raw(`</time>`)
 			}
 			r.raw(`</a>`)
@@ -924,7 +1142,9 @@ func (r *pageRenderer) renderBlogArticle() {
 	}
 	r.raw(`</div></aside><main class="blog-article-main" id="content"><article class="blog-article"><header class="blog-article-header"><a class="blog-article-kicker" href="`)
 	r.url(r.pageURL(article.IndexRoute))
-	r.raw(`">Blog</a><h1>`)
+	r.raw("\">")
+	r.uiText("Blog")
+	r.raw("</a><h1>")
 	r.text(d.Page.Title)
 	r.raw(`</h1>`)
 	if d.Page.Description != "" {
@@ -998,14 +1218,22 @@ func (r *pageRenderer) renderLanding() {
 }
 
 func (r *pageRenderer) renderNotFound() {
-	r.raw(`<main class="mpress-not-found" id="content"><div><span class="mpress-not-found-code">404</span><h1>Page not found</h1><p>The page you requested does not exist or may have moved.</p><a class="mpress-button mpress-button-primary" href="`)
+	r.raw("<main class=\"mpress-not-found\" id=\"content\"><div><span class=\"mpress-not-found-code\">404</span><h1>")
+	r.uiText("Page not found")
+	r.raw("</h1><p>")
+	r.uiText("The page you requested does not exist or may have moved.")
+	r.raw("</p><a class=\"mpress-button mpress-button-primary\" href=\"")
 	r.url(r.pageURL("/"))
-	r.raw(`">Go to documentation home</a></div></main>`)
+	r.raw("\">")
+	r.uiText("Go to documentation home")
+	r.raw("</a></div></main>")
 }
 
 func (r *pageRenderer) renderDocs() {
 	d := r.data
-	r.raw(`<div class="layout"><aside class="sidebar" id="mpress-sidebar" tabindex="-1"><nav aria-label="Documentation sidebar">`)
+	r.raw("<div class=\"layout\"><aside class=\"sidebar\" id=\"mpress-sidebar\" tabindex=\"-1\"><nav aria-label=\"")
+	r.uiText("Documentation sidebar")
+	r.raw("\">")
 	if d.CompiledNav != nil {
 		d.CompiledNav.render(r.out, d.Root, d.Page.URLPath)
 	} else {
@@ -1026,16 +1254,20 @@ func (r *pageRenderer) renderDocs() {
 		r.raw(`<div class="page-meta">`)
 		if d.Config.Social.EditURL != "" && !d.Page.Meta.Generated {
 			r.raw(`<a href="`)
-			r.url(pageEditURL(d.Config.Social.EditURL, pageEditSource(d.Page)))
+			r.url(pageEditURL(d.Config.Social.EditURL, pageEditSource(d.Page, d.Config.Site.DefaultLanguage)))
 			r.raw(`">`)
 			r.icon("pencil", 15)
-			r.raw(`<span>Edit page</span></a>`)
+			r.raw("<span>")
+			r.uiText("Edit page")
+			r.raw("</span></a>")
 		}
 		if !d.Page.LastModified.IsZero() {
-			r.raw(`<p>Last updated: <time datetime="`)
+			r.raw("<p>")
+			r.uiText("Last updated:")
+			r.raw(" <time datetime=\"")
 			r.attr(isoTime(d.Page.LastModified))
 			r.raw(`">`)
-			r.text(displayDate(d.Page.LastModified))
+			r.text(r.readerDate(d.Page.LastModified))
 			r.raw(`</time></p>`)
 		}
 		r.raw(`</div>`)
@@ -1046,7 +1278,9 @@ func (r *pageRenderer) renderDocs() {
 		r.url(r.pageURL(d.Prev.Link))
 		r.raw(`"><span class="pager-direction">`)
 		r.icon("arrow-left", 16)
-		r.raw(`<span>Previous</span></span><strong>`)
+		r.raw("<span>")
+		r.uiText("Previous")
+		r.raw("</span></span><strong>")
 		r.text(d.Prev.Label)
 		r.raw(`</strong></a>`)
 	} else {
@@ -1055,15 +1289,21 @@ func (r *pageRenderer) renderDocs() {
 	if d.Next != nil {
 		r.raw(`<a rel="next" href="`)
 		r.url(r.pageURL(d.Next.Link))
-		r.raw(`"><span class="pager-direction"><span>Next</span>`)
+		r.raw("\"><span class=\"pager-direction\"><span>")
+		r.uiText("Next")
+		r.raw("</span>")
 		r.icon("arrow-right", 16)
 		r.raw(`</span><strong>`)
 		r.text(d.Next.Label)
 		r.raw(`</strong></a>`)
 	}
-	r.raw(`</nav></main><aside class="toc"><strong><span>On this page</span><span class="toc-mobile-icon">`)
+	r.raw("</nav></main><aside class=\"toc\"><strong><span>")
+	r.uiText("On this page")
+	r.raw("</span><span class=\"toc-mobile-icon\">")
 	r.icon("chevron-right", 14)
-	r.raw(`</span></strong><a class="toc-level-1" href="#content">Overview</a>`)
+	r.raw("</span></strong><a class=\"toc-level-1\" href=\"#content\">")
+	r.uiText("Overview")
+	r.raw("</a>")
 	for _, heading := range d.Page.Headings {
 		if heading.Level != 2 && heading.Level != 3 {
 			continue
@@ -1107,7 +1347,7 @@ func (r *pageRenderer) renderNav(items []navigation.Item, current string) {
 			active := strings.Trim(item.Link, "/") == current
 			r.raw(`<a class="`)
 			if active {
-				r.raw(`active`)
+				r.raw("active")
 			}
 			r.raw(`"`)
 			if active {
@@ -1165,15 +1405,18 @@ func pageEditURL(base, source string) string {
 	return strings.TrimRight(base, "/") + "/" + strings.TrimLeft(source, "/")
 }
 
-func pageEditSource(page *content.Page) string {
+func pageEditSource(page *content.Page, defaultLanguage string) string {
 	if page == nil {
 		return ""
 	}
 	path := filepath.ToSlash(filepath.Clean(strings.TrimSpace(page.Meta.SourcePath)))
-	if path != "." && path != ".." && !strings.HasPrefix(path, "../") && !strings.HasPrefix(path, "/") {
-		return path
+	if path == "." || path == ".." || strings.HasPrefix(path, "../") || strings.HasPrefix(path, "/") {
+		path = page.SourcePath
 	}
-	return page.SourcePath
+	if page.Language != "" && page.Language != defaultLanguage && !strings.HasPrefix(path, page.Language+"/") {
+		path = page.Language + "/" + path
+	}
+	return path
 }
 
 func isoTime(value time.Time) string { return value.UTC().Format(time.RFC3339) }

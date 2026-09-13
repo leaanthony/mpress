@@ -13,6 +13,19 @@ M-Press does not charge for the translation workflow, language routing,
 freshness tracking, glossary checks, or review state. The selected model
 provider may charge for API usage.
 
+The reader interface is included in the CLI for English, French, German,
+Portuguese, Russian, Japanese, Korean, Indonesian, Simplified Chinese, and
+Traditional Chinese. Search, accessibility settings, contribution dialogs,
+and navigation controls use the page language without a network request.
+Custom labels remain as written when they do not match a built-in message.
+
+Links in a translated page that point to default-language documentation are
+rendered as links to the corresponding translated page when it exists. Links
+to headings use the matching translated heading. Keep heading order and levels
+aligned with the source so these links remain correct. External links, code
+examples, and explicit links to another language retain their destinations.
+The edit-page link opens the source file for the current language.
+
 ## Add target languages
 
 Add every published language to `mpress.yaml`:
