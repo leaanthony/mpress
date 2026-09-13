@@ -11,14 +11,14 @@ import (
 	"testing"
 )
 
-func TestBuildReplacesCachedPreCJKEmphasisHTML(t *testing.T) {
+func TestBuildReplacesCachedPreLocalizationHTML(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, "mpress.yaml", "site:\n  languages: [en, zh-cn]\nbuild:\n  contentDir: content\n")
-	source := "# Guide\n\n从*[Go](https://go.dev/)*下载。\n"
+	source := "# Guide\n\n从*[Go](https://go.dev/)*下载。\n\n```d2\n来源 -> 目标\n```\n"
 	writeFixture(t, root, "content/zh-cn/guide.mpd", source)
 	writeFixture(t, root, "content/index.md", "# Home\n")
 	cache := newParseCache(root)
-	legacy := sha256.Sum256([]byte("mpress-parse-v19\x00zh-cn\x00guide.mpd\x00" + source))
+	legacy := sha256.Sum256([]byte("mpress-parse-v20\x00zh-cn\x00guide.mpd\x00" + source))
 	stale, err := json.Marshal(parseCacheEntry{Page: &content.Page{
 		Language: "zh-cn", URLPath: "guide", Title: "Guide", SourcePath: "guide.mpd",
 		HTML: `<p>从**<a href="https://go.dev/">Go</a>**下载。</p>`,
@@ -38,6 +38,9 @@ func TestBuildReplacesCachedPreCJKEmphasisHTML(t *testing.T) {
 	}
 	if !strings.Contains(string(markup), `从<strong><a href="https://go.dev/">Go</a></strong>下载。`) {
 		t.Fatal("build reused pre-fix emphasis HTML")
+	}
+	if !strings.Contains(string(markup), `alt="来源, 目标"`) || strings.Contains(string(markup), `alt="Diagram:`) {
+		t.Fatal("build reused the English diagram description")
 	}
 }
 

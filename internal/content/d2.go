@@ -61,7 +61,9 @@ func renderD2Diagram(info, source string) (string, error) {
 				labels = append(labels, text)
 			}
 		}
-		label = "Diagram: " + strings.Join(labels, ", ")
+		// The figure already supplies the diagram semantics. Its description
+		// must contain only the document's labels, without an English prefix.
+		label = strings.Join(labels, ", ")
 	}
 	// An image isolates SVG IDs/styles from other diagrams and prevents its
 	// markup from becoming active document content. Fonts are embedded by D2.

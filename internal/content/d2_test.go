@@ -37,7 +37,7 @@ func TestD2FenceRendersStandaloneDiagram(t *testing.T) {
 	if strings.Contains(page.HTML, `class="language-d2"`) {
 		t.Error("diagram source was displayed as ordinary code")
 	}
-	if !strings.Contains(page.HTML, `alt="Diagram: Frontend, Backend"`) {
+	if !strings.Contains(page.HTML, `alt="Frontend, Backend"`) {
 		t.Error("diagram alternative text does not describe its nodes")
 	}
 }
