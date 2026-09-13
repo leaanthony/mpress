@@ -151,7 +151,7 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 		if readErr != nil {
 			return report, pairs, readErr
 		}
-		targetDoc, extractErr := extractFile(file, e.Config.Build.NavFile, target)
+		targetDoc, extractErr := extractTargetFile(file, e.Config.Build.NavFile, source, target)
 		if extractErr != nil {
 			report.add(AuditFinding{Severity: "error", Code: "invalid-target", File: file, Message: extractErr.Error()})
 			continue
@@ -174,7 +174,7 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 				continue
 			}
 			pairs = append(pairs, AuditPair{File: file, ID: segment.ID, Section: segment.Section, Source: segment.Original, Target: targetSegment.Original})
-			if severity, unchanged := unchangedProse(segment.Kind, segment.Original, targetSegment.Original, e.Config.Site.Title); unchanged {
+			if severity, unchanged := unchangedSegmentProse(segment, targetSegment.Original, e.Config.Site.Title); unchanged {
 				report.add(AuditFinding{Severity: severity, Code: "untranslated", File: file, Segment: segment.ID, Message: "prose is unchanged from the source"})
 			}
 			if glossaryErr := validateGlossary(segment.Original, targetSegment.Original, glossaries[language]); glossaryErr != nil {
@@ -192,6 +192,14 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 		return report.Findings[i].File < report.Findings[j].File
 	})
 	return report, pairs, nil
+}
+
+func unchangedSegmentProse(segment Segment, target, siteTitle string) (string, bool) {
+	terms := []string{siteTitle}
+	for _, original := range segment.Placeholders {
+		terms = append(terms, original)
+	}
+	return unchangedProse(segment.Kind, segment.Original, target, terms...)
 }
 
 var auditCodeSpanPattern = regexp.MustCompile("`[^`]*`")

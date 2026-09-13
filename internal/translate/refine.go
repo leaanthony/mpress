@@ -80,7 +80,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 		if parseErr != nil {
 			return report, parseErr
 		}
-		targetDoc, parseErr := extractFile(file, e.Config.Build.NavFile, targetBytes)
+		targetDoc, parseErr := extractTargetFile(file, e.Config.Build.NavFile, sourceBytes, targetBytes)
 		if parseErr != nil {
 			return report, parseErr
 		}

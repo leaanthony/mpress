@@ -241,6 +241,11 @@ empty, and the cloned repository must contain `mpress.yaml`.
 Use `--scope missing` to fill gaps only. Use `--scope all --force` only when you
 intend to replace existing machine text and manual conflicts.
 
+MPD pages with local heading links can be updated and refined without treating
+translated anchors as manual edits. If the heading structure changes and those
+anchors cannot be aligned safely, preserve any manual corrections, regenerate
+that page with `--file path/to/page.mpd --scope all --force`, and review it again.
+
 You can run the same workflow from the **Translations** item in the development
 bar. Start with the outcome you need: add a language, translate the current
 page, update a complete language, or mark the current page as reviewed. M-Press

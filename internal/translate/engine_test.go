@@ -546,3 +546,94 @@ Use the archive.
 		t.Fatalf("translated rendered HTML is incomplete: %#v", page)
 	}
 }
+
+func TestTranslationReusesLocalizedMPDLinksWithoutChangingCode(t *testing.T) {
+	root := t.TempDir()
+	cfg := config.Default()
+	cfg.Site.Languages = []string{"en", "fr"}
+	cfg.Build.ContentDir = "content"
+	cfg.Translation.SourceLanguage = "en"
+	if err := os.MkdirAll(filepath.Join(root, "content"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "content", "index.mpd")
+	source := "# Hello\n\nRead [the details](#details).\n\n## Details\n\nBuild the site.\n\n```go\nfmt.Println(\"(#details)\")\n```\n"
+	if err := os.WriteFile(path, []byte(source), 0644); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(root, cfg, &fakeProvider{})
+	if _, err := engine.Run(context.Background(), Options{Language: "fr"}); err != nil {
+		t.Fatal(err)
+	}
+	source += "\nA newly added paragraph.\n"
+	if err := os.WriteFile(path, []byte(source), 0644); err != nil {
+		t.Fatal(err)
+	}
+	report, err := engine.Run(context.Background(), Options{Language: "fr"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if report.Files[0].Translated != 1 || report.Files[0].States["manual"] != 0 {
+		t.Fatalf("unexpected state: %#v", report)
+	}
+	doc, err := ExtractMPD("index.mpd", []byte(source))
+	if err != nil {
+		t.Fatal(err)
+	}
+	finding := AuditFinding{File: "index.mpd", Segment: doc.Segments[1].ID, Severity: "warning", Message: "Clarify the link instruction"}
+	if _, err := engine.RefineWithProvider(context.Background(), "fr", "index.mpd", []AuditFinding{finding}, &fakeRefinementProvider{}); err != nil {
+		t.Fatal(err)
+	}
+	target, err := os.ReadFile(filepath.Join(root, "content", "fr", "index.mpd"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(target), "](#fr-details)") || !strings.Contains(string(target), `fmt.Println("(#details)")`) {
+		t.Fatalf("lost link/code contract: %s", target)
+	}
+	if err := Validate(doc, target); err != nil {
+		t.Fatal(err)
+	}
+}
+
+func TestChangedMPDHeadingStructureRequiresExplicitRetranslation(t *testing.T) {
+	root := t.TempDir()
+	cfg := config.Default()
+	cfg.Site.Languages = []string{"en", "fr"}
+	cfg.Build.ContentDir = "content"
+	cfg.Translation.SourceLanguage = "en"
+	if err := os.MkdirAll(filepath.Join(root, "content"), 0755); err != nil {
+		t.Fatal(err)
+	}
+	path := filepath.Join(root, "content", "index.mpd")
+	source := "# Hello\n\nRead [details](#details).\n\n## Details\n\nBuild this.\n"
+	if err := os.WriteFile(path, []byte(source), 0644); err != nil {
+		t.Fatal(err)
+	}
+	engine := NewEngine(root, cfg, &fakeProvider{})
+	if _, err := engine.Run(context.Background(), Options{Language: "fr"}); err != nil {
+		t.Fatal(err)
+	}
+	targetPath := filepath.Join(root, "content", "fr", "index.mpd")
+	before, err := os.ReadFile(targetPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	source += "\n## Added heading\n\nMore instructions.\n"
+	if err := os.WriteFile(path, []byte(source), 0644); err != nil {
+		t.Fatal(err)
+	}
+	if _, err := engine.Run(context.Background(), Options{Language: "fr"}); err == nil || !strings.Contains(err.Error(), "--scope all --force") {
+		t.Fatalf("expected explicit retry instruction, got %v", err)
+	}
+	after, err := os.ReadFile(targetPath)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(after) != string(before) {
+		t.Fatal("overwrote existing work")
+	}
+	if _, err := engine.Run(context.Background(), Options{Language: "fr", Scope: "all", Force: true}); err != nil {
+		t.Fatal(err)
+	}
+}

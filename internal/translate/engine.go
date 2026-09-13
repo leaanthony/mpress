@@ -1,6 +1,7 @@
 package translate
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -439,7 +440,10 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 		}
 	}
 	if targetBytes, readErr := os.ReadFile(targetReadPath); readErr == nil {
-		targetDoc, err = extractFile(sourceFile, e.Config.Build.NavFile, targetBytes)
+		targetDoc, err = extractTargetFile(sourceFile, e.Config.Build.NavFile, sourceBytes, targetBytes)
+		if errors.Is(err, errTranslationHeadingStructure) && (len(state.Segments) == 0 || options.Force && options.Scope == "all") {
+			targetDoc, err = extractFile(sourceFile, e.Config.Build.NavFile, targetBytes)
+		}
 		if err != nil {
 			return FileReport{}, fmt.Errorf("parse existing target: %w", err)
 		}
@@ -736,6 +740,15 @@ type nativeHeading struct {
 // must not route MPD through the Markdown renderer merely to discover heading
 // anchors during translation.
 func rewriteMPDLocalFragments(filename string, source, target []byte) ([]byte, error) {
+	return rewriteMPDFragments(filename, source, target, false)
+}
+
+var errTranslationHeadingStructure = errors.New("heading structure changed; regenerate this page with --scope all --force after preserving any manual corrections")
+
+func rewriteMPDFragments(filename string, source, target []byte, reverse bool) ([]byte, error) {
+	if reverse && !bytes.Contains(target, []byte("](#")) {
+		return target, nil
+	}
 	sourceHeadings, err := nativeMPDHeadings(filename, source)
 	if err != nil {
 		return nil, fmt.Errorf("parse source page anchors: %w", err)
@@ -745,20 +758,61 @@ func rewriteMPDLocalFragments(filename string, source, target []byte) ([]byte, e
 		return nil, fmt.Errorf("parse translated page anchors: %w", err)
 	}
 	if len(sourceHeadings) != len(targetHeadings) {
+		if reverse {
+			return nil, errTranslationHeadingStructure
+		}
 		return nil, errors.New("translation changed the rendered heading structure")
 	}
-	result := string(target)
+	aliases := map[string]string{}
 	for index, sourceHeading := range sourceHeadings {
 		targetHeading := targetHeadings[index]
 		if sourceHeading.level != targetHeading.level {
+			if reverse {
+				return nil, errTranslationHeadingStructure
+			}
 			return nil, errors.New("translation changed a rendered heading level")
 		}
 		if sourceHeading.id == "" || targetHeading.id == "" || sourceHeading.id == targetHeading.id {
 			continue
 		}
-		result = strings.ReplaceAll(result, "(#"+sourceHeading.id+")", "(#"+targetHeading.id+")")
+		from, to := sourceHeading.id, targetHeading.id
+		if reverse {
+			from, to = to, from
+		}
+		aliases["#"+from] = "#" + to
 	}
-	return []byte(result), nil
+	return patchMPDFragments(filename, target, aliases), nil
+}
+
+func patchMPDFragments(filename string, source []byte, aliases map[string]string) []byte {
+	document := mpd.Parse(filename, source)
+	var links []mpd.Range
+	for _, node := range document.Nodes {
+		if node.Kind == mpd.KindLink && node.Flags&mpd.FlagReference == 0 {
+			links = append(links, node.Content)
+		}
+	}
+	sort.Slice(links, func(i, j int) bool { return links[i].Start > links[j].Start })
+	result := append([]byte(nil), source...)
+	for _, link := range links {
+		if value, ok := aliases[string(document.Text(link))]; ok {
+			result = append(result[:link.Start], append([]byte(value), result[link.End:]...)...)
+		}
+	}
+	return result
+}
+
+// Translation state stores source anchor spellings. Normalize only generated
+// local anchors when reusing prose; executable examples never enter this map.
+func extractTargetFile(file, navFile string, source, target []byte) (*Document, error) {
+	if strings.EqualFold(filepath.Ext(file), ".mpd") {
+		var err error
+		target, err = rewriteMPDFragments(file, source, target, true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	return extractFile(file, navFile, target)
 }
 
 func nativeMPDHeadings(filename string, source []byte) ([]nativeHeading, error) {
@@ -994,7 +1048,16 @@ func prepareExisting(segment Segment, target string) (string, error) {
 	for _, original := range originals {
 		replacements := grouped[original]
 		sort.Slice(replacements, func(i, j int) bool { return replacements[i].position < replacements[j].position })
-		patterns = append(patterns, regexp.QuoteMeta(original))
+		pattern := regexp.QuoteMeta(original)
+		// The numeric protector uses word boundaries. A version digit in an
+		// unprotected name such as v2 must not consume a standalone 2 token.
+		if original[0] >= '0' && original[0] <= '9' {
+			pattern = `\b` + pattern
+		}
+		if last := original[len(original)-1]; last >= '0' && last <= '9' {
+			pattern += `\b`
+		}
+		patterns = append(patterns, pattern)
 	}
 	// Match the original target once: inserted placeholder indices must never
 	// become matches for a later protected number.
@@ -1031,6 +1094,13 @@ func Validate(source *Document, target []byte) error {
 	}
 	sourceSkeleton := immutableSkeleton(source)
 	targetSkeleton := immutableSkeleton(targetDoc)
+	if sourceSkeleton != targetSkeleton && source.Format == "mpd" {
+		targetDoc, err = extractTargetFile("translated.mpd", "_nav.yaml", source.Source, target)
+		if err != nil {
+			return err
+		}
+		targetSkeleton = immutableSkeleton(targetDoc)
+	}
 	if sourceSkeleton != targetSkeleton {
 		return structuralTranslationError(sourceSkeleton, targetSkeleton, source.Format)
 	}

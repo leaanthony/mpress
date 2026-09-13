@@ -269,3 +269,34 @@ func TestD2CodeAndMathLabelsRemainProtected(t *testing.T) {
 		t.Fatalf("%v: %s", err, out)
 	}
 }
+
+func TestPrepareExistingDistinguishesVersionNamesFromNumbers(t *testing.T) {
+	source := "Wails v2 has reached version 2. More v2 releases follow."
+	text, placeholders := protect(source)
+	segment := Segment{ID: "version", Original: source, Text: text, Placeholders: placeholders}
+	target := "Wails v2 hat Version 2 erreicht. Weitere v2-Releases folgen."
+	prepared, err := prepareExisting(segment, target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	restored, err := restore(segment, prepared, false)
+	if err != nil || restored != target {
+		t.Fatalf("got %q, %v", restored, err)
+	}
+}
+
+func TestUnchangedProseDoesNotCountProtectedImagePaths(t *testing.T) {
+	doc, err := ExtractMPD("page.mpd", []byte("![ESP Studio](/assets/showcase-images/esp-studio.png)\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	s := doc.Segments[0]
+	var terms []string
+	for _, v := range s.Placeholders {
+		terms = append(terms, v)
+	}
+	severity, found := unchangedProse(s.Kind, s.Original, s.Original, terms...)
+	if !found || severity != "warning" {
+		t.Fatalf("proper-name label should request review, not count URL prose: %s, %v", severity, found)
+	}
+}
