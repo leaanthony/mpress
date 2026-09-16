@@ -57,7 +57,7 @@ func run(args []string) error {
 	case "clean":
 		return clean()
 	case "check":
-		return checkSite()
+		return checkCommand(args[1:])
 	case "import":
 		return importSite(args[1:])
 	case "convert":
@@ -91,6 +91,7 @@ Usage:
   mpress contribute <site-url> [--goal page|translate] [--checkout DIRECTORY] [--port 3000] [--draft-file FILE] [--no-open]
   mpress clean
   mpress check
+  mpress check site [--output DIRECTORY] [--cloudflare-pages] [--json]
   mpress import --from starlight <source> --output <directory>
 	  mpress convert [--to mpd|markdown] [--content DIRECTORY] --replace
   mpress deploy [--target name] [--production] [--json]
@@ -99,6 +100,7 @@ Usage:
   mpress versions capture|list|verify|remove
   mpress translate [status] [--lang CODE] [--add-language] [--label NAME] [--file PAGE] [--scope missing|stale|all] [--harness codex|claudecode] [--model MODEL] [--estimate] [--workers N]
   mpress translate audit --lang CODE [--file PAGE] [--json]
+  mpress translate check [--lang CODE] [--exceptions FILE] [--exclude-audit PAGE] [--json]
   mpress translate review --lang CODE --file PAGE [--status reviewed|final]
   mpress translate --repo URL --checkout DIRECTORY [--branch NAME] [translation options]
   mpress knowledge [directory] [--transport stdio|http] [--host 127.0.0.1] [--port 3100]
@@ -109,6 +111,9 @@ Usage:
 }
 
 func translateSite(args []string) error {
+	if len(args) > 0 && args[0] == "check" {
+		return checkTranslations(args[1:])
+	}
 	statusOnly := len(args) > 0 && args[0] == "status"
 	reviewOnly := len(args) > 0 && args[0] == "review"
 	auditOnly := len(args) > 0 && args[0] == "audit"
