@@ -399,7 +399,7 @@ not invoke a provider or write files. Use `--lang fr` to check one language.
 
 For reviewed linguistic false positives, pass an exception file with
 `--exceptions translation/audit-exceptions.json`. Exceptions are tied to the
-exact source and translated file hashes. See the [command-line reference](cli.md#publication-checks)
+exact source and translated file hashes. See the [command-line reference](/cli/#publication-checks)
 for the exception format and explicit legacy audit exclusions.
 
 After building, check the rendered pages too:
