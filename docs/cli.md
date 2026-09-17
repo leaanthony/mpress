@@ -107,8 +107,7 @@ mpress translate check --json
 mpress translate check --lang fr --exceptions translation/audit-exceptions.json --json
 ```
 
-Both commands are read-only and run locally without Python, a translation
-provider, or network access. They return a non-zero exit status on validation
+Both commands are read-only and run locally. They return a non-zero exit status on validation
 failures. `--json` writes one report to stdout; the error summary goes to stderr.
 Paths supplied by these flags are relative to the project root containing
 `mpress.yaml`, unless absolute.
