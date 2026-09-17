@@ -384,6 +384,33 @@ terms:
 M-Press includes applicable terms in each request. It also rejects a result
 when a required translation is missing.
 
+## Check translations before publishing
+
+Run the local publication gate to require translations of every source page and
+navigation file in all configured target languages:
+
+```sh
+mpress translate check --json
+```
+
+Missing, empty, and orphaned translations fail, as do local audit findings,
+including warnings. This command calls the Go audit engine directly and does
+not invoke a provider or write files. Use `--lang fr` to check one language.
+
+For reviewed linguistic false positives, pass an exception file with
+`--exceptions translation/audit-exceptions.json`. Exceptions are tied to the
+exact source and translated file hashes. See the [command-line reference](/cli/#publication-checks)
+for the exception format and explicit legacy audit exclusions.
+
+After building, check the rendered pages too:
+
+```sh
+mpress build --strict
+mpress check site --json
+```
+
+Add `--cloudflare-pages` to enforce the Pages upload size and file-count limits.
+
 ## Review generated files
 
 Audit a translated language before human review:
