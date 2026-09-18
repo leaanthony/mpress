@@ -1,7 +1,7 @@
 site:
     title: M-Press
     description: Beautiful documentation from Markdown, without Node.js or MDX.
-    baseURL: ""
+    baseURL: https://m-press.me
     defaultLanguage: en
     languages:
         - en
@@ -83,8 +83,14 @@ translation:
     inputPricePerMillion: 0
     outputPricePerMillion: 0
 deploy:
-    default: ""
-    targets: {}
+    default: cloudflare
+    targets:
+        cloudflare:
+            provider: cloudflare-pages
+            accountID: c9e2228ddc647134653521013b0ea7dc
+            project: mpress-docs
+            productionBranch: main
+            domain: ""
 blog:
     landingStyle: featured
     tagline: ""
