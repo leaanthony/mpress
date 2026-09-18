@@ -135,32 +135,8 @@ Ni all un cyflwyniad fod yn addas i bob darllenydd. Mae'r ddewislen hygyrchedd w
 @button[Darllen y cyfeirnod hygyrchedd](/accessibility/){secondary}
 @end
 
-@column{variant=story-visual|class=mp-home-accessibility-carousel}
-@carousel{label="Accessibility options"}
-## Darllen sy'n addas i chi
-
-Dewiswch faint testun, ffont darllenadwy, bylchau llac, pwyslais bionig, a lled tudalen sy'n gyfforddus ar eich sgrin.
-
-- Maint testun: Diofyn, Mawr, Mwy
-- Lled tudalen: Cymharol neu sefydlog
-- Ffont darllenadwy a bylchau llac
----
-## Cadwch eich lle
-
-Lleihau pethau gweledol sy'n tynnu sylw heb newid y cynnwys.
-
-- Mae'r modd ffocws yn pylu'r llywio
-- Mae'r canllaw darllen yn dilyn y pwyntydd
-- Mae lleihau symudiad yn atal animeiddiadau nad ydynt yn hanfodol
----
-## Gwella lliw a chyferbyniad
-
-Gwnewch ddolenni a rheolyddion yn haws eu hadnabod.
-
-- Cyferbyniad uchel
-- Dolenni wedi'u tanlinellu
-- Proffiliau lliw ar gyfer anghenion golwg lliw cyffredin
-@end
+@column{variant=site-screenshot|class=mp-home-accessibility-screenshot}
+@image{light="/images/mpress-accessibility-light.png" dark="/images/mpress-accessibility-dark.png" alt="The open accessibility menu with the complete Reading panel" expand}
 @end
 @end
 @end
