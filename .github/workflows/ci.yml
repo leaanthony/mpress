@@ -25,6 +25,46 @@ jobs:
       - run: go run ./cmd/mpress check
       - run: bash scripts/collect-release-licenses.sh "$RUNNER_TEMP/mpress-licenses"
 
+  publish-docs:
+    name: Publish documentation
+    needs: public-tests
+    if: github.repository == 'leaanthony/mpress' && github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    concurrency:
+      group: mpress-docs-production
+      cancel-in-progress: false
+    steps:
+      - uses: actions/checkout@d23441a48e516b6c34aea4fa41551a30e30af803 # v6
+      - name: Check this is still the latest main commit
+        id: current
+        shell: bash
+        run: |
+          latest="$(git ls-remote origin refs/heads/main | cut -f1)"
+          if [[ "$latest" == "$GITHUB_SHA" ]]; then
+            echo "publish=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "Skipping publication: main has a newer commit."
+          fi
+      - uses: actions/setup-go@924ae3a1cded613372ab5595356fb5720e22ba16 # v6
+        if: steps.current.outputs.publish == 'true'
+        with:
+          go-version-file: go.mod
+          cache: true
+      - name: Build M-Press from this commit
+        if: steps.current.outputs.publish == 'true'
+        run: go build -o "$RUNNER_TEMP/mpress" ./cmd/mpress
+      - name: Build, check, and publish with M-Press
+        if: steps.current.outputs.publish == 'true'
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+        run: |
+          if [ -z "$CLOUDFLARE_API_TOKEN" ]; then
+            echo "::error::Set the CLOUDFLARE_API_TOKEN repository secret with Cloudflare Pages Edit permission."
+            exit 1
+          fi
+          "$RUNNER_TEMP/mpress" deploy --target cloudflare --production
+
   private-conformance:
     if: vars.PRIVATE_CONFORMANCE == 'true' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
     runs-on: ubuntu-latest
