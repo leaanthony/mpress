@@ -18,3 +18,13 @@
     height: 23px;
   }
 }
+
+.mp-home-accessibility-screenshot {
+  width: min(100%, 560px);
+  justify-self: center;
+}
+
+.mp-home-mobile-screenshot {
+  width: min(100%, 340px);
+  justify-self: center;
+}

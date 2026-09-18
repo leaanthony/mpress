@@ -24,7 +24,7 @@ M-Press vous fournit des composants riches, une recherche privée, des contrôle
 @end
 
 @column{variant=site-screenshot|class=mp-home-site-screenshot-hero}
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="The generated M-Press tutorial site"}
+@image{light="/images/mpress-tutorial-light.png" dark="/images/mpress-tutorial-dark.png" alt="The generated M-Press tutorial site"}
 @end
 @end
 @end
@@ -78,7 +78,7 @@ Les lecteurs attendent encore la recherche, les onglets, les étapes, les termin
 @end
 
 @column{variant=story-visual|class=mp-home-story-image}
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="An M-Press documentation page with navigation, search, a terminal, and a page outline"}
+@image{light="/images/mpress-tutorial-light.png" dark="/images/mpress-tutorial-dark.png" alt="An M-Press documentation page with navigation, search, a terminal, and a page outline"}
 @end
 @end
 @end
@@ -130,20 +130,8 @@ Une seule présentation ne convient pas à tous les lecteurs. Le menu d'accessib
 @button[Use the accessibility controls](/accessibility/){secondary}
 @end
 
-@column{variant=story-visual|class=mp-home-accessibility-visual}
-### Accessibilité
-
-**Lecture** · Focus · Vision
-
-- [x] Police lisible
-- [x] Espacement aéré
-- [x] Bionic reading
-
-**Taille du texte**
-
-Par défaut · Grand · Plus grand
-
-*Chaque contrôle dispose d'un raccourci clavier, d'un focus visible et d'une alternative à mouvement réduit.*
+@column{variant=site-screenshot|class=mp-home-accessibility-screenshot}
+@image{light="/images/mpress-accessibility-light.png" dark="/images/mpress-accessibility-dark.png" alt="Le menu d’accessibilité en anglais, avec tous les réglages de lecture" expand}
 @end
 @end
 @end
@@ -195,7 +183,7 @@ Un générateur de documentation ne doit pas imposer la même identité visuelle
 @end
 
 @column{variant=story-visual|class=mp-home-custom-visual}
-@image{light="/images/mpress-home-mobile.png" alt="The responsive M-Press landing page on a mobile screen"}
+@image{light="/images/mpress-home-mobile-light.png" dark="/images/mpress-home-mobile-dark.png" alt="The responsive M-Press landing page on a mobile screen"}
 
 ### Votre marque, à toute échelle
 

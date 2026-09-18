@@ -24,7 +24,7 @@ M-Press gives you rich components, private search, reader accessibility controls
 @end
 
 @column{variant=site-screenshot|class=mp-home-site-screenshot-hero}
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="The generated M-Press tutorial site" expand}
+@image{light="/images/mpress-tutorial-light.png" dark="/images/mpress-tutorial-dark.png" alt="The M-Press first-site tutorial in the browser" expand}
 @end
 @end
 @end
@@ -188,32 +188,8 @@ One presentation cannot suit every reader. The accessibility menu is enabled by 
 @button[Read the accessibility reference](/accessibility/){secondary}
 @end
 
-@column{variant=story-visual|class=mp-home-accessibility-carousel}
-@carousel{label="Accessibility options"}
-## Reading that fits you
-
-Choose a text size, readable font, relaxed spacing, bionic emphasis, and a page width that is comfortable on your screen.
-
-- Text size: Default, Large, Larger
-- Page width: Relative or fixed
-- Readable font and relaxed spacing
----
-## Keep your place
-
-Reduce visual distraction without changing the content.
-
-- Focus mode dims navigation
-- Reading guide follows the pointer
-- Reduced motion stops non-essential animation
----
-## Improve colour and contrast
-
-Make links and controls easier to identify.
-
-- High contrast
-- Underlined links
-- Colour profiles for common colour-vision needs
-@end
+@column{variant=site-screenshot|class=mp-home-accessibility-screenshot}
+@image{light="/images/mpress-accessibility-light.png" dark="/images/mpress-accessibility-dark.png" alt="The open accessibility menu showing the complete Reading panel, including layout, reading column, font, spacing, and bionic reading controls" expand}
 @end
 @end
 @end
@@ -288,6 +264,22 @@ The development site exposes the work that is usually hidden across scripts and 
 
 @column{variant=story-visual|class="mp-home-story-image mp-home-config-screenshot"}
 @image{light="/images/mpress-config-light.png" dark="/images/mpress-config-dark.png" alt="The structured M-Press configuration editor in development mode" expand}
+@end
+@end
+@end
+
+@section{variant=story|class=mp-home-story-mobile}
+@columns{variant=story}
+@column{variant=story-copy}
+## The same site, ready for a smaller screen.
+
+Navigation, search, accessibility controls, and page content adapt to the space available. Readers get the same documentation on a phone, with controls that stay within reach.
+
+@button[Read the first-site tutorial](/tutorials/first-site/){secondary}
+@end
+
+@column{variant=site-screenshot|class=mp-home-mobile-screenshot}
+@image{light="/images/mpress-home-mobile-light.png" dark="/images/mpress-home-mobile-dark.png" alt="The actual M-Press homepage displayed in a 390-pixel-wide mobile browser viewport" expand}
 @end
 @end
 @end

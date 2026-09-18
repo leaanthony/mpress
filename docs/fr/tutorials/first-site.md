@@ -78,7 +78,7 @@ accessibility:
 ```
 
 [Résultat]
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="Le site de documentation généré dans M-Press" expand}
+@image{light="/images/mpress-tutorial-output-light.png" dark="/images/mpress-tutorial-output-dark.png" alt="Le site de documentation généré dans M-Press" expand}
 @end
 
 Enregistrez le fichier. Le serveur de développement reconstruit le site et actualise la page.
