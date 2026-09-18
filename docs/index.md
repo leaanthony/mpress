@@ -24,7 +24,7 @@ M-Press gives you rich components, private search, reader accessibility controls
 @end
 
 @column{variant=site-screenshot|class=mp-home-site-screenshot-hero}
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="The M-Press first-site tutorial in the browser" expand}
+@image{light="/images/mpress-tutorial-light.png" dark="/images/mpress-tutorial-dark.png" alt="The M-Press first-site tutorial in the browser" expand}
 @end
 @end
 @end

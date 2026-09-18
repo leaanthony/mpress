@@ -82,4 +82,4 @@ Exécutez `mpress build --strict` et `mpress check` avant de publier la page.
 
 La même page d'atterrissage Markdown doit s'adapter aux écrans étroits :
 
-![La page d'atterrissage de la documentation M-Press à la largeur mobile](/images/mpress-home-mobile.png)
+![La page d'atterrissage de la documentation M-Press à la largeur mobile](/images/mpress-home-mobile-light.png)

@@ -24,7 +24,7 @@ Mae M-Press yn darparu cydrannau cyfoethog, chwilio preifat, rheolyddion hygyrch
 @end
 
 @column{variant=site-screenshot|class=mp-home-site-screenshot-hero}
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="The generated M-Press tutorial site" expand}
+@image{light="/images/mpress-tutorial-light.png" dark="/images/mpress-tutorial-dark.png" alt="The generated M-Press tutorial site" expand}
 @end
 @end
 @end

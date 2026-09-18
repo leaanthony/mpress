@@ -82,4 +82,4 @@ Run `mpress build --strict` and `mpress check` before you publish the page.
 
 The same Markdown landing page must adapt to narrow screens:
 
-![The M-Press documentation landing page at mobile width](/images/mpress-home-mobile.png)
+![The M-Press documentation landing page at mobile width](/images/mpress-home-mobile-light.png)

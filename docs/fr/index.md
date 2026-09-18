@@ -24,7 +24,7 @@ M-Press vous fournit des composants riches, une recherche privée, des contrôle
 @end
 
 @column{variant=site-screenshot|class=mp-home-site-screenshot-hero}
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="The generated M-Press tutorial site"}
+@image{light="/images/mpress-tutorial-light.png" dark="/images/mpress-tutorial-dark.png" alt="The generated M-Press tutorial site"}
 @end
 @end
 @end
@@ -78,7 +78,7 @@ Les lecteurs attendent encore la recherche, les onglets, les étapes, les termin
 @end
 
 @column{variant=story-visual|class=mp-home-story-image}
-@image{light="/images/mpress-docs-light.png" dark="/images/mpress-docs-dark.png" alt="An M-Press documentation page with navigation, search, a terminal, and a page outline"}
+@image{light="/images/mpress-tutorial-light.png" dark="/images/mpress-tutorial-dark.png" alt="An M-Press documentation page with navigation, search, a terminal, and a page outline"}
 @end
 @end
 @end
