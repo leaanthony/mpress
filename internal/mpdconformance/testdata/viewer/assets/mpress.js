@@ -121,6 +121,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
     const powerShellQuote = value => "'" + String(value).replaceAll("'", "''") + "'";
     const shellInstallerURL = new URL(contributeDialog.dataset.installerShell, location.href).href;
     const powerShellInstallerURL = new URL(contributeDialog.dataset.installerPowershell, location.href).href;
+    const contributionSource = contributeDialog.dataset.contributionSource;
     const detectedPlatform = navigator.userAgentData?.platform || navigator.platform || navigator.userAgent || '';
     const contributionPlatform = /Windows|Win32|Win64/i.test(detectedPlatform) ? 'powershell' : 'shell';
     contributionPlatformLabel.textContent = contributionPlatform === 'powershell' ? mpressUI("Command for Windows PowerShell") : mpressUI("Command for macOS and Linux");
@@ -177,15 +178,16 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
 	  return pageURL.href;
 	})();
 	const contributionCommands = () => {
-	  const shellURL = shellQuote(shellInstallerURL);
-	  const shellDownload = shellInstallerURL.startsWith('https:')
-		? "{ command -v curl >/dev/null 2>&1 && curl --proto '=https' --tlsv1.2 -fsSL " + shellURL + ' || wget --https-only -qO- ' + shellURL + '; }'
-		: '{ command -v curl >/dev/null 2>&1 && curl -fsSL ' + shellURL + ' || wget -qO- ' + shellURL + '; }';
-	  const shellArgs = shellQuote(contributionPageURL) + (downloadedDraftName ? ' ' + shellQuote(downloadedDraftName) : " ''") + (contributionGoal ? ' ' + shellQuote(contributionGoal) : '');
-	  const powerShellArgs = powerShellQuote(contributionPageURL) + (downloadedDraftName ? ' ' + powerShellQuote(downloadedDraftName) : " ''") + (contributionGoal ? ' ' + powerShellQuote(contributionGoal) : '');
+	  const source = contributionGoal === 'translate' && !downloadedDraftName ? '' : contributionSource;
+	  const shellArgs = (source ? ' ' + shellQuote(source) : '')
+		+ (downloadedDraftName ? ' --draft-file ' + shellQuote(downloadedDraftName) : '')
+		+ (downloadedDraftName && contributionGoal === 'translate' ? ' --goal translate' : '');
+	  const powerShellArgs = (source ? ' ' + powerShellQuote(source) : '')
+		+ (downloadedDraftName ? ' --draft-file ' + powerShellQuote(downloadedDraftName) : '')
+		+ (downloadedDraftName && contributionGoal === 'translate' ? ' --goal translate' : '');
 	  return {
-		shell: shellDownload + ' | sh -s -- ' + shellArgs,
-		powershell: '& ([scriptblock]::Create((irm ' + powerShellQuote(powerShellInstallerURL) + '))) ' + powerShellArgs
+		shell: 'curl -fsSL ' + shellQuote(shellInstallerURL) + ' | sh' + (shellArgs ? ' -s --' + shellArgs : ''),
+		powershell: '& ([scriptblock]::Create((irm ' + powerShellQuote(powerShellInstallerURL) + ')))' + powerShellArgs
 	  };
 	};
 	const refreshContributionCommand = () => {
@@ -211,7 +213,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
 	  contributionChoices.hidden = true;
 	  contributionSetup.hidden = false;
 	  contributionIntro.textContent = goal === 'translate'
-		? mpressUI("Run this command once. M-Press will download the project, open the requested page, and take you directly to guided translation.")
+		? mpressUI("Run this command once. M-Press will download the project and open guided translation.")
 		: draftChanges().length
 		? mpressUI("Run this command to check out the source and apply your browser draft to the exact Markdown page.")
 		: mpressUI("Run this command to check out the source and open this exact page in the M-Press development server.");
