@@ -162,6 +162,40 @@ func TestContributionOptionsWorkBeforeOrAfterThePageURL(t *testing.T) {
 	}
 }
 
+func TestContributionSourceFileSelectsPageEditing(t *testing.T) {
+	for _, args := range [][]string{
+		{"--file", "docs/fr/reader's guide.md", "https://example.test/docs.git"},
+		{"https://example.test/docs.git", "--file=docs/fr/reader's guide.md"},
+	} {
+		options, err := parseContributionArgs(args)
+		if err != nil || options.File != "docs/fr/reader's guide.md" || options.Goal != "page" {
+			t.Fatalf("file handoff = %#v, %v", options, err)
+		}
+	}
+	for _, source := range []string{"../outside.md", "/outside.md"} {
+		if _, err := parseContributionArgs([]string{"https://example.test/docs.git", "--file", source}); err == nil {
+			t.Fatalf("accepted source outside checkout: %q", source)
+		}
+	}
+	options, err := parseContributionArgs([]string{"https://example.test/docs.git", "--file", "docs/guide.md", "--goal", "translate"})
+	if err != nil || options.Goal != "translate" {
+		t.Fatalf("explicit translation goal was lost: %#v, %v", options, err)
+	}
+}
+
+func TestContributionOptionsRejectIncompleteFlags(t *testing.T) {
+	for _, flag := range []string{"--branch", "--checkout", "--host", "--draft-file", "--goal", "--file", "--port"} {
+		if _, err := parseContributionArgs([]string{"https://example.test/docs.git", flag}); err == nil {
+			t.Errorf("accepted missing value for %s", flag)
+		}
+	}
+	for _, option := range []string{"--port=-1", "--port=65536", "--port=abc", "--goal=invalid", "--no-open=false", "--unknown=value"} {
+		if _, err := parseContributionArgs([]string{"https://example.test/docs.git", option}); err == nil {
+			t.Errorf("accepted invalid option %s", option)
+		}
+	}
+}
+
 func TestInitCreatesGuidedTutorialProjectWithoutOverwriting(t *testing.T) {
 	root := filepath.Join(t.TempDir(), "my-docs")
 	if err := initProject([]string{root}); err != nil {

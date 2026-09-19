@@ -794,6 +794,7 @@
       setDrawerBody('Edit this page', `
         <div class="workspace-context">
           <span class="wizard-kicker">Current page</span>
+          <section data-page-translations aria-live="polite"></section>
           <div class="result-box"><strong>Source file</strong><code>${escapeHTML(source)}</code></div>
           <div class="result-box"><strong>Local checkout</strong><code>${escapeHTML(checkout)}</code></div>
           <div class="check-item ${build.status === 'ready' ? 'pass' : 'warn'}">${iconHTML(build.status === 'ready' ? 'check' : 'triangle-alert')}<div><strong>${build.status === 'ready' ? 'Live preview is ready' : 'Build needs attention'}</strong><span>${Number(build.pages) || 0} pages · ${Number(build.durationMs) || 0}ms</span></div></div>
@@ -806,6 +807,7 @@
       });
       q('[data-page-settings]').addEventListener('click', () => command('quick'));
       q('[data-page-checks]').addEventListener('click', () => command('checks'));
+      void showPageTranslationStatus(source);
     } catch (error) {
       setDrawerBody('Edit this page', `<div class="result-box"><strong>Source file not found</strong>${escapeHTML(error.message)}</div><div class="actions"><button class="button" type="button" data-page-settings>Open site settings</button><button class="button primary" type="button" data-page-back>Back to site</button></div>`, 'This route does not map to a documentation source file.');
       q('[data-page-settings]').addEventListener('click', () => command('quick'));
@@ -3002,21 +3004,59 @@
       };
     } catch (error) { restoreConfigPreview(); toast(error.message, true); }
   };
-  const showTranslations = async () => {
+  const translationPageStatus = file => {
+    const states = file.states || {};
+    if (states['migration-required']) return 'Tracking needs migration before this translation can be updated.';
+    if (states['migration-review']) return 'Review the migrated tracking before updating this translation.';
+    if (states.untracked) return 'Existing translation preserved. Restore its tracking files from Git before updating.';
+    const pending = file.needsTranslation || 0;
+    const conflict = states.conflict || 0;
+    const details = [];
+    if (pending) details.push(`${pending} passage${pending === 1 ? '' : 's'} to translate or update`);
+    if (conflict) details.push(`${conflict} human-edited passage${conflict === 1 ? '' : 's'} to reconcile with the source`);
+    return details.join(' · ') || 'Up to date with the source';
+  };
+  const showPageTranslations = source => {
+    openDrawer('Translations', 'Translations of this page', '<section data-page-translations aria-live="polite"></section><div class="actions"><button class="button" type="button" data-page-edit>Back to editing</button></div>', 'tool');
+    q('[data-page-edit]').addEventListener('click', () => state.project?.contribution ? showContributionPage() : showCurrentPage());
+    void showPageTranslationStatus(source);
+  };
+  const showPageTranslationStatus = async source => {
+    const container = q('[data-page-translations]');
+    if (!container || !source || !state.project?.features?.translations) return;
+    container.innerHTML = '<div class="result-box"><strong>Translations of this page</strong>Checking other languages…</div>';
+    try {
+      const data = await api('translations?file=' + encodeURIComponent(source));
+      if (!container.isConnected) return;
+      const files = data.report?.files || [];
+      if (!files.length) { container.innerHTML = ''; return; }
+      const needsAttention = files.some(file => file.needsTranslation || Object.keys(file.states || {}).some(key => ['conflict', 'untracked', 'migration-required', 'migration-review'].includes(key)));
+      container.innerHTML = `<div class="result-box"><strong>${needsAttention ? 'Update this page in other languages?' : 'Translations of this page are current'}</strong><p>Saving the source does not translate it automatically. Review the affected languages below; human edits are preserved.</p>${files.map(file => `<div class="page-translation-row"><div><strong>${escapeHTML(data.languageLabels?.[file.targetLanguage] || file.targetLanguage)}</strong><span>${escapeHTML(translationPageStatus(file))}</span></div>${file.needsTranslation ? `<button class="button" type="button" data-page-translate="${escapeHTML(file.targetLanguage)}">Review update</button>` : ''}</div>`).join('')}</div>`;
+      container.querySelectorAll('[data-page-translate]').forEach(button => button.addEventListener('click', () => showTranslations({file: source, language: button.dataset.pageTranslate})));
+    } catch (error) {
+      if (!container.isConnected) return;
+      container.innerHTML = `<div class="result-box"><strong>Translation status unavailable</strong><p>${escapeHTML(error.message)}</p><button class="button" type="button" data-translation-retry>Check again</button></div>`;
+      container.querySelector('[data-translation-retry]').addEventListener('click', () => void showPageTranslationStatus(source));
+    }
+  };
+  const showTranslations = async (context = {}) => {
     let route = null;
     try { route = await api('route?url=' + encodeURIComponent(siteRoute)); } catch (_) {}
+    if (context.file) route = {path: context.file};
     let data;
-    const loadTranslationData = async (language = '', file = '') => {
+    const loadTranslationData = async (language = '', file = '', scope = 'stale', force = false) => {
       const query = new URLSearchParams();
       if (language) query.set('lang', language);
       if (file) query.set('file', file);
+      query.set('scope', scope);
+      query.set('force', String(force));
       data = await api('translations' + (query.size ? '?' + query : ''));
       return data;
     };
     let activeLanguage = '';
     try {
       await loadTranslationData();
-      activeLanguage = (data.languages || []).find(language => language !== data.defaultLanguage) || '';
+      activeLanguage = context.language || (data.languages || []).find(language => language !== data.defaultLanguage) || '';
       if (activeLanguage) await loadTranslationData(activeLanguage);
     } catch (error) { toast(error.message, true); return; }
     const targets = () => (data.languages || []).filter(language => language !== data.defaultLanguage);
@@ -3125,16 +3165,17 @@
       if (!targets().length) { renderAddLanguage(true); return; }
       const selected = activeLanguage || targets()[0];
       const pending = totalPending();
-      const untracked = (data.report?.files || []).reduce((sum, file) => sum + (Number(file.states?.untracked) || 0), 0);
+      const states = {};
+      for (const file of data.report?.files || []) {
+        for (const [name, count] of Object.entries(file.states || {})) states[name] = (states[name] || 0) + count;
+      }
       const segments = totalSegments();
-      const migration = (data.report?.files || []).reduce((sum, file) => sum + (Number(file.states?.["migration-required"]) || 0), 0);
-      const migrationReview = (data.report?.files || []).reduce((sum, file) => sum + (Number(file.states?.["migration-review"]) || 0), 0);
-      const attention = pending + untracked + migration + migrationReview;
+      const attention = pending + ['untracked', 'migration-required', 'migration-review', 'conflict'].reduce((sum, name) => sum + (states[name] || 0), 0);
       const current = Math.max(0, segments - attention);
-      const percent = segments ? Math.round(current / segments * 100) : 0;
+      const percent = segments ? Math.round(current / segments * 100) : 100;
       openDrawer('Translations', 'Translations', `
         <section class="translation-hero">
-          <div>${targets().length > 1 ? `<label class="translation-overview-language"><span>Language</span><select id="translation-overview-language">${languageOptions(selected)}</select></label>` : `<span class="wizard-kicker">${escapeHTML(languageLabel(selected))}</span>`}<h2>${attention ? `Continue ${escapeHTML(languageLabel(selected))}` : `${escapeHTML(languageLabel(selected))} is current`}</h2><p>${migration ? `${migration} passages require translation state migration. Run mpress translate migrate-state with the original project snapshot before updating them.` : migrationReview ? `${migrationReview} migrated passages require review before their translation state can be trusted.` : untracked ? `${untracked} passage${untracked === 1 ? '' : 's'} have existing translations without tracking state. Restore their translation sidecars from Git before updating them.` : (pending ? `${pending} passage${pending === 1 ? '' : 's'} need translation or updating.` : 'Every source passage has a current translation.')}</p></div>
+          <div>${targets().length > 1 ? `<label class="translation-overview-language"><span>Language</span><select id="translation-overview-language">${languageOptions(selected)}</select></label>` : `<span class="wizard-kicker">${escapeHTML(languageLabel(selected))}</span>`}<h2>${attention ? `Continue ${escapeHTML(languageLabel(selected))}` : `${escapeHTML(languageLabel(selected))} is current`}</h2><p>${escapeHTML(translationPageStatus({states, needsTranslation: pending}))}</p></div>
           <div class="translation-score" aria-label="${percent} percent current"><strong>${percent}%</strong><span>current</span></div>
         </section>
         <div class="translation-stats"><div><strong>${(data.report?.files || []).length}</strong><span>pages</span></div><div><strong>${current}</strong><span>current passages</span></div><div><strong>${attention}</strong><span>need attention</span></div></div>
@@ -3194,7 +3235,7 @@
         const form = event.currentTarget;
         const plan = {goal, language: form.elements.language.value, scope: form.elements.scope.value, force: form.elements.force.checked, file: isPage ? route?.path || '' : '', workers: 4};
         try {
-          const planData = await loadTranslationData(plan.language, plan.file);
+          const planData = await loadTranslationData(plan.language, plan.file, plan.scope, plan.force);
           plan.report = planData.report;
           renderTranslationConfirmation(plan);
         } catch (error) { toast(error.message, true); }
@@ -3226,8 +3267,9 @@
       const previousReloadSuppression = state.suppressReloadUntil;
       state.suppressReloadUntil = Number.MAX_SAFE_INTEGER;
       try {
-        renderProgress(label, 0, `${plan.report?.pending || 0} passages using ${modelName(selectedStage('draft'))}.`);
-        const result = await api('translations', {method: 'POST', body: JSON.stringify(plan)});
+        renderProgress(label, 0, `${plan.report?.pending || 0} passage${plan.report?.pending === 1 ? '' : 's'} using ${modelName(selectedStage('draft'))}.`);
+        const {language, file, scope, force, workers} = plan;
+        const result = await api('translations', {method: 'POST', body: JSON.stringify({language, file, scope, force, workers})});
         updateBuild(result.state);
 		renderProgress(label, 1, 'An independent reviewer is checking meaning, terminology, and structure. Flagged passages are repaired and checked again.');
 		const checked = await api('translations', {method: 'POST', body: JSON.stringify({action: 'audit', language: plan.language, file: plan.file, refine: true})});
@@ -3248,7 +3290,8 @@
 	  if (audit?.audit) audit = audit.audit;
       const clean = !audit.errors && !audit.warnings;
       const findings = audit.findings || [];
-	  setDrawerBody(clean ? 'Translation ready for review' : 'Translation needs review', `<div class="translation-result ${clean ? 'clean' : 'attention'}">${iconHTML(clean ? 'check-circle' : 'search')}<div><strong>${clean ? 'Automated checks passed' : `${audit.errors} error${audit.errors === 1 ? '' : 's'} and ${audit.warnings} warning${audit.warnings === 1 ? '' : 's'} remain`}</strong><span>${translated} passage${translated === 1 ? '' : 's'} translated${refined ? ` and ${refined} refined after review` : ''} across ${result.report?.written || 0} written page${result.report?.written === 1 ? '' : 's'}.</span></div></div>${findings.length ? `<div class="translation-findings">${findings.slice(0,20).map(finding => `<article><span class="${finding.severity}">${escapeHTML(finding.severity)}</span><div><strong>${escapeHTML(finding.file)}${finding.segment ? ` · ${escapeHTML(finding.segment)}` : ''}</strong><p>${escapeHTML(finding.message)}</p></div></article>`).join('')}</div>` : '<p class="translation-clean-copy">Code, links, metadata, components, glossary terms, and translated structure are intact.</p>'}<div class="actions"><button class="button" id="translation-overview" type="button">Translation overview</button>${plan.file && clean ? '<button class="button primary" id="translation-review" type="button">Review and approve this page</button>' : '<button class="button primary" id="translation-done" type="button">Done for now</button>'}</div>`, clean ? 'The independent review and automated checks found no remaining structural, terminology, or meaning problems. Read the result before approving it.' : 'Your translation and automatic repairs are saved. Review the remaining passages before approval.');
+	  setDrawerBody(clean ? 'Translation ready for review' : 'Translation needs review', `<div class="translation-result ${clean ? 'clean' : 'attention'}">${iconHTML(clean ? 'check-circle' : 'search')}<div><strong>${clean ? 'Automated checks passed' : `${audit.errors} error${audit.errors === 1 ? '' : 's'} and ${audit.warnings} warning${audit.warnings === 1 ? '' : 's'} remain`}</strong><span>${translated} passage${translated === 1 ? '' : 's'} translated${refined ? ` and ${refined} refined after review` : ''} across ${result.report?.written || 0} written page${result.report?.written === 1 ? '' : 's'}.</span></div></div>${findings.length ? `<div class="translation-findings">${findings.slice(0,20).map(finding => `<article><span class="${finding.severity}">${escapeHTML(finding.severity)}</span><div><strong>${escapeHTML(finding.file)}${finding.segment ? ` · ${escapeHTML(finding.segment)}` : ''}</strong><p>${escapeHTML(finding.message)}</p></div></article>`).join('')}</div>` : '<p class="translation-clean-copy">Code, links, metadata, components, glossary terms, and translated structure are intact.</p>'}<div class="actions"><button class="button" id="translation-overview" type="button">Translation overview</button>${plan.file ? '<button class="button" id="translation-other-languages" type="button">Other languages for this page</button>' : ''}${plan.file && clean ? '<button class="button primary" id="translation-review" type="button">Review and approve this page</button>' : '<button class="button primary" id="translation-done" type="button">Done for now</button>'}</div>`, clean ? 'The independent review and automated checks found no remaining structural, terminology, or meaning problems. Read the result before approving it.' : 'Your translation and automatic repairs are saved. Review the remaining passages before approval.');
+      q('#translation-other-languages')?.addEventListener('click', () => showPageTranslations(plan.file));
       q('#translation-overview').addEventListener('click', async () => { await loadTranslationData(plan.language); renderOverview(); });
       q('#translation-review')?.addEventListener('click', () => renderReview(plan.language, plan.file, audit));
       q('#translation-done')?.addEventListener('click', closeDrawer);
@@ -3269,12 +3312,12 @@
         try {
           await api('translations', {method: 'POST', body: JSON.stringify({action: 'mark', language, file, status: 'reviewed'})});
           toast('Translation approved');
-          await loadTranslationData(language);
-          renderOverview();
+          showPageTranslations(file);
         } catch (error) { button.disabled = false; button.textContent = 'Approve this translation'; toast(error.message, true); }
       });
     };
     renderOverview();
+    if (context.file) renderTranslationPlan('page', activeLanguage);
   };
   const formatCheckDuration = value => {
     const milliseconds = Math.max(0, Number(value) || 0);
@@ -3638,6 +3681,7 @@
         <span class="wizard-kicker">Markdown source</span>
         <h3 class="wizard-title">Edit this page locally.</h3>
         <p class="intro">Open this file in your editor. M-Press rebuilds the site and reloads this browser whenever you save a valid change.</p>
+        <section data-page-translations aria-live="polite"></section>
         ${guideHTML}
         <div class="result-box"><strong>Source file</strong><code>${escapeHTML(source)}</code></div>
         <div class="result-box"><strong>Checkout</strong><code>${escapeHTML(state.project.repository?.path || '')}</code></div>
@@ -3645,7 +3689,11 @@
       </div>`, 'wizard');
     q('[data-contribution-back]').addEventListener('click', showContributionWizard);
     q('[data-contribution-copy]').addEventListener('click', async () => {
-      try { await navigator.clipboard.writeText(source); toast('Source path copied'); }
+      try {
+        const checkout = state.project.repository?.path || '';
+        await navigator.clipboard.writeText(checkout ? checkout.replace(/[\\/]$/, '') + '/' + source : source);
+        toast('Source path copied');
+      }
       catch { toast('Could not copy the source path', true); }
     });
     q('[data-contribution-open]').addEventListener('click', async () => {
@@ -3657,6 +3705,7 @@
       }
     });
     q('[data-contribution-check]').addEventListener('click', () => runChecks(true, showContributionReview, 'Review changes'));
+    void showPageTranslationStatus(contribution.sourcePath);
   };
   const contributionCommandsHTML = commands => `<div class="contribution-commands"><strong>Run these commands manually</strong><pre>${escapeHTML((commands || []).join('\n'))}</pre><button class="button" type="button" data-contribution-copy-commands>Copy commands</button></div>`;
   const showContributionReview = async suppliedStatus => {
@@ -3682,7 +3731,8 @@
       } else {
         next = contributionCommandsHTML(status.fallback);
       }
-      setDrawerBody('Review your contribution', `<div class="wizard-page contribution-review"><span class="wizard-kicker">${escapeHTML(status.branch || 'Contribution branch')}</span>${files ? `<ul class="contribution-file-list">${files}</ul>` : ''}${diff}${next}</div>`, status.pullRequest ? 'Your draft pull request is ready for review.' : 'Nothing is pushed until you approve each step.');
+      setDrawerBody('Review your contribution', `<div class="wizard-page contribution-review"><span class="wizard-kicker">${escapeHTML(status.branch || 'Contribution branch')}</span>${files ? `<ul class="contribution-file-list">${files}</ul>` : ''}${diff}<section data-page-translations aria-live="polite"></section>${next}</div>`, status.pullRequest ? 'Your draft pull request is ready for review.' : 'Nothing is pushed until you approve each step.');
+      void showPageTranslationStatus(state.project?.contribution?.sourcePath);
       q('[data-contribution-back-page]')?.addEventListener('click', showContributionPage);
       q('[data-contribution-finish]')?.addEventListener('click', closeDrawer);
       q('[data-contribution-copy-commands]')?.addEventListener('click', async () => {

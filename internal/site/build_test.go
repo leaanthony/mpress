@@ -425,8 +425,9 @@ contribution:
 		`mpress-contribute-choices-public`,
 		readerMessage("fr", "Translate documentation"),
 		`data-contribute-translate`,
-		`mpress-contribute.sh`,
-		`mpress-contribute.ps1`,
+		`data-contribution-source="content/fr/index.md"`,
+		`contribute.sh`,
+		`contribute.ps1`,
 	} {
 		if !strings.Contains(markup, want) {
 			t.Errorf("contribution page missing %q", want)
@@ -450,7 +451,7 @@ contribution:
 			t.Errorf("development contribution page is missing local quick editing %q", localOnly)
 		}
 	}
-	for _, name := range []string{"mpress-contribute.sh", "mpress-contribute.ps1"} {
+	for _, name := range []string{"contribute.sh", "contribute.ps1", "mpress-contribute.sh", "mpress-contribute.ps1"} {
 		contents, readErr := os.ReadFile(filepath.Join(root, "site", name))
 		if readErr != nil || !strings.Contains(string(contents), "mpress") || !strings.Contains(string(contents), "https://github.com/example/docs.git") || !strings.Contains(string(contents), "next") {
 			t.Errorf("installer %s was not generated: %v", name, readErr)
@@ -458,7 +459,7 @@ contribution:
 	}
 	script, err := os.ReadFile(filepath.Join(root, "site", "assets", "mpress.js"))
 	runtime := string(script)
-	if err != nil || !strings.Contains(runtime, "data-contribute-command") || !strings.Contains(runtime, "navigator.userAgentData?.platform") || !strings.Contains(runtime, "| sh -s --") || !strings.Contains(runtime, "mpress-quick-edit:") || !strings.Contains(runtime, "Command copied") || !strings.Contains(runtime, "new Blob") || !strings.Contains(runtime, ".mpress-draft") || !strings.Contains(runtime, "downloadQuickEditDraft") {
+	if err != nil || !strings.Contains(runtime, "data-contribute-command") || !strings.Contains(runtime, "navigator.userAgentData?.platform") || !strings.Contains(runtime, " | sh") || !strings.Contains(runtime, "mpress-quick-edit:") || !strings.Contains(runtime, "Command copied") || !strings.Contains(runtime, "new Blob") || !strings.Contains(runtime, ".mpress-draft") || !strings.Contains(runtime, "downloadQuickEditDraft") {
 		t.Fatalf("contribution command runtime was not generated: %v", err)
 	}
 	if strings.Contains(runtime, "encodeQuickEditDraft") || strings.Contains(runtime, "btoa(") {

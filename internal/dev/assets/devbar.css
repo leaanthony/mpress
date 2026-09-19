@@ -639,6 +639,9 @@ button { color: inherit; }
 .stepper span.active, .stepper span.done { background: var(--mp-accent); }
 .welcome-mark { display: grid; width: 54px; height: 54px; place-items: center; margin-bottom: 24px; border-radius: 10px; background: var(--mp-accent); color: white; font-size: 19px; font-weight: 850; box-shadow: 0 14px 38px rgba(82,120,255,.24); }
 .wizard-page { max-width: 760px; margin: 0 auto; animation: wizard-page-in 560ms cubic-bezier(.16,1,.3,1) both; }
+.page-translation-row { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 12px; padding: 14px 0; border-top: 1px solid var(--mp-border); }
+.page-translation-row > div { flex: 1; min-width: 180px; }
+.page-translation-row span { display: block; }
 .wizard-kicker { display: block; margin-bottom: 15px; color: var(--mp-accent); font-size: 11px; font-weight: 800; letter-spacing: .12em; text-transform: uppercase; }
 .wizard-title { max-width: 680px; margin: 0 0 14px; font-size: clamp(34px, 5vw, 54px); line-height: 1.02; letter-spacing: -.045em; }
 .wizard-page > .intro { max-width: 650px; font-size: 16px; line-height: 1.7; }

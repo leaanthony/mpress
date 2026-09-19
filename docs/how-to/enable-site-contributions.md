@@ -11,12 +11,14 @@ file.
 ## Start from the page
 
 1. Select the edit icon in the documentation navbar.
-2. Select **Open the project**.
+2. Select **Edit this page locally**, or **Translate documentation** to start
+   with a translation.
 3. Copy the command selected for your operating system.
 4. Run the command in a terminal.
 
-The command includes the current page URL. M-Press uses the generated page
-metadata to find the repository, branch, route, and source file.
+The generated script already contains this site's repository, branch, and
+translation goal. The translation command needs no arguments. **Edit this page
+locally** adds just the source filename, which selects the page editor instead.
 
 If M-Press is installed, the command runs it directly. Otherwise, the generated
 shell or PowerShell script downloads the matching release and verifies its
@@ -29,7 +31,8 @@ is uploaded while you edit or run checks.
 
 ## Choose the contribution
 
-The local site opens the contribution wizard automatically. Choose one outcome:
+The local site opens the editing or translation workflow you selected. Use
+**Back** from the editing screen to choose another contribution:
 
 - **Improve this page** opens the exact source file for the published page.
 - **Translate documentation** opens the guided translation workflow.
@@ -44,6 +47,25 @@ you start editing.
 M-Press shows the relative source path and the local checkout. Copy the path,
 open it in your editor, and save the Markdown file. The development server
 rebuilds the site and reloads the browser when the changed page is ready.
+
+If the site has other languages, the editing screen shows **Update this page in
+other languages?** when translations need attention. Even a one-line source
+change can make a translated passage stale.
+
+1. Select **Review update** beside a language.
+2. Keep **Everything that needs attention** to translate only missing or stale
+   passages on this page. Leave **Replace passages changed by a person** off.
+3. Select **Review the plan** and check the page, passage count, and provider.
+4. Select **Start translation**. Read the translated page before approving it.
+5. After approval, choose the next language from **Translations of this page**.
+   You can also select **Other languages for this page** from the result before
+   approval.
+
+Saving a source file never starts translation automatically. Existing human
+edits are preserved. If the screen reports missing tracking or migration, resolve
+that state first; see [Translation state and review](/translation/#track-freshness-and-human-edits).
+You can also leave translations for another contributor and submit the source
+change on its own.
 
 Select **Run checks when finished**. M-Press rebuilds every page and validates
 internal links and generated assets.
@@ -97,9 +119,23 @@ contributions.
 
 ## Generated installation scripts
 
-The production build includes `/mpress-contribute.sh` and
-`/mpress-contribute.ps1`. Each script contains the configured repository and
-branch.
+The production build includes `/contribute.sh` and `/contribute.ps1`. Each
+script contains the configured repository and branch and opens the translation
+workflow by default. These are ordinary static files generated during the build.
+
+For a site published at `https://docs.example.com`, the commands are:
+
+```sh
+# Translate the documentation
+curl -fsSL https://docs.example.com/contribute.sh | sh
+
+# Edit one source page
+curl -fsSL https://docs.example.com/contribute.sh | sh -s -- docs/guide.md
+```
+
+The filename is relative to the repository root, including its content directory
+and language directory when applicable. The site's copy button supplies and
+quotes the correct filename automatically.
 
 The POSIX script supports Linux and macOS on AMD64 and ARM64. It tries `curl`
 and then `wget`, downloads the matching archive from the latest GitHub release,
@@ -108,24 +144,31 @@ applies the same SHA-256 check.
 
 Both scripts use `mpress` directly when it is already available on the path.
 
-To open the translation workflow directly, pass `--goal translate`. After
-saving the generated script locally, run:
+The macOS and Linux command shown to readers uses `curl` only to fetch this
+script; release selection, download retries, verification, and setup happen
+inside the script. If `curl` is unavailable, save the script using the
+**View the macOS and Linux script** link under **What this command does** and
+run it with `sh` as shown below. The script can use `wget` for release downloads.
+
+After saving the generated script locally, run:
 
 ```sh
-sh mpress-contribute.sh --goal translate
-sh mpress-contribute.sh https://docs.example.com/guide/ --goal translate --checkout "../docs translations"
+sh contribute.sh
+sh contribute.sh docs/guide.md --checkout "../docs contributions"
 ```
 
 On Windows:
 
 ```powershell
-./mpress-contribute.ps1 --goal translate
+./contribute.ps1
+./contribute.ps1 docs/guide.md
 ```
 
-Options go after the optional page URL. The scripts forward contributor
+Options go after the optional source filename or page URL. The scripts forward contributor
 options such as `--checkout`, `--port`, `--no-open`, and `--draft-file` to
 M-Press. The older positional page, draft filename, and goal arguments from
-published pages still work. Run the script with `--help` for usage without
+published pages still work, and the old `mpress-contribute.sh` and
+`mpress-contribute.ps1` URLs remain available. Run the script with `--help` for usage without
 downloading anything.
 
 Git must be installed before running the script. Downloaded release files are

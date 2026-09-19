@@ -88,7 +88,7 @@ Usage:
   mpress export [--output archive.zip] [--strict] [--drafts] [--force] [--json] [archive.zip]
   mpress dev [directory] [--host 127.0.0.1] [--port 3000] [--read-only]
   mpress dev --repo URL --checkout DIRECTORY [--branch docs/mpress]
-  mpress contribute <site-url> [--goal page|translate] [--checkout DIRECTORY] [--port 3000] [--draft-file FILE] [--no-open]
+  mpress contribute <site-url> [--goal page|translate] [--file SOURCE] [--checkout DIRECTORY] [--port 3000] [--draft-file FILE] [--no-open]
   mpress clean
   mpress check
   mpress check site [--output DIRECTORY] [--cloudflare-pages] [--json]
@@ -872,6 +872,16 @@ func contributeSite(args []string) error {
 	}
 	fmt.Println("Prepared work branch", branch)
 	metadata.Guide = contribute.DetectGuide(root, metadata.Guide)
+	if options.File != "" {
+		metadata.Source = options.File
+		info, err := os.Stat(filepath.Join(root, filepath.FromSlash(options.File)))
+		if err != nil {
+			return fmt.Errorf("open contribution source: %w", err)
+		}
+		if info.IsDir() {
+			return errors.New("--file must identify a source file, not a directory")
+		}
+	}
 	if options.DraftFile != "" {
 		draftPath, resolveErr := quickedit.ResolveDraftFile(options.DraftFile)
 		if resolveErr != nil {
@@ -914,46 +924,40 @@ type contributionCLIOptions struct {
 	NoOpen    bool
 	DraftFile string
 	Goal      string
+	File      string
 }
 
 func parseContributionArgs(args []string) (contributionCLIOptions, error) {
 	options := contributionCLIOptions{Host: "127.0.0.1"}
+	stringOptions := map[string]*string{
+		"--branch": &options.Branch, "--checkout": &options.Checkout,
+		"--host": &options.Host, "--draft-file": &options.DraftFile,
+		"--goal": &options.Goal, "--file": &options.File,
+	}
 	for index := 0; index < len(args); index++ {
 		argument := args[index]
-		value := func(name string) (string, error) {
+		name, inlineValue, inline := strings.Cut(argument, "=")
+		value := func() (string, error) {
+			if inline {
+				return inlineValue, nil
+			}
 			if index+1 >= len(args) {
 				return "", fmt.Errorf("%s requires a value", name)
 			}
 			index++
 			return args[index], nil
 		}
+		if destination, ok := stringOptions[name]; ok {
+			var err error
+			*destination, err = value()
+			if err != nil {
+				return options, err
+			}
+			continue
+		}
 		switch {
-		case argument == "--branch":
-			var err error
-			options.Branch, err = value("--branch")
-			if err != nil {
-				return options, err
-			}
-		case strings.HasPrefix(argument, "--branch="):
-			options.Branch = strings.TrimPrefix(argument, "--branch=")
-		case argument == "--checkout":
-			var err error
-			options.Checkout, err = value("--checkout")
-			if err != nil {
-				return options, err
-			}
-		case strings.HasPrefix(argument, "--checkout="):
-			options.Checkout = strings.TrimPrefix(argument, "--checkout=")
-		case argument == "--host":
-			var err error
-			options.Host, err = value("--host")
-			if err != nil {
-				return options, err
-			}
-		case strings.HasPrefix(argument, "--host="):
-			options.Host = strings.TrimPrefix(argument, "--host=")
-		case argument == "--port":
-			raw, err := value("--port")
+		case name == "--port":
+			raw, err := value()
 			if err != nil {
 				return options, err
 			}
@@ -961,43 +965,28 @@ func parseContributionArgs(args []string) (contributionCLIOptions, error) {
 			if err != nil || options.Port < 0 || options.Port > 65535 {
 				return options, errors.New("--port must be between 0 and 65535")
 			}
-		case strings.HasPrefix(argument, "--port="):
-			var err error
-			options.Port, err = strconv.Atoi(strings.TrimPrefix(argument, "--port="))
-			if err != nil || options.Port < 0 || options.Port > 65535 {
-				return options, errors.New("--port must be between 0 and 65535")
-			}
 		case argument == "--no-open":
 			options.NoOpen = true
-		case argument == "--draft-file":
-			var err error
-			options.DraftFile, err = value("--draft-file")
-			if err != nil {
-				return options, err
-			}
-		case strings.HasPrefix(argument, "--draft-file="):
-			options.DraftFile = strings.TrimPrefix(argument, "--draft-file=")
-		case argument == "--goal":
-			var err error
-			options.Goal, err = value("--goal")
-			if err != nil {
-				return options, err
-			}
-		case strings.HasPrefix(argument, "--goal="):
-			options.Goal = strings.TrimPrefix(argument, "--goal=")
 		case strings.HasPrefix(argument, "-"):
 			return options, fmt.Errorf("unknown contribute option %q", argument)
 		case options.SiteURL == "":
 			options.SiteURL = argument
 		default:
-			return options, errors.New("usage: mpress contribute <site-url-or-repository> [--goal page|translate] [--branch BRANCH] [--checkout DIRECTORY] [--port PORT] [--draft-file FILE] [--no-open]")
+			return options, errors.New("usage: mpress contribute <site-url-or-repository> [--goal page|translate] [--file SOURCE] [--branch BRANCH] [--checkout DIRECTORY] [--port PORT] [--draft-file FILE] [--no-open]")
 		}
 	}
+
 	if options.SiteURL == "" {
-		return options, errors.New("usage: mpress contribute <site-url-or-repository> [--goal page|translate] [--branch BRANCH] [--checkout DIRECTORY] [--port PORT] [--draft-file FILE] [--no-open]")
+		return options, errors.New("usage: mpress contribute <site-url-or-repository> [--goal page|translate] [--file SOURCE] [--branch BRANCH] [--checkout DIRECTORY] [--port PORT] [--draft-file FILE] [--no-open]")
 	}
 	if options.Goal != "" && options.Goal != "translate" && options.Goal != "page" {
 		return options, errors.New("--goal must be translate or page")
+	}
+	if options.File != "" && !filepath.IsLocal(options.File) {
+		return options, errors.New("--file must be a relative path inside the contribution checkout")
+	}
+	if options.File != "" && options.Goal == "" {
+		options.Goal = "page"
 	}
 	return options, nil
 }
