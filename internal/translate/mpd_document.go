@@ -60,7 +60,7 @@ func ExtractMPD(filename string, source []byte) (*Document, error) {
 			case mpd.KindComponent:
 				attributeNumber++
 				name := string(parsed.Text(node.Name))
-				document.Segments = append(document.Segments, mpdAttributeSegments(parsed, node, "a", attributeNumber, mpdTranslatableAttributes)...)
+				document.Segments = append(document.Segments, mpdAttributeSegments(parsed, node, "a", attributeNumber, componentTranslationAttributes(name))...)
 				if name == "filetree" {
 					blockNumber++
 					document.Segments = append(document.Segments, mpdFiletreeSegments(parsed, node, blockNumber, section)...)

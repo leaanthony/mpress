@@ -3022,7 +3022,6 @@
     const targets = () => (data.languages || []).filter(language => language !== data.defaultLanguage);
     const languageLabel = language => data.languageLabels?.[language] || language;
     const languageOptions = selected => targets().map(language => `<option value="${escapeHTML(language)}"${selectedAttr(language, selected)}>${escapeHTML(languageLabel(language))}</option>`).join('');
-    const formats = () => data.documentFormats || {markdown: 0, mpd: 0, nativeMPD: false};
     const automatic = () => data.automatic || {};
     const selectedStage = stage => automatic()?.[stage]?.selection || {};
     const bindBack = handler => q('[data-translation-back]')?.addEventListener('click', handler);
@@ -3126,15 +3125,19 @@
       if (!targets().length) { renderAddLanguage(true); return; }
       const selected = activeLanguage || targets()[0];
       const pending = totalPending();
+      const untracked = (data.report?.files || []).reduce((sum, file) => sum + (Number(file.states?.untracked) || 0), 0);
       const segments = totalSegments();
-      const current = Math.max(0, segments - pending);
+      const migration = (data.report?.files || []).reduce((sum, file) => sum + (Number(file.states?.["migration-required"]) || 0), 0);
+      const migrationReview = (data.report?.files || []).reduce((sum, file) => sum + (Number(file.states?.["migration-review"]) || 0), 0);
+      const attention = pending + untracked + migration + migrationReview;
+      const current = Math.max(0, segments - attention);
       const percent = segments ? Math.round(current / segments * 100) : 0;
       openDrawer('Translations', 'Translations', `
         <section class="translation-hero">
-          <div>${targets().length > 1 ? `<label class="translation-overview-language"><span>Language</span><select id="translation-overview-language">${languageOptions(selected)}</select></label>` : `<span class="wizard-kicker">${escapeHTML(languageLabel(selected))}</span>`}<h2>${pending ? `Continue ${escapeHTML(languageLabel(selected))}` : `${escapeHTML(languageLabel(selected))} is current`}</h2><p>${pending ? `${pending} passage${pending === 1 ? '' : 's'} need translation or updating.` : 'Every source passage has a current translation.'}</p></div>
+          <div>${targets().length > 1 ? `<label class="translation-overview-language"><span>Language</span><select id="translation-overview-language">${languageOptions(selected)}</select></label>` : `<span class="wizard-kicker">${escapeHTML(languageLabel(selected))}</span>`}<h2>${attention ? `Continue ${escapeHTML(languageLabel(selected))}` : `${escapeHTML(languageLabel(selected))} is current`}</h2><p>${migration ? `${migration} passages require translation state migration. Run mpress translate migrate-state with the original project snapshot before updating them.` : migrationReview ? `${migrationReview} migrated passages require review before their translation state can be trusted.` : untracked ? `${untracked} passage${untracked === 1 ? '' : 's'} have existing translations without tracking state. Restore their translation sidecars from Git before updating them.` : (pending ? `${pending} passage${pending === 1 ? '' : 's'} need translation or updating.` : 'Every source passage has a current translation.')}</p></div>
           <div class="translation-score" aria-label="${percent} percent current"><strong>${percent}%</strong><span>current</span></div>
         </section>
-        <div class="translation-stats"><div><strong>${(data.report?.files || []).length}</strong><span>pages</span></div><div><strong>${current}</strong><span>current passages</span></div><div><strong>${pending}</strong><span>need attention</span></div></div>
+        <div class="translation-stats"><div><strong>${(data.report?.files || []).length}</strong><span>pages</span></div><div><strong>${current}</strong><span>current passages</span></div><div><strong>${attention}</strong><span>need attention</span></div></div>
         ${setupHTML()}
         <h3 class="translation-section-heading">What M-Press will do</h3>
         ${pipelineHTML()}
@@ -3151,7 +3154,7 @@
       ['ar','العربية'],['he','עברית'],['hi','हिन्दी'],['id','Bahasa Indonesia'],['tr','Türkçe'],['sv','Svenska']
     ];
     const renderAddLanguage = first => {
-      setDrawerBody('Add a language', `<form id="translation-language-form" class="form-grid translation-language-form"><label class="field settings-wide"><span>Language</span><select name="locale" required><option value="">Choose a language</option>${localeChoices.filter(([code]) => !data.languages?.includes(code)).map(([code,label]) => `<option value="${escapeHTML(code)}">${escapeHTML(label)} · ${escapeHTML(code)}</option>`).join('')}<option value="custom">Another language or locale</option></select><small>M-Press configures its label, route, script, and translation guidance automatically.</small></label><div class="translation-custom-locale" hidden><label class="field"><span>Language code</span><input name="language" pattern="[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*" maxlength="24" placeholder="cy"></label><label class="field"><span>Display name</span><input name="label" placeholder="Cymraeg"></label></div><div class="actions">${first ? '<button class="button" type="button" data-translation-close>Not now</button>' : '<button class="button" type="button" data-translation-back>Back</button>'}<button class="button primary" type="submit">Add language and continue</button></div></form>`, 'Choose the language. M-Press will prepare the source, select the best available models, and show the complete plan before spending anything.');
+      setDrawerBody('Add a language', `<form id="translation-language-form" class="form-grid translation-language-form"><label class="field settings-wide"><span>Language</span><select name="locale" required><option value="">Choose a language</option>${localeChoices.filter(([code]) => !data.languages?.includes(code)).map(([code,label]) => `<option value="${escapeHTML(code)}">${escapeHTML(label)} · ${escapeHTML(code)}</option>`).join('')}<option value="custom">Another language or locale</option></select><small>M-Press configures its label, route, script, and translation guidance automatically.</small></label><div class="translation-custom-locale" hidden><label class="field"><span>Language code</span><input name="language" pattern="[A-Za-z0-9]+(?:-[A-Za-z0-9]+)*" maxlength="24" placeholder="cy"></label><label class="field"><span>Display name</span><input name="label" placeholder="Cymraeg"></label></div><div class="actions">${first ? '<button class="button" type="button" data-translation-close>Not now</button>' : '<button class="button" type="button" data-translation-back>Back</button>'}<button class="button primary" type="submit">Add language and continue</button></div></form>`, 'Choose the language. M-Press will select the best available models and show the complete plan before spending anything.');
       if (first) q('[data-translation-close]').addEventListener('click', closeDrawer); else bindBack(() => void returnOverview());
       const form = q('#translation-language-form');
       form.elements.locale.addEventListener('change', () => {
@@ -3183,7 +3186,7 @@
     const renderTranslationPlan = (goal, selectedLanguage = '') => {
       const isPage = goal === 'page';
       const selected = selectedLanguage || targets()[0];
-      setDrawerBody(isPage ? 'Translate this page' : `Translate ${languageLabel(selected)}`, `<form id="translation-plan-form" class="form-grid"><label class="field"><span>Target language</span><select name="language">${languageOptions(selected)}</select></label><label class="field"><span>Update</span><select name="scope"><option value="stale">Everything that needs attention</option><option value="missing">Only missing translations</option><option value="all">Replace previous machine translations</option></select></label>${isPage ? `<div class="result-box settings-wide"><strong>Page</strong>${escapeHTML(route?.path || '')}</div>` : ''}<label class="check-field settings-wide"><input name="force" type="checkbox"><span><strong>Replace passages changed by a person</strong><small>Leave this off to preserve every manual edit.</small></span></label>${formats().nativeMPD ? '<div class="translation-preparation ready">' + iconHTML('check') + '<span><strong>Source is ready</strong>All documents already use native MPD.</span></div>' : '<div class="translation-preparation">' + iconHTML('zap') + `<span><strong>Source preparation included</strong>M-Press will convert ${formats().markdown} Markdown document${formats().markdown === 1 ? '' : 's'} to MPD and validate the result before translation.</span></div>`}${setupHTML()}<div class="actions"><button class="button" type="button" data-translation-back>Back</button><button class="button primary" type="submit"${automatic().ready ? '' : ' disabled'}>Review the plan</button></div></form>`, 'Choose the outcome. M-Press preserves code, links, metadata, components, and human edits.');
+      setDrawerBody(isPage ? 'Translate this page' : `Translate ${languageLabel(selected)}`, `<form id="translation-plan-form" class="form-grid"><label class="field"><span>Target language</span><select name="language">${languageOptions(selected)}</select></label><label class="field"><span>Update</span><select name="scope"><option value="stale">Everything that needs attention</option><option value="missing">Only missing translations</option><option value="all">Replace previous machine translations</option></select></label>${isPage ? `<div class="result-box settings-wide"><strong>Page</strong>${escapeHTML(route?.path || '')}</div>` : ''}<label class="check-field settings-wide"><input name="force" type="checkbox"><span><strong>Replace passages changed by a person</strong><small>Leave this off to preserve every manual edit.</small></span></label><div class="translation-preparation ready">${iconHTML('check')}<span><strong>Source format preserved</strong>Translated files keep the project’s current document format.</span></div>${setupHTML()}<div class="actions"><button class="button" type="button" data-translation-back>Back</button><button class="button primary" type="submit"${automatic().ready ? '' : ' disabled'}>Review the plan</button></div></form>`, 'Choose the outcome. M-Press preserves code, links, metadata, components, and human edits.');
       bindBack(() => void returnOverview());
       bindAdvanced();
       q('#translation-plan-form').addEventListener('submit', async event => {
@@ -3215,7 +3218,7 @@
       q('#translation-run').addEventListener('click', () => runTranslation(plan));
     };
     const renderProgress = (label, activeStage, detail) => {
-	  const stages = ['Prepare source','Translate prose','Review and refine quality','Prepare human review'];
+	  const stages = ['Translate prose','Review and refine quality','Prepare human review'];
       setDrawerBody(`Translating ${label}`, `<div class="translation-progress" role="status" aria-live="polite"><div class="translation-progress-heading"><span class="translation-spinner" aria-hidden="true"></span><div><strong>${escapeHTML(stages[activeStage])}</strong><span>${escapeHTML(detail)}</span></div></div><ol>${stages.map((stage,index) => `<li class="${index < activeStage ? 'done' : index === activeStage ? 'active' : ''}">${index < activeStage ? iconHTML('check') : `<span>${index + 1}</span>`}<strong>${stage}</strong></li>`).join('')}</ol><p>You can leave this page open. Completed pages are saved safely and the workflow can be resumed.</p></div>`, 'M-Press protects document structure and saves only validated output.');
     };
     const runTranslation = async plan => {
@@ -3223,18 +3226,12 @@
       const previousReloadSuppression = state.suppressReloadUntil;
       state.suppressReloadUntil = Number.MAX_SAFE_INTEGER;
       try {
-        if (!formats().nativeMPD) {
-          renderProgress(label, 0, `Converting and validating ${formats().markdown} source documents.`);
-          const conversion = await api('translations', {method: 'POST', body: JSON.stringify({action: 'convert-mpd'})});
-          updateBuild(conversion.state);
-          await loadTranslationData(plan.language, plan.file);
-        }
-        renderProgress(label, 1, `${plan.report?.pending || 0} passages using ${modelName(selectedStage('draft'))}.`);
+        renderProgress(label, 0, `${plan.report?.pending || 0} passages using ${modelName(selectedStage('draft'))}.`);
         const result = await api('translations', {method: 'POST', body: JSON.stringify(plan)});
         updateBuild(result.state);
-		renderProgress(label, 2, 'An independent reviewer is checking meaning, terminology, and structure. Flagged passages are repaired and checked again.');
+		renderProgress(label, 1, 'An independent reviewer is checking meaning, terminology, and structure. Flagged passages are repaired and checked again.');
 		const checked = await api('translations', {method: 'POST', body: JSON.stringify({action: 'audit', language: plan.language, file: plan.file, refine: true})});
-        renderProgress(label, 3, 'Preparing the result and any passages that still need attention.');
+        renderProgress(label, 2, 'Preparing the result and any passages that still need attention.');
 		renderTranslationResult(plan, result, checked);
       } catch (error) {
         setDrawerBody('Translation paused', `<div class="translation-failure">${iconHTML('triangle-alert')}<div><strong>Your completed work is safe</strong><span>${escapeHTML(error.message)}</span></div></div><p class="intro">Fix the problem and continue the same plan. M-Press will reuse completed translations rather than starting over.</p><div class="actions"><button class="button" id="translation-error-advanced" type="button">Advanced settings</button><button class="button primary" id="translation-error-back" type="button">Return to plan</button></div>`, 'The workflow stopped safely. No invalid page was written.');

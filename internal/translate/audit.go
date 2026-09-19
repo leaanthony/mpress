@@ -54,10 +54,10 @@ func (report *AuditReport) addStructureError(file string, err error) {
 }
 
 func (report *AuditReport) addProtectedContentError(format, file string, source, target Segment) {
-	if format != "mpd" || !strings.Contains(source.Text, "⟪MPRESS_INLINE_") {
+	if format != markdownTranslationFormat && (format != "mpd" || !strings.Contains(source.Text, "⟪MPRESS_INLINE_")) {
 		return
 	}
-	if _, err := prepareExistingSegment(source, target); err != nil {
+	if _, err := prepareExistingForFormat(format, &source, target); err != nil {
 		report.add(AuditFinding{Severity: "error", Code: "protected-content", File: file, Segment: source.ID, Message: err.Error()})
 	}
 }

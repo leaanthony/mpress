@@ -127,6 +127,12 @@ func (e *Engine) Mark(language, sourceFile, status string) (FileReport, error) {
 	if err != nil {
 		return FileReport{}, err
 	}
+	if err := checkStateExtractor(state, sourceFile); err != nil {
+		return FileReport{}, err
+	}
+	if err := validateFile(sourceFile, e.Config.Build.NavFile, sourceDoc, targetBytes); err != nil {
+		return FileReport{}, err
+	}
 	targetByID := map[string]Segment{}
 	for _, segment := range targetDoc.Segments {
 		targetByID[segment.ID] = segment
@@ -171,6 +177,8 @@ type Engine struct {
 	Project  string
 	Config   config.Config
 	Provider Provider
+	// Supplied by CLI/project conversion to keep the translation core independent of importers.
+	MarkdownToMPD func(string) (string, error)
 }
 
 func NewEngine(project string, cfg config.Config, provider Provider) *Engine {
@@ -191,6 +199,14 @@ type configuredProvider struct {
 
 func (p *configuredProvider) Name() string  { return p.cfg.Translation.Provider }
 func (p *configuredProvider) Model() string { return p.cfg.Translation.Model }
+func providerModelForLanguage(provider Provider, language string) string {
+	if configured, ok := provider.(*configuredProvider); ok {
+		if selection, exists := configured.cfg.Translation.LanguageModels[language]; exists {
+			return selection.Model
+		}
+	}
+	return provider.Model()
+}
 func (p *configuredProvider) Translate(ctx context.Context, request TranslationRequest) (map[string]string, error) {
 	model := p.cfg.Translation.Model
 	reasoningEffort := p.cfg.Translation.ReasoningEffort
@@ -439,23 +455,32 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 		return FileReport{}, err
 	}
 
-	var targetDoc *Document
 	targetReadPath := targetPath
 	if state.SourceFile != "" && filepath.ToSlash(state.SourceFile) != filepath.ToSlash(sourceFile) {
 		if _, statErr := os.Stat(targetPath); errors.Is(statErr, os.ErrNotExist) {
 			targetReadPath = filepath.Join(contentDir, filepath.FromSlash(language), filepath.FromSlash(state.SourceFile))
 		}
 	}
-	if targetBytes, readErr := os.ReadFile(targetReadPath); readErr == nil {
-		targetDoc, err = extractTargetFile(sourceFile, e.Config.Build.NavFile, sourceBytes, targetBytes)
-		if errors.Is(err, errTranslationHeadingStructure) && (len(state.Segments) == 0 || options.Force && options.Scope == "all") {
-			targetDoc, err = extractFile(sourceFile, e.Config.Build.NavFile, targetBytes)
+	report := FileReport{SourceFile: filepath.ToSlash(sourceFile), TargetFile: filepath.ToSlash(filepath.Join(language, sourceFile)), TargetLanguage: language, Segments: len(sourceDoc.Segments), States: map[string]int{}}
+	targetDoc, err := e.readTranslationTarget(sourceFile, targetReadPath, sourceBytes, state, options)
+	if options.DryRun && (errors.Is(err, errUntrackedTranslation) || errors.Is(err, errTranslationMigration) || errors.Is(err, errMigrationReview)) {
+		stateName := "untracked"
+		if errors.Is(err, errTranslationMigration) {
+			stateName = "migration-required"
 		}
-		if err != nil {
-			return FileReport{}, fmt.Errorf("parse existing target: %w", err)
+		if errors.Is(err, errMigrationReview) {
+			for _, entry := range state.Segments {
+				if entry.Status == "migration-review" {
+					report.States["migration-review"]++
+				}
+			}
+		} else {
+			report.States[stateName] = report.Segments
 		}
-	} else if !errors.Is(readErr, os.ErrNotExist) {
-		return FileReport{}, readErr
+		return report, nil
+	}
+	if err != nil {
+		return FileReport{}, err
 	}
 	targetByID := map[string]Segment{}
 	if targetDoc != nil {
@@ -467,7 +492,6 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 	matches := matchSegments(sourceDoc.Segments, state.Segments)
 	layout := inferTargetLayout(matches, state.Segments, targetByID)
 	items := make([]matchedSegment, 0, len(sourceDoc.Segments))
-	report := FileReport{SourceFile: filepath.ToSlash(sourceFile), TargetFile: filepath.ToSlash(filepath.Join(language, sourceFile)), TargetLanguage: language, Segments: len(sourceDoc.Segments), States: map[string]int{}}
 	for _, segment := range sourceDoc.Segments {
 		oldID := matches[segment.ID]
 		old, exists := state.Segments[oldID]
@@ -487,6 +511,7 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 		}
 		status := segmentStatus(segment, old, exists, targetText)
 		if segment.Protected {
+			target = segment
 			targetText = segment.Original
 			status = "protected"
 		}
@@ -554,7 +579,8 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 	}
 	values := map[string]string{}
 	newState := newFileState(sourceFile, e.Config.Translation.SourceLanguage, language, sourceDoc.TranslationKey)
-	for _, item := range items {
+	newState.Migration = state.Migration
+	for itemIndex, item := range items {
 		value, newlyTranslated := translated[item.ID]
 		status := item.State
 		machineText := item.Old.MachineText
@@ -574,7 +600,8 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 		} else if item.TargetText != "" {
 			target := item.Target
 			target.Original = item.TargetText
-			value, err = prepareExistingSegment(item.Segment, target)
+			value, err = prepareExistingForFormat(sourceDoc.Format, &item.Segment, target)
+			sourceDoc.Segments[itemIndex] = item.Segment
 			if err != nil {
 				return report, err
 			}
@@ -587,13 +614,25 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 			return report, restoreErr
 		}
 		providerName, providerModel := item.Old.Provider, item.Old.Model
-		if e.Provider != nil {
-			providerName, providerModel = e.Provider.Name(), e.Provider.Model()
+		if newlyTranslated && e.Provider != nil {
+			providerName, providerModel = e.Provider.Name(), providerModelForLanguage(e.Provider, language)
 		}
 		newState.Segments[item.ID] = SegmentState{
 			SourceHash: item.SourceHash, TargetHash: Hash(restored), MachineHash: machineHash,
 			MachineText: machineText, Status: status, SourcePreview: preview(item.Original),
-			Provider: providerName, Model: providerModel, PromptVersion: promptVersion, UpdatedAt: nowString(),
+			Provider: providerName, Model: providerModel, PromptVersion: item.Old.PromptVersion, UpdatedAt: item.Old.UpdatedAt,
+		}
+		if !newlyTranslated && !item.Protected {
+			entry := newState.Segments[item.ID]
+			entry.SourceHash = item.Old.SourceHash
+			entry.SourcePreview = item.Old.SourcePreview
+			newState.Segments[item.ID] = entry
+		}
+		if newlyTranslated {
+			entry := newState.Segments[item.ID]
+			entry.PromptVersion = promptVersion
+			entry.UpdatedAt = nowString()
+			newState.Segments[item.ID] = entry
 		}
 	}
 	output, err := Apply(sourceDoc, values)
@@ -628,6 +667,39 @@ func (e *Engine) translateFile(ctx context.Context, language, sourceFile string,
 	}
 	report.Written = true
 	return report, nil
+}
+
+var errUntrackedTranslation = errors.New("existing text has no translation state")
+
+// readTranslationTarget checks the on-disk target before any provider request.
+func (e *Engine) readTranslationTarget(sourceFile, targetPath string, source []byte, state *FileState, options Options) (*Document, error) {
+	target, err := os.ReadFile(targetPath)
+	if errors.Is(err, os.ErrNotExist) {
+		// A sidecar is not a translation. Cached machine text must not hide a
+		// deleted target or its lost manual edits from status and missing-only runs.
+		state.Segments = map[string]SegmentState{}
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	replaceAll := options.Force && options.Scope == "all"
+	if replaceAll {
+		state.Segments = map[string]SegmentState{}
+	} else if err := checkStateForUpdate(state, sourceFile); err != nil {
+		return nil, err
+	}
+	if len(target) > 0 && len(state.Segments) == 0 && !replaceAll {
+		return nil, fmt.Errorf("%s: %w; restore its sidecar from Git, or use --scope all --force only to deliberately replace this translation", targetPath, errUntrackedTranslation)
+	}
+	document, err := extractTargetFile(sourceFile, e.Config.Build.NavFile, source, target)
+	if errors.Is(err, errTranslationHeadingStructure) && (len(state.Segments) == 0 || replaceAll) {
+		document, err = extractFile(sourceFile, e.Config.Build.NavFile, target)
+	}
+	if err != nil {
+		return nil, fmt.Errorf("parse existing target: %w", err)
+	}
+	return document, nil
 }
 
 func estimateUsage(cfg config.Config, sourceDoc *Document, language string, pending []RequestSegment, styleGuide string, glossary []GlossaryTerm) UsageEstimate {
@@ -703,49 +775,7 @@ func rewriteLocalFragments(sourceFile, sourceLanguage, targetLanguage string, so
 	if strings.EqualFold(filepath.Ext(sourceFile), ".mpd") {
 		return rewriteMPDLocalFragments(sourceFile, source, target)
 	}
-	renderer := content.NewRenderer()
-	sourceRenderable, err := translationRenderable(sourceFile, source)
-	if err != nil {
-		return nil, fmt.Errorf("parse source page anchors: %w", err)
-	}
-	targetRenderable, err := translationRenderable(sourceFile, target)
-	if err != nil {
-		return nil, fmt.Errorf("parse translated page anchors: %w", err)
-	}
-	sourcePage, sourceDiagnostics, err := renderer.ParseBytes(sourceFile, sourceLanguage, sourceRenderable)
-	if err != nil {
-		return nil, fmt.Errorf("parse source page anchors: %w", err)
-	}
-	targetPage, targetDiagnostics, err := renderer.ParseBytes(sourceFile, targetLanguage, targetRenderable)
-	if err != nil {
-		return nil, fmt.Errorf("parse translated page anchors: %w", err)
-	}
-	for _, diagnostic := range append(sourceDiagnostics, targetDiagnostics...) {
-		if diagnostic.Severity == "error" {
-			return nil, fmt.Errorf("validate translated components: %s", diagnostic.Message)
-		}
-	}
-	if len(sourcePage.Headings) != len(targetPage.Headings) {
-		return nil, errors.New("translation changed the rendered heading structure")
-	}
-	result := string(target)
-	for index, sourceHeading := range sourcePage.Headings {
-		targetHeading := targetPage.Headings[index]
-		if sourceHeading.Level != targetHeading.Level {
-			return nil, errors.New("translation changed a rendered heading level")
-		}
-		if sourceHeading.ID == "" || targetHeading.ID == "" || sourceHeading.ID == targetHeading.ID {
-			continue
-		}
-		for _, pair := range [][2]string{
-			{"(#" + sourceHeading.ID + ")", "(#" + targetHeading.ID + ")"},
-			{"href=\"#" + sourceHeading.ID + "\"", "href=\"#" + targetHeading.ID + "\""},
-			{"href='#" + sourceHeading.ID + "'", "href='#" + targetHeading.ID + "'"},
-		} {
-			result = strings.ReplaceAll(result, pair[0], pair[1])
-		}
-	}
-	return []byte(result), nil
+	return rewriteMarkdownFragments(sourceFile, source, target, false)
 }
 
 type nativeHeading struct {
@@ -825,6 +855,13 @@ func extractTargetFile(file, navFile string, source, target []byte) (*Document, 
 	if strings.EqualFold(filepath.Ext(file), ".mpd") {
 		var err error
 		target, err = rewriteMPDFragments(file, source, target, true)
+		if err != nil {
+			return nil, err
+		}
+	}
+	if !strings.EqualFold(filepath.Ext(file), ".mpd") && filepath.ToSlash(file) != filepath.ToSlash(navFile) {
+		var err error
+		target, err = rewriteMarkdownFragments(file, source, target, true)
 		if err != nil {
 			return nil, err
 		}
@@ -965,7 +1002,7 @@ func extractFile(sourceFile, navFile string, data []byte) (*Document, error) {
 	if strings.EqualFold(filepath.Ext(sourceFile), ".mpd") {
 		return ExtractMPD(sourceFile, data)
 	}
-	return Extract(data)
+	return ExtractMarkdown(data)
 }
 
 func validateFile(sourceFile, navFile string, source *Document, target []byte) error {
@@ -1092,6 +1129,8 @@ func segmentStatus(segment Segment, old SegmentState, exists bool, targetText st
 		return "conflict"
 	case sourceChanged:
 		return "stale"
+	case old.Status == "migration-review":
+		return "migration-review"
 	case targetChanged:
 		return "manual"
 	case old.Status == "manual" || old.Status == "reviewed" || old.Status == "final":
@@ -1206,6 +1245,15 @@ func partialQuantityMatch(text string, start, end int) bool {
 }
 
 func Validate(source *Document, target []byte) error {
+	// Reused segments may retain equivalent target token spellings. Validation
+	// is always grounded in the original source bytes, not those mutable maps.
+	if source.Format == markdownTranslationFormat {
+		original, err := ExtractMarkdown(source.Source)
+		if err != nil {
+			return err
+		}
+		source = original
+	}
 	if err := validateTranslationControls(string(target)); err != nil {
 		return err
 	}
@@ -1213,6 +1261,8 @@ func Validate(source *Document, target []byte) error {
 	var err error
 	if source.Format == "mpd" {
 		targetDoc, err = extractTargetFile("translated.mpd", "_nav.yaml", source.Source, target)
+	} else if source.Format == markdownTranslationFormat {
+		targetDoc, err = extractTargetFile("translated.md", "_nav.yaml", source.Source, target)
 	} else {
 		targetDoc, err = Extract(target)
 	}
@@ -1231,7 +1281,7 @@ func Validate(source *Document, target []byte) error {
 	if sourceSkeleton != targetSkeleton {
 		return structuralTranslationError(sourceSkeleton, targetSkeleton, source.Format)
 	}
-	if source.Format == "mpd" {
+	if source.Format == "mpd" || source.Format == markdownTranslationFormat {
 		return validateMPDInlineProtection(source, targetDoc)
 	}
 	return nil

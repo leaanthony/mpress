@@ -267,12 +267,27 @@ empty, and the cloned repository must contain `mpress.yaml`.
 Use `--scope missing` to fill gaps only. Use `--scope all --force` only when you
 intend to replace existing machine text and manual conflicts.
 
-MPD pages with local heading links can be updated and refined without treating
+If a translated file exists but its translation sidecar is missing or empty,
+status reports it as `untracked`. Updates stop instead of overwriting the
+existing text. Restore the matching
+sidecar from Git before continuing. If you deliberately want a new machine
+translation, select that single page with `--file` and use `--scope all --force`.
+Keep a copy of any human corrections for review. A deleted target file is
+reported as missing even when its old sidecar still exists.
+
+Contributors can open the local translation workflow with
+`mpress contribute <page-url> --goal translate`. The generated contributor
+scripts accept the same option; see [Enable site contributions](/how-to/enable-site-contributions/).
+
+The contributor workflow keeps the project's document format. Translating a
+Markdown page does not convert the source tree to MPD.
+
+Markdown and MPD pages with local heading links can be updated and refined without treating
 translated anchors as manual edits. If the heading structure changes and those
 anchors cannot be aligned safely, preserve any manual corrections, regenerate
 that page with `--file path/to/page.mpd --scope all --force`, and review it again.
 
-Audits report each damaged native MPD inline segment as `protected-content`,
+Audits report each damaged inline segment as `protected-content`,
 including changed quantities, code, or formatting. Targeted refinement can
 rebuild those segments from the protected source while retaining the other
 translations. A refinement that still damages protected content is rejected
@@ -285,6 +300,12 @@ then shows the target, scope, affected pages, and conflict policy before it
 writes content. Remote writes require the development server authoring token.
 
 ## What M-Press protects
+
+Markdown translation includes component titles and labels, structured component
+fields, visible text and accessibility attributes in HTML blocks, nested
+hero/banner metadata, and D2 labels. Functional identifiers such as input and
+variant names stay protected. Custom components and labels embedded inside
+inline HTML still need a manual coverage review.
 
 M-Press parses M-Press Flavoured Markdown into a structured document. It sends
 exact prose ranges to the provider and patches the returned text into the
@@ -300,7 +321,8 @@ The translator protects:
 - visible component attributes such as titles, labels, descriptions, and
   alternative text are translated without exposing their JSON syntax;
 - configuration placeholders such as `{name}` and `${HOME}`;
-- Markdown punctuation and line structure;
+- block structure and component field boundaries, while allowing prose
+  paragraphs to reflow and inline placeholders to move;
 - navigation links and YAML nesting.
 
 D2 diagram labels are translated using D2's editing API. Shape identifiers,
@@ -322,10 +344,60 @@ by the target language without separating it from the sentence. In a
 `@filetree`, paths stay protected and human-readable descriptions are
 translated.
 
+## Migrate existing translation state
+
+The current sidecar schema is version 2. It identifies the extractor used for
+its segment hashes. Old Markdown sidecars and sidecars renamed from `.mpd` to
+`.md` must be migrated before provider updates. Native MPD and navigation
+sidecars with compatible extraction remain readable.
+
+Keep a project snapshot containing the original source files, translated files,
+configuration, and sidecars together. From the current project, preview migration:
+
+```sh
+mpress translate migrate-state --from ../original-project --lang fr --json
+mpress translate migrate-state --from ../original-project --lang fr --write
+```
+
+Add `--file path/to/current.md` to select one page. Omit `--lang` to include
+all configured target languages. The default run writes nothing and contacts
+no provider. `--write` changes sidecars only; repeating a completed migration
+leaves them unchanged. Do not use a snapshot whose sidecars were already
+mechanically renamed: restore the original triplets from Git first.
+
+Migration preserves approvals and provider/model provenance only when the
+original source and target evidence can be verified. The report distinguishes
+pre-existing layout differences, stale or missing historical state, unmapped
+content, and changes since the snapshot. Sidecars retain the original
+segment records as historical evidence.
+
+A single added standalone Markdown paragraph can retain the surrounding
+translations' history when removing that paragraph restores both the original
+source and translated documents exactly. The new paragraph remains
+`migration-review` with reason `inserted-content`. Duplicate or otherwise
+ambiguous matches, multiple insertions, and other layout changes still require
+review; ordinal segment IDs alone do not establish identity.
+
+A page containing `migration-review` segments is blocked from provider updates
+and refinement. Compare the page with its source, correct any content or
+structure differences, then record your review:
+
+```sh
+mpress translate review --lang fr --file path/to/current.md
+```
+
+The explicit `mpress convert --to markdown --replace` and
+`mpress convert --to mpd --replace` commands plan sidecar migration before
+writing converted documents or removing their originals. Review the reported
+migration requirements before continuing translation work.
+
+`translate audit` and `translate check` inspect document content independently
+of sidecar freshness. Their success does not approve migrated state.
+
 ## Track freshness and human edits
 
 Commit `.mpress/translations/` to the repository. Each sidecar file records
-source and target hashes, provider, model, prompt version, and review state. It
+source and target hashes, extractor identity, provider, model, prompt version, and review state. It
 does not contain an API key.
 
 M-Press reports these states:
@@ -333,6 +405,9 @@ M-Press reports these states:
 | State | Meaning |
 | --- | --- |
 | `missing` | No target text exists. |
+| `untracked` | A target file exists without translation state; its freshness cannot be established. |
+| `migration-required` | The sidecar uses a different extractor; update it before translating. |
+| `migration-review` | Migration could not verify a segment; review the page before updating it. |
 | `machine-translated` | The target matches the last provider output. |
 | `stale` | The source changed after machine translation. |
 | `manual` | A person edited the target while the source stayed unchanged. |

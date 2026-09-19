@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const stateSchemaVersion = 1
+const stateSchemaVersion = 2
 
 type SegmentState struct {
 	SourceHash    string `json:"sourceHash"`
@@ -27,11 +27,24 @@ type SegmentState struct {
 
 type FileState struct {
 	SchemaVersion  int                     `json:"schemaVersion"`
+	Extractor      string                  `json:"extractor"`
 	PageKey        string                  `json:"pageKey"`
 	SourceFile     string                  `json:"sourceFile"`
 	SourceLanguage string                  `json:"sourceLanguage"`
 	TargetLanguage string                  `json:"targetLanguage"`
 	Segments       map[string]SegmentState `json:"segments"`
+	Migration      *StateMigration         `json:"migration,omitempty"`
+}
+
+// Historical approval remains evidence, never effective approval of an
+// unverified new segment. Keep original provenance even for ambiguous mappings.
+type StateMigration struct {
+	FromExtractor    string                  `json:"fromExtractor"`
+	FromSourceFile   string                  `json:"fromSourceFile"`
+	SourceHash       string                  `json:"sourceHash"`
+	TargetHash       string                  `json:"targetHash"`
+	PreviousSegments map[string]SegmentState `json:"previousSegments"`
+	ReviewReasons    map[string]string       `json:"reviewReasons,omitempty"`
 }
 
 func newFileState(sourceFile, sourceLanguage, targetLanguage, pageKey string) *FileState {
@@ -39,7 +52,7 @@ func newFileState(sourceFile, sourceLanguage, targetLanguage, pageKey string) *F
 		pageKey = Hash(filepath.ToSlash(sourceFile))[:20]
 	}
 	return &FileState{
-		SchemaVersion: stateSchemaVersion, PageKey: pageKey,
+		SchemaVersion: stateSchemaVersion, Extractor: currentExtractor(sourceFile), PageKey: pageKey,
 		SourceFile: filepath.ToSlash(sourceFile), SourceLanguage: sourceLanguage,
 		TargetLanguage: targetLanguage, Segments: map[string]SegmentState{},
 	}
@@ -57,13 +70,53 @@ func loadState(path, sourceFile, sourceLanguage, targetLanguage, pageKey string)
 	if err := json.Unmarshal(data, &state); err != nil {
 		return nil, fmt.Errorf("parse translation state %s: %w", path, err)
 	}
-	if state.SchemaVersion != stateSchemaVersion {
+	if state.SchemaVersion != 1 && state.SchemaVersion != stateSchemaVersion {
 		return nil, fmt.Errorf("translation state %s uses unsupported schema %d", path, state.SchemaVersion)
+	}
+	if state.Extractor == "" && state.SchemaVersion == 1 {
+		state.Extractor = currentExtractor(state.SourceFile)
+		if state.Extractor == markdownTranslationFormat {
+			state.Extractor = "markdown-text-v1"
+		}
 	}
 	if state.Segments == nil {
 		state.Segments = map[string]SegmentState{}
 	}
 	return &state, nil
+}
+
+func currentExtractor(file string) string {
+	switch strings.ToLower(filepath.Ext(file)) {
+	case ".mpd":
+		return "mpd-v1"
+	case ".yaml", ".yml":
+		return "navigation-v1"
+	default:
+		return markdownTranslationFormat
+	}
+}
+
+var errTranslationMigration = errors.New("translation state requires migration")
+var errMigrationReview = errors.New("migrated translation requires review")
+
+func checkStateForUpdate(state *FileState, file string) error {
+	if err := checkStateExtractor(state, file); err != nil {
+		return err
+	}
+	for _, entry := range state.Segments {
+		if entry.Status == "migration-review" {
+			return fmt.Errorf("%s: %w; inspect the source and target, correct any differences, then use mpress translate review", file, errMigrationReview)
+		}
+	}
+	return nil
+}
+
+func checkStateExtractor(state *FileState, file string) error {
+	want := currentExtractor(file)
+	if len(state.Segments) > 0 && state.Extractor != want {
+		return fmt.Errorf("%w: %s uses %q, expected %q; run mpress translate migrate-state with the original source, target and sidecar", errTranslationMigration, file, state.Extractor, want)
+	}
+	return nil
 }
 
 func saveState(path string, state *FileState) error {

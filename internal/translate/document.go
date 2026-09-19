@@ -859,7 +859,9 @@ func writePaddedInt(result *strings.Builder, value, width int) {
 	_, _ = result.Write(digits)
 }
 
-func preservesMarkdownSyntax(format string) bool { return format != "mpd" && format != "navigation" }
+func preservesMarkdownSyntax(format string) bool {
+	return format != "mpd" && format != "navigation" && format != markdownTranslationFormat
+}
 
 func navigationLabelEnd(line []byte, start int) int {
 	if start < len(line) && (line[start] == '\'' || line[start] == '"') {

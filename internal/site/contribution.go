@@ -8,29 +8,45 @@ const contributionBranchMarker = "__MPRESS_CONTRIBUTION_BRANCH__"
 const contributionInstallShellTemplate = `#!/bin/sh
 set -eu
 
-target=${1-}
-draft_file=${2-}
-goal=${3-}
+case "${1-}" in
+  -h|--help)
+    echo 'Usage: mpress-contribute.sh [PAGE-OR-REPOSITORY [DRAFT-FILE [GOAL]]] [contribute options]'
+    echo 'Translate: sh mpress-contribute.sh --goal translate'
+    echo 'Options: --goal page|translate, --checkout DIRECTORY, --port PORT, --no-open, --draft-file FILE'
+    exit 0 ;;
+esac
+
+# Keep the positional handoff used by published sites, then forward CLI options.
+target=
+draft_file=
+goal=
+case "${1-}" in -*) ;; *) target=${1-}; if [ "$#" -gt 0 ]; then shift; fi ;; esac
+case "${1-}" in -*) ;; *) draft_file=${1-}; if [ "$#" -gt 0 ]; then shift; fi ;; esac
+case "${1-}" in -*) ;; *) goal=${1-}; if [ "$#" -gt 0 ]; then shift; fi ;; esac
 if [ -z "$target" ]; then
   target=` + contributionRepositoryMarker + `
 fi
 
 run_contribution() {
   mpress_binary=$1
+  shift
   if [ -n "$draft_file" ]; then
-		if [ -n "$goal" ]; then
-			exec "$mpress_binary" contribute --branch ` + contributionBranchMarker + ` --goal "$goal" "$target" --draft-file "$draft_file"
-		fi
-		exec "$mpress_binary" contribute --branch ` + contributionBranchMarker + ` "$target" --draft-file "$draft_file"
+    set -- --draft-file "$draft_file" "$@"
   fi
-	if [ -n "$goal" ]; then
-		exec "$mpress_binary" contribute --branch ` + contributionBranchMarker + ` --goal "$goal" "$target"
-	fi
-  exec "$mpress_binary" contribute --branch ` + contributionBranchMarker + ` "$target"
+  if [ -n "$goal" ]; then
+    set -- --goal "$goal" "$@"
+  fi
+  "$mpress_binary" contribute --branch ` + contributionBranchMarker + ` "$target" "$@"
 }
 
+if ! command -v git >/dev/null 2>&1; then
+  echo 'Git is required to prepare a contribution checkout. Install Git and run this command again.' >&2
+  exit 1
+fi
+
 if command -v mpress >/dev/null 2>&1; then
-  run_contribution mpress
+  run_contribution mpress "$@"
+  exit $?
 fi
 
 release_base=${MPRESS_RELEASE_BASE_URL:-https://github.com/leaanthony/mpress/releases/latest/download}
@@ -76,7 +92,10 @@ fi
 
 temporary_directory=$(mktemp -d 2>/dev/null || mktemp -d -t mpress)
 cleanup() { rm -rf "$temporary_directory"; }
-trap cleanup EXIT HUP INT TERM
+trap cleanup EXIT
+trap 'exit 129' HUP
+trap 'exit 130' INT
+trap 'exit 143' TERM
 
 asset="mpress-${system}-${machine}.tar.gz"
 archive="$temporary_directory/$asset"
@@ -109,22 +128,41 @@ if [ ! -f "$binary" ]; then
   exit 1
 fi
 chmod +x "$binary"
-run_contribution "$binary"
+run_contribution "$binary" "$@"
 `
 
 const contributionInstallPowerShellTemplate = `$ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
-$target = if ($args.Count -gt 0 -and $args[0]) { [string] $args[0] } else { ` + contributionRepositoryMarker + ` }
-$draftFile = if ($args.Count -gt 1 -and $args[1]) { [string] $args[1] } else { "" }
-$goal = if ($args.Count -gt 2 -and $args[2]) { [string] $args[2] } else { "" }
+if ($args.Count -gt 0 -and $args[0] -in @('-h', '--help')) {
+  Write-Output 'Usage: mpress-contribute.ps1 [PAGE-OR-REPOSITORY [DRAFT-FILE [GOAL]]] [contribute options]'
+  Write-Output 'Translate: ./mpress-contribute.ps1 --goal translate'
+  Write-Output 'Options: --goal page|translate, --checkout DIRECTORY, --port PORT, --no-open, --draft-file FILE'
+  exit 0
+}
+
+$positional = @('', '', '')
+$argumentOffset = 0
+while ($argumentOffset -lt $args.Count -and $argumentOffset -lt 3 -and -not ([string]$args[$argumentOffset]).StartsWith('-')) {
+  $positional[$argumentOffset] = [string]$args[$argumentOffset]
+  $argumentOffset++
+}
+$target = if ($positional[0]) { $positional[0] } else { ` + contributionRepositoryMarker + ` }
+$draftFile = $positional[1]
+$goal = $positional[2]
+$extraArguments = @($args | Select-Object -Skip $argumentOffset)
 
 function Start-Contribution([string] $Binary) {
   $contributionArguments = @("contribute", "--branch", ` + contributionBranchMarker + `, $target)
   if ($draftFile) { $contributionArguments += @("--draft-file", $draftFile) }
   if ($goal) { $contributionArguments += @("--goal", $goal) }
+  $contributionArguments += $extraArguments
   & $Binary @contributionArguments
   exit $LASTEXITCODE
+}
+
+if (-not (Get-Command git -CommandType Application -ErrorAction SilentlyContinue)) {
+  throw 'Git is required to prepare a contribution checkout. Install Git and run this command again.'
 }
 
 $installedMPress = Get-Command mpress -CommandType Application -ErrorAction SilentlyContinue
