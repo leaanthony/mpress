@@ -1945,10 +1945,10 @@ const defaultThemeJS = `
 	const contributionCommands = () => {
 	  const shellURL = shellQuote(shellInstallerURL);
 	  const shellDownload = shellInstallerURL.startsWith('https:')
-		? "{ command -v curl >/dev/null 2>&1 && curl --proto '=https' --tlsv1.2 -fsSL " + shellURL + ' || wget --https-only -qO- ' + shellURL + '; }'
-		: '{ command -v curl >/dev/null 2>&1 && curl -fsSL ' + shellURL + ' || wget -qO- ' + shellURL + '; }';
-	  const shellArgs = shellQuote(contributionPageURL) + (downloadedDraftName ? ' ' + shellQuote(downloadedDraftName) : " ''") + (contributionGoal ? ' ' + shellQuote(contributionGoal) : '');
-	  const powerShellArgs = powerShellQuote(contributionPageURL) + (downloadedDraftName ? ' ' + powerShellQuote(downloadedDraftName) : " ''") + (contributionGoal ? ' ' + powerShellQuote(contributionGoal) : '');
+		? "curl --proto '=https' --tlsv1.2 -fsSL " + shellURL
+		: 'curl -fsSL ' + shellURL;
+	  const shellArgs = shellQuote(contributionPageURL) + (downloadedDraftName ? ' --draft-file ' + shellQuote(downloadedDraftName) : '') + (contributionGoal ? ' --goal ' + shellQuote(contributionGoal) : '');
+	  const powerShellArgs = powerShellQuote(contributionPageURL) + (downloadedDraftName ? ' --draft-file ' + powerShellQuote(downloadedDraftName) : '') + (contributionGoal ? ' --goal ' + powerShellQuote(contributionGoal) : '');
 	  return {
 		shell: shellDownload + ' | sh -s -- ' + shellArgs,
 		powershell: '& ([scriptblock]::Create((irm ' + powerShellQuote(powerShellInstallerURL) + '))) ' + powerShellArgs

@@ -129,6 +129,12 @@ applies the same SHA-256 check.
 
 Both scripts use `mpress` directly when it is already available on the path.
 
+The macOS and Linux command shown to readers uses `curl` only to fetch this
+script; release selection, download retries, verification, and setup happen
+inside the script. If `curl` is unavailable, save the script using the
+**View the macOS and Linux script** link under **What this command does** and
+run it with `sh` as shown below. The script can use `wget` for release downloads.
+
 To open the translation workflow directly, pass `--goal translate`. After
 saving the generated script locally, run:
 

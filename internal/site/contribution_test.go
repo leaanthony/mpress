@@ -11,6 +11,68 @@ import (
 	"testing"
 )
 
+func TestDisplayedShellCommandRunsInstaller(t *testing.T) {
+	if runtime.GOOS == "windows" {
+		t.Skip("POSIX shell test")
+	}
+	node, err := exec.LookPath("node")
+	if err != nil {
+		t.Skip("Node.js is not installed")
+	}
+	root := t.TempDir()
+	writeExecutable(t, filepath.Join(root, "mpress"), "#!/bin/sh\nprintf '%s\\n' \"$@\"\nexit 23\n")
+	writeExecutable(t, filepath.Join(root, "curl"), "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$MPRESS_TEST_CURL_LOG\"\ncat \"$MPRESS_TEST_INSTALLER\"\n")
+	installer := filepath.Join(root, "installer.sh")
+	writeExecutable(t, installer, renderContributionInstallShell("https://example.test/repo.git", "main"))
+
+	// Run the command emitted by the actual theme, including shell quoting and
+	// the installer's named-option parser, without making network requests.
+	quotesStart := strings.Index(defaultThemeJS, "const shellQuote =")
+	quotesEnd := strings.Index(defaultThemeJS, "const shellInstallerURL =")
+	commandsStart := strings.Index(defaultThemeJS, "const contributionCommands =")
+	commandsEnd := strings.Index(defaultThemeJS, "const refreshContributionCommand =")
+	if quotesStart < 0 || quotesEnd <= quotesStart || commandsStart < 0 || commandsEnd <= commandsStart {
+		t.Fatal("contribution command generation not found")
+	}
+	quoted := defaultThemeJS[quotesStart:quotesEnd]
+	commands := defaultThemeJS[commandsStart:commandsEnd]
+	harness := `
+const assert = require('node:assert/strict');
+const {spawnSync} = require('node:child_process');
+const {readFileSync} = require('node:fs');
+const contributionPageURL = "https://example.test/a'b/?q=$(not-a-command)&x=1";
+const powerShellInstallerURL = 'https://example.test/mpress-contribute.ps1';
+let shellInstallerURL, downloadedDraftName, contributionGoal;
+` + quoted + commands + `
+for (const scheme of ['https', 'http']) {
+  shellInstallerURL = scheme + "://example.test/a'b/mpress-contribute.sh";
+  for (const draft of ['', "reader's $(not-a-command).mpress-draft"]) {
+    downloadedDraftName = draft;
+    for (const goal of ['', 'page', 'translate']) {
+      contributionGoal = goal;
+      const command = contributionCommands().shell;
+      assert.ok(!command.includes('command -v') && !command.includes('wget'));
+      const result = spawnSync('sh', ['-c', command], {encoding: 'utf8'});
+      assert.equal(result.status, 23, result.stderr);
+      const expected = ['contribute', '--branch', 'main', contributionPageURL];
+      if (draft) expected.push('--draft-file', draft);
+      if (goal) expected.push('--goal', goal);
+      assert.deepEqual(result.stdout.trim().split('\n'), expected);
+      const download = readFileSync(process.env.MPRESS_TEST_CURL_LOG, 'utf8').trim().split('\n');
+      assert.deepEqual(download, scheme === 'https'
+        ? ['--proto', '=https', '--tlsv1.2', '-fsSL', shellInstallerURL]
+        : ['-fsSL', shellInstallerURL]);
+    }
+  }
+}
+`
+	command := exec.Command(node, "-e", harness)
+	command.Env = append(os.Environ(), "PATH="+root+string(os.PathListSeparator)+os.Getenv("PATH"), "MPRESS_TEST_INSTALLER="+installer, "MPRESS_TEST_CURL_LOG="+filepath.Join(root, "curl.log"))
+	if output, err := command.CombinedOutput(); err != nil {
+		t.Fatalf("displayed contribution command: %v\n%s", err, output)
+	}
+}
+
 func TestShellInstallerDownloadsVerifiesAndRunsLatestRelease(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("POSIX shell test")
