@@ -11,7 +11,8 @@ file.
 ## Start from the page
 
 1. Select the edit icon in the documentation navbar.
-2. Select **Open the project**.
+2. Select **Edit this page locally**, or **Translate documentation** to start
+   with a translation.
 3. Copy the command selected for your operating system.
 4. Run the command in a terminal.
 
@@ -29,7 +30,8 @@ is uploaded while you edit or run checks.
 
 ## Choose the contribution
 
-The local site opens the contribution wizard automatically. Choose one outcome:
+The local site opens the editing or translation workflow you selected. Use
+**Back** from the editing screen to choose another contribution:
 
 - **Improve this page** opens the exact source file for the published page.
 - **Translate documentation** opens the guided translation workflow.
@@ -44,6 +46,25 @@ you start editing.
 M-Press shows the relative source path and the local checkout. Copy the path,
 open it in your editor, and save the Markdown file. The development server
 rebuilds the site and reloads the browser when the changed page is ready.
+
+If the site has other languages, the editing screen shows **Update this page in
+other languages?** when translations need attention. Even a one-line source
+change can make a translated passage stale.
+
+1. Select **Review update** beside a language.
+2. Keep **Everything that needs attention** to translate only missing or stale
+   passages on this page. Leave **Replace passages changed by a person** off.
+3. Select **Review the plan** and check the page, passage count, and provider.
+4. Select **Start translation**. Read the translated page before approving it.
+5. After approval, choose the next language from **Translations of this page**.
+   You can also select **Other languages for this page** from the result before
+   approval.
+
+Saving a source file never starts translation automatically. Existing human
+edits are preserved. If the screen reports missing tracking or migration, resolve
+that state first; see [Translation state and review](/translation/#track-freshness-and-human-edits).
+You can also leave translations for another contributor and submit the source
+change on its own.
 
 Select **Run checks when finished**. M-Press rebuilds every page and validates
 internal links and generated assets.

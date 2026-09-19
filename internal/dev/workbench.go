@@ -82,6 +82,8 @@ func devbarHTML() string {
 		"{{icon:monitor}}", icons.Lucide("monitor", 15),
 		"{{icon:zap}}", icons.Lucide("zap", 16),
 		"{{icon:check}}", icons.Lucide("check", 17),
+		"{{icon:triangle-alert}}", icons.Lucide("triangle-alert", 17),
+		"{{icon:search}}", icons.Lucide("search", 17),
 		"{{icon:x}}", icons.Lucide("x", 17),
 		"{{brand:cloudflare}}", icons.Starlight("cloudflare", 26),
 		"{{brand:netlify}}", icons.Starlight("netlify", 26),
