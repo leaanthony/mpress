@@ -10,14 +10,17 @@ import (
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/importer"
 	"github.com/leaanthony/mpress/internal/mpd"
+	"github.com/leaanthony/mpress/internal/translate"
 )
 
 // Result describes a complete, atomic project content conversion.
 type Result struct {
-	Count        int    `json:"count"`
-	Directory    string `json:"directory"`
-	SourceFormat string `json:"sourceFormat"`
-	TargetFormat string `json:"targetFormat"`
+	Count           int    `json:"count"`
+	Directory       string `json:"directory"`
+	SourceFormat    string `json:"sourceFormat"`
+	TargetFormat    string `json:"targetFormat"`
+	MigratedStates  int    `json:"migratedStates"`
+	MigrationReview int    `json:"migrationReview"`
 }
 
 type conversion struct {
@@ -41,6 +44,7 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 	}
 
 	var conversions []conversion
+	var documents []translate.ConvertedDocument
 	err := filepath.WalkDir(directory, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
@@ -95,6 +99,17 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 			return infoErr
 		}
 		conversions = append(conversions, conversion{source: path, target: target, mode: info.Mode().Perm(), data: converted})
+		relative, err := filepath.Rel(cfg.ContentPath(root), path)
+		if err != nil {
+			return err
+		}
+		targetRelative, err := filepath.Rel(cfg.ContentPath(root), target)
+		if err != nil {
+			return err
+		}
+		if relative != ".." && !strings.HasPrefix(relative, ".."+string(filepath.Separator)) {
+			documents = append(documents, translate.ConvertedDocument{SourceFile: filepath.ToSlash(relative), TargetFile: filepath.ToSlash(targetRelative), Source: source, Target: converted})
+		}
 		return nil
 	})
 	if err != nil {
@@ -105,6 +120,17 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 			return Result{}, errors.New("no Markdown documents were found")
 		}
 		return Result{}, errors.New("no MPD documents were found")
+	}
+
+	states, err := translate.PlanConversionStates(root, *cfg, documents, importer.MarkdownToMPD)
+	if err != nil {
+		return Result{}, err
+	}
+	count := len(conversions)
+	review := 0
+	for _, state := range states {
+		conversions = append(conversions, conversion{source: state.Path, target: state.Path, mode: 0644, data: state.Data})
+		review += state.RequiresReview
 	}
 
 	for _, item := range conversions {
@@ -118,6 +144,9 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 		}
 	}
 	for _, item := range conversions {
+		if item.source == item.target {
+			continue
+		}
 		if err := os.Remove(item.source); err != nil {
 			return Result{}, err
 		}
@@ -155,5 +184,5 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 	if format == "markdown" {
 		sourceLabel, targetLabel = "MPD", "Markdown"
 	}
-	return Result{Count: len(conversions), Directory: directory, SourceFormat: sourceLabel, TargetFormat: targetLabel}, nil
+	return Result{Count: count, Directory: directory, SourceFormat: sourceLabel, TargetFormat: targetLabel, MigratedStates: len(states), MigrationReview: review}, nil
 }

@@ -281,6 +281,9 @@ func translationSystemPrompt(format string) string {
 	if format == "mpd" {
 		formatRule = "The source format is MPress Document (MPD), not Markdown. Preserve every MPD inline construct and placeholder. Translate prose and natural punctuation freely. Paragraph lines may be reflowed. Do not introduce component declarations, code fences or other MPD block syntax."
 	}
+	if format == markdownTranslationFormat {
+		formatRule = "Translate complete Markdown prose blocks and visible labels. Preserve every placeholder exactly; it protects code, links and markup. Reorder clauses and their placeholders naturally. Paragraph lines may be reflowed. Do not add markup, component declarations or code fences. Attribute quoting is handled by the application."
+	}
 	if format == "navigation" {
 		formatRule = "Translate plain-text navigation labels. Use natural target-language punctuation, including full-width punctuation when appropriate. YAML quoting and escaping are handled by the application; do not add YAML syntax."
 	}

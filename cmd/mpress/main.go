@@ -111,6 +111,9 @@ Usage:
 }
 
 func translateSite(args []string) error {
+	if len(args) > 0 && args[0] == "migrate-state" {
+		return migrateTranslationState(args[1:])
+	}
 	if len(args) > 0 && args[0] == "check" {
 		return checkTranslations(args[1:])
 	}
@@ -281,7 +284,13 @@ func translateSite(args []string) error {
 		return nil
 	}
 	for _, fileReport := range report.Files {
-		if fileReport.NeedsTranslation == 0 {
+		if migration := fileReport.States["migration-required"]; migration > 0 {
+			fmt.Printf("%s → %s: %d segments require state migration", fileReport.SourceFile, fileReport.TargetLanguage, migration)
+		} else if untracked := fileReport.States["untracked"]; untracked > 0 {
+			fmt.Printf("%s → %s: existing translation has no tracking state; restore its sidecar before updating", fileReport.SourceFile, fileReport.TargetLanguage)
+		} else if review := fileReport.States["migration-review"]; review > 0 {
+			fmt.Printf("%s → %s: %d migrated segments require review", fileReport.SourceFile, fileReport.TargetLanguage, review)
+		} else if fileReport.NeedsTranslation == 0 {
 			fmt.Printf("%s → %s: up to date", fileReport.SourceFile, fileReport.TargetLanguage)
 		} else if options.DryRun {
 			fmt.Printf("%s → %s: %d segment(s) need translation", fileReport.SourceFile, fileReport.TargetLanguage, fileReport.NeedsTranslation)
@@ -1142,6 +1151,9 @@ func convertSite(args []string) error {
 		return err
 	}
 	fmt.Printf("Converted %d %s document(s) to %s in %s.\n", result.Count, result.SourceFormat, result.TargetFormat, result.Directory)
+	if result.MigratedStates > 0 {
+		fmt.Printf("Migrated %d translation sidecars; %d segments require review.\n", result.MigratedStates, result.MigrationReview)
+	}
 	return nil
 }
 func versions(args []string) error {

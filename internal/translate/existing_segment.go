@@ -12,10 +12,10 @@ func validateMPDInlineProtection(source, target *Document) error {
 		targets[segment.ID] = segment
 	}
 	for _, segment := range source.Segments {
-		if !strings.Contains(segment.Text, "⟪MPRESS_INLINE_") {
+		if source.Format != markdownTranslationFormat && !strings.Contains(segment.Text, "⟪MPRESS_INLINE_") {
 			continue
 		}
-		if _, err := prepareExistingSegment(segment, targets[segment.ID]); err != nil {
+		if _, err := prepareExistingForFormat(source.Format, &segment, targets[segment.ID]); err != nil {
 			return &inlineProtectionFailure{err: err}
 		}
 	}

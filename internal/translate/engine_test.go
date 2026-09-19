@@ -127,7 +127,7 @@ func TestEngineTranslatesAndTracksState(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if !strings.Contains(string(translated), "FR Welcome") || !strings.Contains(string(translated), "title: FR Hello") {
+	if !strings.Contains(string(translated), "FR Welcome") || !strings.Contains(string(translated), `title: "FR Hello"`) {
 		t.Fatalf("translation not written:\n%s", translated)
 	}
 	if !strings.Contains(string(translated), "(#fr-details)") {
@@ -303,6 +303,10 @@ func TestAuditAndRefinementRepairDamagedProtectedContent(t *testing.T) {
 	audit, err = engine.Audit("fr", "page.mpd")
 	if err != nil || audit.Errors != 0 {
 		t.Fatalf("repaired content still fails: %#v, %v", audit, err)
+	}
+	reportState, err := engine.Run(context.Background(), Options{Language: "fr", File: "page.mpd", DryRun: true})
+	if err != nil || reportState.Files[0].States["migration-review"] != 2 {
+		t.Fatalf("untracked untouched prose was silently adopted: %#v, %v", reportState, err)
 	}
 }
 

@@ -84,12 +84,24 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 		if parseErr != nil {
 			return report, parseErr
 		}
+		stateFile, stateErr := statePath(e.Project, e.Config.Translation.StateDir, language, file)
+		if stateErr != nil {
+			return report, stateErr
+		}
+		state, stateErr := loadState(stateFile, file, e.Config.Site.DefaultLanguage, language, sourceDoc.TranslationKey)
+		if stateErr != nil {
+			return report, stateErr
+		}
+
+		if stateErr = checkStateForUpdate(state, file); stateErr != nil {
+			return report, stateErr
+		}
 		targets := make(map[string]Segment, len(targetDoc.Segments))
 		for _, segment := range targetDoc.Segments {
 			targets[segment.ID] = segment
 		}
 		var pending []RequestSegment
-		for _, segment := range sourceDoc.Segments {
+		for segmentIndex, segment := range sourceDoc.Segments {
 			messages := notes[segment.ID]
 			if len(messages) == 0 || segment.Protected {
 				continue
@@ -98,7 +110,16 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			if !ok {
 				continue
 			}
-			current, prepareErr := prepareExistingSegment(segment, target)
+			current, prepareErr := prepareExistingForFormat(sourceDoc.Format, &segment, target)
+			if prepareErr == nil && segment.Text != sourceDoc.Segments[segmentIndex].Text {
+				// Refinement still starts from English source tokens. Unrefined segments
+				// below retain the target representation; never send it as source prose.
+				segment = sourceDoc.Segments[segmentIndex]
+				current = target.Original
+				messages = append(append([]string(nil), messages...), "The current translation uses equivalent formatting. Rebuild from the source while preserving every source placeholder.")
+			} else {
+				sourceDoc.Segments[segmentIndex] = segment
+			}
 			if prepareErr != nil {
 				current = target.Original
 				messages = append(append([]string(nil), messages...), "The existing translation has damaged protected content. Rebuild this segment from the source, preserving every source placeholder exactly. "+prepareErr.Error())
@@ -127,7 +148,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			}
 		}
 		values := make(map[string]string, len(sourceDoc.Segments))
-		for _, segment := range sourceDoc.Segments {
+		for segmentIndex, segment := range sourceDoc.Segments {
 			if value, ok := refined[segment.ID]; ok {
 				values[segment.ID] = value
 				continue
@@ -136,7 +157,8 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			if !ok {
 				return report, fmt.Errorf("refine %s: target segment %s is missing", file, segment.ID)
 			}
-			value, prepareErr := prepareExistingSegment(segment, target)
+			value, prepareErr := prepareExistingForFormat(sourceDoc.Format, &segment, target)
+			sourceDoc.Segments[segmentIndex] = segment
 			if prepareErr != nil {
 				return report, prepareErr
 			}
@@ -158,17 +180,12 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 		if writeErr := writeAtomic(targetPath, output); writeErr != nil {
 			return report, writeErr
 		}
-		stateFile, stateErr := statePath(e.Project, e.Config.Translation.StateDir, language, file)
-		if stateErr != nil {
-			return report, stateErr
-		}
-		state, stateErr := loadState(stateFile, file, e.Config.Site.DefaultLanguage, language, sourceDoc.TranslationKey)
-		if stateErr != nil {
-			return report, stateErr
-		}
 		for _, segment := range sourceDoc.Segments {
 			value, changed := refined[segment.ID]
 			if !changed {
+				if _, tracked := state.Segments[segment.ID]; !tracked {
+					state.Segments[segment.ID] = SegmentState{SourceHash: segment.SourceHash, TargetHash: Hash(targets[segment.ID].Original), Status: "migration-review", SourcePreview: preview(segment.Original)}
+				}
 				continue
 			}
 			restored, restoreErr := restore(segment, value, preservesMarkdownSyntax(sourceDoc.Format))
@@ -182,7 +199,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			entry.MachineText = restored
 			entry.Status = "machine-refined"
 			entry.Provider = provider.Name()
-			entry.Model = provider.Model()
+			entry.Model = providerModelForLanguage(provider, language)
 			entry.PromptVersion = promptVersion
 			entry.UpdatedAt = nowString()
 			state.Segments[segment.ID] = entry

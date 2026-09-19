@@ -107,3 +107,29 @@ and verifies it against `checksums.txt`. The Windows script uses PowerShell and
 applies the same SHA-256 check.
 
 Both scripts use `mpress` directly when it is already available on the path.
+
+To open the translation workflow directly, pass `--goal translate`. After
+saving the generated script locally, run:
+
+```sh
+sh mpress-contribute.sh --goal translate
+sh mpress-contribute.sh https://docs.example.com/guide/ --goal translate --checkout "../docs translations"
+```
+
+On Windows:
+
+```powershell
+./mpress-contribute.ps1 --goal translate
+```
+
+Options go after the optional page URL. The scripts forward contributor
+options such as `--checkout`, `--port`, `--no-open`, and `--draft-file` to
+M-Press. The older positional page, draft filename, and goal arguments from
+published pages still work. Run the script with `--help` for usage without
+downloading anything.
+
+Git must be installed before running the script. Downloaded release files are
+temporary and are removed when M-Press exits, including when setup fails.
+The contribution checkout remains available for your next session. Provider
+configuration and translation review happen in the local translation workflow;
+opening it does not start paid translation requests.
