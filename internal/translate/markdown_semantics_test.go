@@ -16,6 +16,9 @@ func TestMarkdownEquivalentFormattingPreservesAuthoredTarget(t *testing.T) {
 		{"nested simplified Chinese", "No, I'm not joking: *No* *CGO* *dependency* 🤯!", "没错，我不是在开玩笑：*不再**依赖 CGO*** 🤯！"},
 		{"nested traditional Chinese", "No, I'm not joking: *No* *CGO* *dependency* 🤯!", "不，我不是在開玩笑：*不再**依賴 CGO**了* 🤯！"},
 		{"literal code font", "Yes (return false)", "Ja (`false` zurückgeben)"},
+		{"true code font", "Return true", "Gib `true` zurück"},
+		{"nil code font", "Return nil", "Gib `nil` zurück"},
+		{"null code font", "Return null", "Gib `null` zurück"},
 	} {
 		t.Run(test.name, func(t *testing.T) {
 			source, err := ExtractMarkdown([]byte(test.source + "\n"))

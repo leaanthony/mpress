@@ -13,11 +13,14 @@ func rewriteMarkdownFragments(file string, source, target []byte, reverse bool) 
 		return target, nil
 	}
 	renderer := content.NewRenderer()
-	a, _, err := renderer.ParseBytes(file, "en", source)
+	// Only headings are used here. Localized component labels render as note
+	// paragraphs and disclosure summaries, not headings; use the neutral locale
+	// for both documents, including normalization without language metadata.
+	a, _, err := renderer.ParseBytes(file, "", source)
 	if err != nil {
 		return nil, err
 	}
-	b, _, err := renderer.ParseBytes(file, "target", target)
+	b, _, err := renderer.ParseBytes(file, "", target)
 	if err != nil {
 		return nil, err
 	}

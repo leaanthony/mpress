@@ -1,8 +1,11 @@
 package translate
 
 import (
+	"reflect"
 	"strings"
 	"testing"
+
+	"github.com/leaanthony/mpress/internal/content"
 )
 
 func TestMarkdownBlockTranslations(t *testing.T) {
@@ -128,6 +131,45 @@ func TestMarkdownFragmentRewritesLeaveExamplesAlone(t *testing.T) {
 	}
 	if string(normalized) != string(target) {
 		t.Fatalf("reverse anchors:\n%s", normalized)
+	}
+}
+
+func TestMarkdownFragmentRewritesWithLocalizedComponents(t *testing.T) {
+	source := []byte("## Installer\n\n[Guide](#installer)\n\n@note{type=\"warning\"}\n\n### Attention\n\nTexte.\n@end\n\n@details\n\n### Informations\n\nTexte.\n@end\n")
+	target := []byte(strings.NewReplacer("Installer", "Installation", "Attention", "Achtung", "Informations", "Informationen", "Texte.", "Text.").Replace(string(source)))
+	renderer := content.NewRenderer()
+	for _, document := range []struct {
+		language string
+		data     []byte
+	}{{"fr", source}, {"de", target}} {
+		neutral, _, err := renderer.ParseBytes("guide.md", "", document.data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		localized, _, err := renderer.ParseBytes("guide.md", document.language, document.data)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if neutral.HTML == localized.HTML {
+			t.Fatal("fixture did not exercise localized component labels")
+		}
+		if len(localized.Headings) != 3 || !reflect.DeepEqual(neutral.Headings, localized.Headings) {
+			t.Fatalf("%s changes heading identity: neutral=%#v localized=%#v", document.language, neutral.Headings, localized.Headings)
+		}
+	}
+	patched, err := rewriteLocalFragments("guide.md", "fr", "de", source, target)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(patched), "[Guide](#installation)") {
+		t.Fatalf("fragment did not follow the translated heading: %s", patched)
+	}
+	normalized, err := extractTargetFile("guide.md", "_nav.yaml", source, patched)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(normalized.Source) != string(target) {
+		t.Fatalf("reverse normalization changed authored target: %s", normalized.Source)
 	}
 }
 

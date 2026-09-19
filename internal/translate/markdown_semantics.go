@@ -89,18 +89,19 @@ func validateMarkdownProtection(source, target Segment) error {
 	return nil
 }
 
+var markdownLiteralWords = map[string]*regexp.Regexp{
+	"true":  regexp.MustCompile(`\btrue\b`),
+	"false": regexp.MustCompile(`\bfalse\b`),
+	"nil":   regexp.MustCompile(`\bnil\b`),
+	"null":  regexp.MustCompile(`\bnull\b`),
+}
+
 // A target may put an existing literal keyword in code font. This does not
 // license new commands, changed values, or extra occurrences of that keyword.
 func supportedLiteralFormatting(value string, count int, plainSource string) bool {
 	if len(value) < 3 || value[0] != '`' || value[len(value)-1] != '`' {
 		return false
 	}
-	literal := value[1 : len(value)-1]
-	switch literal {
-	case "true", "false", "nil", "null":
-		words := regexp.MustCompile(`\b` + literal + `\b`)
-		return len(words.FindAllStringIndex(plainSource, -1)) >= count
-	default:
-		return false
-	}
+	words := markdownLiteralWords[value[1:len(value)-1]]
+	return words != nil && len(words.FindAllStringIndex(plainSource, -1)) >= count
 }
