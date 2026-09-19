@@ -23,7 +23,7 @@ func TestDisplayedShellCommandRunsInstaller(t *testing.T) {
 	writeExecutable(t, filepath.Join(root, "mpress"), "#!/bin/sh\nprintf '%s\\n' \"$@\"\nexit 23\n")
 	writeExecutable(t, filepath.Join(root, "curl"), "#!/bin/sh\nprintf '%s\\n' \"$@\" > \"$MPRESS_TEST_CURL_LOG\"\ncat \"$MPRESS_TEST_INSTALLER\"\n")
 	installer := filepath.Join(root, "installer.sh")
-	writeExecutable(t, installer, renderContributionInstallShell("https://example.test/repo.git", "main"))
+	writeExecutable(t, installer, renderContributionInstallShell("https://example.test/repo.git", "main", "translate"))
 
 	// Run the command emitted by the actual theme, including shell quoting and
 	// the installer's named-option parser, without making network requests.
@@ -40,12 +40,12 @@ func TestDisplayedShellCommandRunsInstaller(t *testing.T) {
 const assert = require('node:assert/strict');
 const {spawnSync} = require('node:child_process');
 const {readFileSync} = require('node:fs');
-const contributionPageURL = "https://example.test/a'b/?q=$(not-a-command)&x=1";
-const powerShellInstallerURL = 'https://example.test/mpress-contribute.ps1';
+const contributionSource = "docs/a'b $(not-a-command).md";
+const powerShellInstallerURL = 'https://example.test/contribute.ps1';
 let shellInstallerURL, downloadedDraftName, contributionGoal;
 ` + quoted + commands + `
 for (const scheme of ['https', 'http']) {
-  shellInstallerURL = scheme + "://example.test/a'b/mpress-contribute.sh";
+  shellInstallerURL = scheme + "://example.test/a'b/contribute.sh";
   for (const draft of ['', "reader's $(not-a-command).mpress-draft"]) {
     downloadedDraftName = draft;
     for (const goal of ['', 'page', 'translate']) {
@@ -54,14 +54,15 @@ for (const scheme of ['https', 'http']) {
       assert.ok(!command.includes('command -v') && !command.includes('wget'));
       const result = spawnSync('sh', ['-c', command], {encoding: 'utf8'});
       assert.equal(result.status, 23, result.stderr);
-      const expected = ['contribute', '--branch', 'main', contributionPageURL];
+      const source = goal !== 'translate' || !!draft;
+      const expected = ['contribute', '--branch', 'main', 'https://example.test/repo.git', '--goal', source ? 'page' : 'translate'];
+      if (source) expected.push('--file', contributionSource);
       if (draft) expected.push('--draft-file', draft);
-      if (goal) expected.push('--goal', goal);
+      if (draft && goal === 'translate') expected.push('--goal', 'translate');
+      if (!source) assert.equal(command, 'curl -fsSL ' + shellQuote(shellInstallerURL) + ' | sh');
       assert.deepEqual(result.stdout.trim().split('\n'), expected);
       const download = readFileSync(process.env.MPRESS_TEST_CURL_LOG, 'utf8').trim().split('\n');
-      assert.deepEqual(download, scheme === 'https'
-        ? ['--proto', '=https', '--tlsv1.2', '-fsSL', shellInstallerURL]
-        : ['-fsSL', shellInstallerURL]);
+      assert.deepEqual(download, ['-fsSL', shellInstallerURL]);
     }
   }
 }
@@ -132,8 +133,8 @@ done
 printf '#!/bin/sh\nprintf "%%s\\n" "$@"\nexit "${MPRESS_TEST_EXIT:-0}"\n' > "$destination/mpress"
 `)
 
-			installer := filepath.Join(root, "mpress-contribute.sh")
-			if err := os.WriteFile(installer, []byte(renderContributionInstallShell("https://github.com/example/docs.git", "next")), 0o755); err != nil {
+			installer := filepath.Join(root, "contribute.sh")
+			if err := os.WriteFile(installer, []byte(renderContributionInstallShell("https://github.com/example/docs.git", "next", "")), 0o755); err != nil {
 				t.Fatal(err)
 			}
 			logPath := filepath.Join(root, "downloads.log")
@@ -173,8 +174,8 @@ printf '#!/bin/sh\nprintf "%%s\\n" "$@"\nexit "${MPRESS_TEST_EXIT:-0}"\n' > "$de
 
 func TestContributionInstallersRequireSHA256Verification(t *testing.T) {
 	installers := map[string]string{
-		"shell":      renderContributionInstallShell("https://github.com/example/docs.git", "main"),
-		"PowerShell": renderContributionInstallPowerShell("https://github.com/example/docs.git", "main"),
+		"shell":      renderContributionInstallShell("https://github.com/example/docs.git", "main", ""),
+		"PowerShell": renderContributionInstallPowerShell("https://github.com/example/docs.git", "main", ""),
 	}
 	for name, script := range installers {
 		for _, want := range []string{"checksums.txt", "SHA256", "Checksum verification failed", "releases/latest/download", "contribute"} {
@@ -207,8 +208,8 @@ printf '%s\n' "$@"
 echo "curl must not run" >&2
 exit 97
 `)
-	installer := filepath.Join(root, "mpress-contribute.sh")
-	if err := os.WriteFile(installer, []byte(renderContributionInstallShell("https://github.com/example/docs.git", "next")), 0o755); err != nil {
+	installer := filepath.Join(root, "contribute.sh")
+	if err := os.WriteFile(installer, []byte(renderContributionInstallShell("https://github.com/example/docs.git", "next", "")), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	command := exec.Command("sh", installer)
@@ -223,11 +224,11 @@ exit 97
 }
 
 func TestContributionInstallersQuoteGeneratedConfiguration(t *testing.T) {
-	shell := renderContributionInstallShell("https://example.test/lea's-docs.git", "release candidate")
+	shell := renderContributionInstallShell("https://example.test/lea's-docs.git", "release candidate", "")
 	if !strings.Contains(shell, `target='https://example.test/lea'"'"'s-docs.git'`) || !strings.Contains(shell, `--branch 'release candidate' "$target"`) {
 		t.Fatalf("shell installer does not safely quote configuration:\n%s", shell)
 	}
-	powerShell := renderContributionInstallPowerShell("https://example.test/lea's-docs.git", "release candidate")
+	powerShell := renderContributionInstallPowerShell("https://example.test/lea's-docs.git", "release candidate", "")
 	if !strings.Contains(powerShell, `else { 'https://example.test/lea''s-docs.git' }`) || !strings.Contains(powerShell, `@("contribute", "--branch", 'release candidate', $target)`) {
 		t.Fatalf("PowerShell installer does not safely quote configuration:\n%s", powerShell)
 	}
@@ -243,8 +244,8 @@ func TestShellInstallerForwardsPageAndBrowserDraftFile(t *testing.T) {
 		t.Fatal(err)
 	}
 	writeExecutable(t, filepath.Join(bin, "mpress"), "#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
-	installer := filepath.Join(root, "mpress-contribute.sh")
-	if err := os.WriteFile(installer, []byte(renderContributionInstallShell("https://github.com/example/docs.git", "next")), 0o755); err != nil {
+	installer := filepath.Join(root, "contribute.sh")
+	if err := os.WriteFile(installer, []byte(renderContributionInstallShell("https://github.com/example/docs.git", "next", "")), 0o755); err != nil {
 		t.Fatal(err)
 	}
 	command := exec.Command("sh", installer, "https://docs.example.test/guide/", "change.mpress-draft", "translate")
@@ -273,7 +274,7 @@ func TestShellInstallerForwardsContributorOptions(t *testing.T) {
 	root := t.TempDir()
 	writeExecutable(t, filepath.Join(root, "mpress"), "#!/bin/sh\nprintf '%s\\n' \"$@\"\n")
 	installer := filepath.Join(root, "install.sh")
-	writeExecutable(t, installer, renderContributionInstallShell("https://example.test/docs.git", "main"))
+	writeExecutable(t, installer, renderContributionInstallShell("https://example.test/docs.git", "main", ""))
 	for _, args := range [][]string{
 		{"--goal", "translate", "--checkout", "my docs; $(not-a-command)", "--no-open", "--port=4567"},
 		{"https://example.test/page/", "--goal", "translate", "--checkout", "my docs; $(not-a-command)"},
@@ -302,7 +303,7 @@ func TestShellInstallerHelpAndMissingGit(t *testing.T) {
 	}
 	root := t.TempDir()
 	installer := filepath.Join(root, "install.sh")
-	writeExecutable(t, installer, renderContributionInstallShell("https://example.test/docs.git", "main"))
+	writeExecutable(t, installer, renderContributionInstallShell("https://example.test/docs.git", "main", ""))
 	shell, err := exec.LookPath("sh")
 	if err != nil {
 		t.Fatal(err)
@@ -316,7 +317,7 @@ func TestShellInstallerHelpAndMissingGit(t *testing.T) {
 		command.Env = append(os.Environ(), "PATH="+root)
 		output, err := command.CombinedOutput()
 		if help {
-			if err != nil || !strings.Contains(string(output), "--goal translate") {
+			if err != nil || !strings.Contains(string(output), "Edit a page:") {
 				t.Fatalf("help: %v\n%s", err, output)
 			}
 		} else if err == nil || !strings.Contains(string(output), "Git is required") {
@@ -345,7 +346,7 @@ func main() { for _, arg := range os.Args[1:] { fmt.Println(arg) }; os.Exit(23) 
 		t.Fatalf("build fixture: %v\n%s", err, output)
 	}
 	installer := filepath.Join(root, "install.ps1")
-	writeExecutable(t, installer, renderContributionInstallPowerShell("https://example.test/docs.git", "main"))
+	writeExecutable(t, installer, renderContributionInstallPowerShell("https://example.test/docs.git", "main", ""))
 	command := exec.Command(powershell, "-NoProfile", "-File", installer, "--goal", "translate", "--checkout", "my docs; $(not-a-command)", "--no-open")
 	command.Env = append(os.Environ(), "PATH="+root+string(os.PathListSeparator)+os.Getenv("PATH"))
 	output, err := command.CombinedOutput()
@@ -358,7 +359,7 @@ func main() { for _, arg := range os.Args[1:] { fmt.Println(arg) }; os.Exit(23) 
 	}
 	command = exec.Command(powershell, "-NoProfile", "-File", installer, "--help")
 	output, err = command.CombinedOutput()
-	if err != nil || !strings.Contains(string(output), "--goal translate") {
+	if err != nil || !strings.Contains(string(output), "Edit a page:") {
 		t.Fatalf("help: %v\n%s", err, output)
 	}
 }

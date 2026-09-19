@@ -261,8 +261,11 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 	}
 	if cfg.Contribution.Enabled {
 		for name, contents := range map[string]string{
-			"mpress-contribute.sh":  renderContributionInstallShell(cfg.Contribution.Repository, cfg.Contribution.Branch),
-			"mpress-contribute.ps1": renderContributionInstallPowerShell(cfg.Contribution.Repository, cfg.Contribution.Branch),
+			"contribute.sh":  renderContributionInstallShell(cfg.Contribution.Repository, cfg.Contribution.Branch, "translate"),
+			"contribute.ps1": renderContributionInstallPowerShell(cfg.Contribution.Repository, cfg.Contribution.Branch, "translate"),
+			// Keep previously copied commands working with their original defaults.
+			"mpress-contribute.sh":  renderContributionInstallShell(cfg.Contribution.Repository, cfg.Contribution.Branch, ""),
+			"mpress-contribute.ps1": renderContributionInstallPowerShell(cfg.Contribution.Repository, cfg.Contribution.Branch, ""),
 		} {
 			if err := os.WriteFile(filepath.Join(outputDir, name), []byte(contents), 0o644); err != nil {
 				return result, err

@@ -16,8 +16,9 @@ file.
 3. Copy the command selected for your operating system.
 4. Run the command in a terminal.
 
-The command includes the current page URL. M-Press uses the generated page
-metadata to find the repository, branch, route, and source file.
+The generated script already contains this site's repository, branch, and
+translation goal. The translation command needs no arguments. **Edit this page
+locally** adds just the source filename, which selects the page editor instead.
 
 If M-Press is installed, the command runs it directly. Otherwise, the generated
 shell or PowerShell script downloads the matching release and verifies its
@@ -118,9 +119,23 @@ contributions.
 
 ## Generated installation scripts
 
-The production build includes `/mpress-contribute.sh` and
-`/mpress-contribute.ps1`. Each script contains the configured repository and
-branch.
+The production build includes `/contribute.sh` and `/contribute.ps1`. Each
+script contains the configured repository and branch and opens the translation
+workflow by default. These are ordinary static files generated during the build.
+
+For a site published at `https://docs.example.com`, the commands are:
+
+```sh
+# Translate the documentation
+curl -fsSL https://docs.example.com/contribute.sh | sh
+
+# Edit one source page
+curl -fsSL https://docs.example.com/contribute.sh | sh -s -- docs/guide.md
+```
+
+The filename is relative to the repository root, including its content directory
+and language directory when applicable. The site's copy button supplies and
+quotes the correct filename automatically.
 
 The POSIX script supports Linux and macOS on AMD64 and ARM64. It tries `curl`
 and then `wget`, downloads the matching archive from the latest GitHub release,
@@ -135,24 +150,25 @@ inside the script. If `curl` is unavailable, save the script using the
 **View the macOS and Linux script** link under **What this command does** and
 run it with `sh` as shown below. The script can use `wget` for release downloads.
 
-To open the translation workflow directly, pass `--goal translate`. After
-saving the generated script locally, run:
+After saving the generated script locally, run:
 
 ```sh
-sh mpress-contribute.sh --goal translate
-sh mpress-contribute.sh https://docs.example.com/guide/ --goal translate --checkout "../docs translations"
+sh contribute.sh
+sh contribute.sh docs/guide.md --checkout "../docs contributions"
 ```
 
 On Windows:
 
 ```powershell
-./mpress-contribute.ps1 --goal translate
+./contribute.ps1
+./contribute.ps1 docs/guide.md
 ```
 
-Options go after the optional page URL. The scripts forward contributor
+Options go after the optional source filename or page URL. The scripts forward contributor
 options such as `--checkout`, `--port`, `--no-open`, and `--draft-file` to
 M-Press. The older positional page, draft filename, and goal arguments from
-published pages still work. Run the script with `--help` for usage without
+published pages still work, and the old `mpress-contribute.sh` and
+`mpress-contribute.ps1` URLs remain available. Run the script with `--help` for usage without
 downloading anything.
 
 Git must be installed before running the script. Downloaded release files are

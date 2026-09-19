@@ -456,9 +456,11 @@ func (r *pageRenderer) renderContributionDialog() {
 		return
 	}
 	r.raw(`<dialog id="mpress-contribute-dialog" class="mpress-contribute-dialog" data-installer-shell="`)
-	r.url(r.data.Root + "mpress-contribute.sh")
+	r.url(r.data.Root + "contribute.sh")
 	r.raw(`" data-installer-powershell="`)
-	r.url(r.data.Root + "mpress-contribute.ps1")
+	r.url(r.data.Root + "contribute.ps1")
+	r.raw(`" data-contribution-source="`)
+	r.attr(r.contributionSourcePath())
 	r.raw(`" aria-labelledby="mpress-contribute-title">`)
 	if r.data.Config.Contribution.QuickEdit {
 		r.renderQuickEditData()
@@ -521,11 +523,11 @@ func (r *pageRenderer) renderContributionDialog() {
 	r.raw("</li><li>")
 	r.uiText("Opens this exact page in the development server.")
 	r.raw("</li></ol><p><a href=\"")
-	r.url(r.data.Root + "mpress-contribute.sh")
+	r.url(r.data.Root + "contribute.sh")
 	r.raw("\" target=\"_blank\" rel=\"noopener\">")
 	r.uiText("View the macOS and Linux script")
 	r.raw("</a> · <a href=\"")
-	r.url(r.data.Root + "mpress-contribute.ps1")
+	r.url(r.data.Root + "contribute.ps1")
 	r.raw("\" target=\"_blank\" rel=\"noopener\">")
 	r.uiText("View the Windows script")
 	r.raw("</a></p><div class=\"mpress-contribute-manual\"><strong>")

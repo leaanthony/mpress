@@ -4,14 +4,16 @@ import "strings"
 
 const contributionRepositoryMarker = "__MPRESS_CONTRIBUTION_REPOSITORY__"
 const contributionBranchMarker = "__MPRESS_CONTRIBUTION_BRANCH__"
+const contributionGoalMarker = "__MPRESS_CONTRIBUTION_GOAL__"
 
 const contributionInstallShellTemplate = `#!/bin/sh
 set -eu
 
 case "${1-}" in
   -h|--help)
-    echo 'Usage: mpress-contribute.sh [PAGE-OR-REPOSITORY [DRAFT-FILE [GOAL]]] [contribute options]'
-    echo 'Translate: sh mpress-contribute.sh --goal translate'
+    echo 'Usage: contribute.sh [SOURCE-FILE | PAGE-OR-REPOSITORY] [contribute options]'
+    echo 'Translate: sh contribute.sh'
+    echo 'Edit a page: sh contribute.sh docs/guide.md'
     echo 'Options: --goal page|translate, --checkout DIRECTORY, --port PORT, --no-open, --draft-file FILE'
     exit 0 ;;
 esac
@@ -20,9 +22,15 @@ esac
 target=
 draft_file=
 goal=
+source_file=
 case "${1-}" in -*) ;; *) target=${1-}; if [ "$#" -gt 0 ]; then shift; fi ;; esac
 case "${1-}" in -*) ;; *) draft_file=${1-}; if [ "$#" -gt 0 ]; then shift; fi ;; esac
 case "${1-}" in -*) ;; *) goal=${1-}; if [ "$#" -gt 0 ]; then shift; fi ;; esac
+case "$target" in
+  ''|*://*|git@*) ;;
+  *) source_file=$target; target=; goal=${goal:-page} ;;
+esac
+if [ -z "$goal" ]; then goal=` + contributionGoalMarker + `; fi
 if [ -z "$target" ]; then
   target=` + contributionRepositoryMarker + `
 fi
@@ -30,6 +38,9 @@ fi
 run_contribution() {
   mpress_binary=$1
   shift
+  if [ -n "$source_file" ]; then
+    set -- --file "$source_file" "$@"
+  fi
   if [ -n "$draft_file" ]; then
     set -- --draft-file "$draft_file" "$@"
   fi
@@ -135,8 +146,9 @@ const contributionInstallPowerShellTemplate = `$ErrorActionPreference = "Stop"
 $ProgressPreference = "SilentlyContinue"
 
 if ($args.Count -gt 0 -and $args[0] -in @('-h', '--help')) {
-  Write-Output 'Usage: mpress-contribute.ps1 [PAGE-OR-REPOSITORY [DRAFT-FILE [GOAL]]] [contribute options]'
-  Write-Output 'Translate: ./mpress-contribute.ps1 --goal translate'
+  Write-Output 'Usage: contribute.ps1 [SOURCE-FILE | PAGE-OR-REPOSITORY] [contribute options]'
+  Write-Output 'Translate: ./contribute.ps1'
+  Write-Output 'Edit a page: ./contribute.ps1 docs/guide.md'
   Write-Output 'Options: --goal page|translate, --checkout DIRECTORY, --port PORT, --no-open, --draft-file FILE'
   exit 0
 }
@@ -150,12 +162,20 @@ while ($argumentOffset -lt $args.Count -and $argumentOffset -lt 3 -and -not ([st
 $target = if ($positional[0]) { $positional[0] } else { ` + contributionRepositoryMarker + ` }
 $draftFile = $positional[1]
 $goal = $positional[2]
+$sourceFile = ''
+if ($positional[0] -and $positional[0] -notmatch '^[^:]+://' -and -not $positional[0].StartsWith('git@')) {
+  $sourceFile = $positional[0]
+  $target = ` + contributionRepositoryMarker + `
+  if (-not $goal) { $goal = 'page' }
+}
+if (-not $goal) { $goal = ` + contributionGoalMarker + ` }
 $extraArguments = @($args | Select-Object -Skip $argumentOffset)
 
 function Start-Contribution([string] $Binary) {
   $contributionArguments = @("contribute", "--branch", ` + contributionBranchMarker + `, $target)
   if ($draftFile) { $contributionArguments += @("--draft-file", $draftFile) }
   if ($goal) { $contributionArguments += @("--goal", $goal) }
+  if ($sourceFile) { $contributionArguments += @("--file", $sourceFile) }
   $contributionArguments += $extraArguments
   & $Binary @contributionArguments
   exit $LASTEXITCODE
@@ -223,14 +243,14 @@ try {
 }
 `
 
-func renderContributionInstallShell(repository, branch string) string {
-	script := strings.ReplaceAll(contributionInstallShellTemplate, contributionRepositoryMarker, shellSingleQuote(repository))
-	return strings.ReplaceAll(script, contributionBranchMarker, shellSingleQuote(branch))
+func renderContributionInstallShell(repository, branch, goal string) string {
+	return strings.NewReplacer(contributionRepositoryMarker, shellSingleQuote(repository),
+		contributionBranchMarker, shellSingleQuote(branch), contributionGoalMarker, shellSingleQuote(goal)).Replace(contributionInstallShellTemplate)
 }
 
-func renderContributionInstallPowerShell(repository, branch string) string {
-	script := strings.ReplaceAll(contributionInstallPowerShellTemplate, contributionRepositoryMarker, powerShellSingleQuote(repository))
-	return strings.ReplaceAll(script, contributionBranchMarker, powerShellSingleQuote(branch))
+func renderContributionInstallPowerShell(repository, branch, goal string) string {
+	return strings.NewReplacer(contributionRepositoryMarker, powerShellSingleQuote(repository),
+		contributionBranchMarker, powerShellSingleQuote(branch), contributionGoalMarker, powerShellSingleQuote(goal)).Replace(contributionInstallPowerShellTemplate)
 }
 
 func shellSingleQuote(value string) string {
