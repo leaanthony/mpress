@@ -298,15 +298,24 @@ func migrateDocuments(previous, current migrationPair, old *FileState, sourceLan
 	conflicts := 0
 	// An incompatible layout cannot safely establish target segment identity.
 	layoutOK := migrationSkeleton(baselineDoc) == migrationSkeleton(sourceDoc) && migrationSkeleton(baselineTargetDoc) == migrationSkeleton(targetDoc) && migrationSkeleton(baselineDoc) == migrationSkeleton(baselineTargetDoc)
+	var alignment map[string]string
+	if !layoutOK && migrationSkeleton(baselineDoc) == migrationSkeleton(baselineTargetDoc) {
+		alignment = insertedParagraphAlignment(baselineDoc, baselineTargetDoc, sourceDoc, targetDoc)
+		layoutOK = alignment != nil
+	}
 	for _, s := range sourceDoc.Segments {
-		origins := contributors[s.ID]
+		baselineID := s.ID
+		if alignment != nil {
+			baselineID = alignment[s.ID]
+		}
+		origins := contributors[baselineID]
 		if len(origins) == 0 {
 			if exact := exactOrigins[s.SourceHash+"\x00"+Hash(targets[s.ID].Original)]; len(exact) == 1 {
 				origins = exact
 			}
 		}
 		entry, proven := migrateSegment(origins, old.Segments, oldSources, oldTargets)
-		proven = proven && layoutOK && baselines[s.ID].SourceHash == s.SourceHash && targets[s.ID].Original != ""
+		proven = proven && layoutOK && baselines[baselineID].SourceHash == s.SourceHash && targets[s.ID].Original != ""
 		targetText := targets[s.ID].Original
 		if !proven && s.Protected && targetText == s.Original {
 			state.Segments[s.ID] = SegmentState{SourceHash: s.SourceHash, TargetHash: Hash(targetText), Status: "protected", SourcePreview: preview(s.Original)}
@@ -321,7 +330,9 @@ func migrateDocuments(previous, current migrationPair, old *FileState, sourceLan
 				reason = "preexisting-layout-mismatch"
 			case !layoutOK:
 				reason = "current-layout-mismatch"
-			case baselines[s.ID].SourceHash != s.SourceHash:
+			case alignment != nil && baselineID == "":
+				reason = "inserted-content"
+			case baselines[baselineID].SourceHash != s.SourceHash:
 				reason = "source-changed-since-snapshot"
 			case len(origins) == 0:
 				reason = "unmapped-content"
@@ -348,7 +359,7 @@ func migrateDocuments(previous, current migrationPair, old *FileState, sourceLan
 		} else {
 			entry.SourceHash = s.SourceHash
 			entry.TargetHash = Hash(targetText)
-			if targetText != baselineTargets[s.ID].Original {
+			if targetText != baselineTargets[baselineID].Original {
 				entry.Status = "manual"
 				entry.MachineHash = ""
 				entry.MachineText = ""
@@ -427,10 +438,13 @@ func migrationTarget(file, nav string, source, target []byte) (*Document, error)
 var migrationSourcePath = regexp.MustCompile(`(?m)^(sourcePath:.*)\.(?:mpd|markdown|md)(["']?\r?)$`)
 
 func migrationSkeleton(doc *Document) string {
-	skeleton := immutableSkeleton(doc)
-	end := frontmatterEnd([]byte(skeleton))
+	return normalizeMigrationSourcePath(immutableSkeleton(doc))
+}
+
+func normalizeMigrationSourcePath(source string) string {
+	end := frontmatterEnd([]byte(source))
 	if end == 0 {
-		return skeleton
+		return source
 	}
-	return migrationSourcePath.ReplaceAllString(skeleton[:end], "${1}.document${2}") + skeleton[end:]
+	return migrationSourcePath.ReplaceAllString(source[:end], "${1}.document${2}") + source[end:]
 }

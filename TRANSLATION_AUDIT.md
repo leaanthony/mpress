@@ -169,6 +169,22 @@ Wails still pins v1.0.17. Review, merge, and publication of a compatible release
 followed by explicit Wails migration review and a separately validated pin update,
 remain integration prerequisites.
 
+### Updater paragraph insertion
+
+The Wails `b81cc5f96` snapshot adds one paragraph to the updater guide in English
+and all nine translations. The initial whole-page layout gate marked 213 prose
+segments per language for review (1,917 total). Migration now recognizes a
+single standalone Markdown paragraph insertion only when removing it restores
+both complete baseline documents exactly and the mapping is unambiguous.
+Other structure changes and ambiguous duplicate paragraphs retain the review gate.
+
+All nine updater dry runs now require review of only the inserted paragraph
+(nine total). A read-only comparison with the `9ada6d697` converted baseline
+verified 367 identical full segment-state records per language, including status,
+provider, model, timestamp and machine history. The inserted paragraphs inherit
+no approvals or provider provenance. No snapshot or live sidecars were written.
+Results are retained in `/tmp/mpress-pr-insertion-validation/`.
+
 ## Remaining limitations
 
 - Custom component grammars and labels embedded inside inline HTML still need

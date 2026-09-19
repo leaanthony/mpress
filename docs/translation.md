@@ -371,6 +371,13 @@ pre-existing layout differences, stale or missing historical state, unmapped
 content, and changes since the snapshot. Sidecars retain the original
 segment records as historical evidence.
 
+A single added standalone Markdown paragraph can retain the surrounding
+translations' history when removing that paragraph restores both the original
+source and translated documents exactly. The new paragraph remains
+`migration-review` with reason `inserted-content`. Duplicate or otherwise
+ambiguous matches, multiple insertions, and other layout changes still require
+review; ordinal segment IDs alone do not establish identity.
+
 A page containing `migration-review` segments is blocked from provider updates
 and refinement. Compare the page with its source, correct any content or
 structure differences, then record your review:
