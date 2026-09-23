@@ -26,7 +26,6 @@ html[data-a11y-site-width="fixed"] .docs-page .layout { width: min(100%, 1500px)
 .mpress-accessibility-panel[popover] {
   position: fixed;
   inset: auto;
-  display: grid;
   width: min(560px, calc(100vw - 1.5rem));
   min-width: min(560px, calc(100vw - 1.5rem));
   max-width: min(560px, calc(100vw - 1.5rem));
@@ -43,6 +42,8 @@ html[data-a11y-site-width="fixed"] .docs-page .layout { width: min(100%, 1500px)
   -webkit-backdrop-filter: blur(16px) saturate(1.3);
   backdrop-filter: blur(16px) saturate(1.3);
 }
+/* Only while open: a display value on the closed panel overrides the browser's display: none for popovers, leaving an invisible layer that swallows taps and scrolling. */
+.mpress-accessibility-panel[popover]:popover-open { display: grid; }
 .mpress-accessibility-panel::backdrop { background: transparent; }
 .mpress-accessibility-header { position: relative; display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: .9rem 1rem .75rem; background: transparent; }
 .mpress-accessibility-header h2 { margin: 0; font-size: 18px; line-height: 1.3; }

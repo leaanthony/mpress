@@ -1,6 +1,7 @@
 package site
 
 import (
+	"regexp"
 	"strings"
 	"testing"
 
@@ -105,13 +106,28 @@ func TestDefaultTOCNeverScrollsHorizontally(t *testing.T) {
 
 func TestAccessibilityPanelUsesTallerResponsiveBody(t *testing.T) {
 	for _, want := range []string{
-		`display: grid;`,
+		`.mpress-accessibility-panel[popover]:popover-open { display: grid; }`,
 		`max-height: min(820px, calc(100dvh - 1rem));`,
 		`grid-template-rows: auto auto minmax(0, 1fr) auto;`,
 		`.mpress-accessibility-body { min-height: 400px; overflow-y: auto; overscroll-behavior: contain; }`,
 	} {
 		if !strings.Contains(accessibilityCSS, want) {
 			t.Errorf("accessibility panel CSS is missing %q", want)
+		}
+	}
+}
+
+// A display value on a closed popover beats the browser's display: none, leaving
+// an invisible fixed layer that blocks taps and touch scrolling on the page.
+func TestClosedPopoversStayHidden(t *testing.T) {
+	rule := regexp.MustCompile(`([^{}]*\[popover\][^{}]*)\{([^{}]*)\}`)
+	display := regexp.MustCompile(`(^|[;\s])display\s*:`)
+	for name, css := range map[string]string{"theme": defaultThemeCSS, "accessibility": accessibilityCSS} {
+		for _, match := range rule.FindAllStringSubmatch(css, -1) {
+			selector := strings.TrimSpace(match[1])
+			if !strings.Contains(selector, ":popover-open") && display.MatchString(match[2]) {
+				t.Errorf("%s CSS sets display on a closed popover: %s", name, selector)
+			}
 		}
 	}
 }
