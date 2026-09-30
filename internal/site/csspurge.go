@@ -6,7 +6,8 @@ import (
 )
 
 var cssSelectorToken = regexp.MustCompile(`[.#]([A-Za-z_][A-Za-z0-9_-]*)`)
-var runtimeStringToken = regexp.MustCompile(`["']([A-Za-z_][A-Za-z0-9_-]*)["']`)
+var runtimeStringToken = regexp.MustCompile("[\"'`]([A-Za-z_][A-Za-z0-9_\\s-]*)[\"'`]")
+var inlineScriptBlock = regexp.MustCompile(`(?is)<script\b[^>]*>(.*?)</script\s*>`)
 
 // purgeUnusedCSS removes only ordinary rules whose class and ID tokens are
 // absent from every generated HTML page and the generated runtime script. It
@@ -42,6 +43,11 @@ func purgeUnusedCSSWithTokens(source string, htmlTokens map[string]struct{}, run
 func addHTMLTokens(used map[string]struct{}, source string) {
 	scanHTMLAttribute(source, "class", used, true)
 	scanHTMLAttribute(source, "id", used, false)
+	// Page scripts can add classes after first paint. Preserve their literal
+	// state tokens just as we do for the generated reader runtime.
+	for _, script := range inlineScriptBlock.FindAllStringSubmatch(source, -1) {
+		addRuntimeTokens(used, script[1])
+	}
 }
 
 // addToken records a class or id token in the used set. The token is often a
@@ -113,7 +119,9 @@ func addRuntimeTokens(used map[string]struct{}, source string) {
 		// Runtime class names are often short state tokens such as active,
 		// open, or hidden. Keep every identifier-like string from the generated
 		// script rather than trying to guess which strings are CSS classes.
-		addToken(used, match[1])
+		for _, token := range strings.Fields(match[1]) {
+			addToken(used, token)
+		}
 	}
 }
 

@@ -54,6 +54,23 @@ func TestTypedRendererEscapesDataAndPreservesRenderedMarkdown(t *testing.T) {
 	}
 }
 
+func TestLandingHeroImagesHaveCriticalLoadingHints(t *testing.T) {
+	page := &content.Page{Layout: "landing", Title: "Build apps", Language: "en"}
+	page.Meta.Hero = content.Hero{Tagline: "With Go", Image: content.HeroImage{
+		Light: "/logo-light.svg", Dark: "/logo-dark.svg", Alt: "Logo",
+	}}
+	markup, err := renderPage(templateData{Config: config.Default(), Page: page, Root: "../"})
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, variant := range []string{"light", "dark"} {
+		want := `<img class="hero-logo-` + variant + `" src="../logo-` + variant + `.svg" alt="Logo" loading="eager" fetchpriority="high" decoding="async">`
+		if !strings.Contains(string(markup), want) {
+			t.Errorf("hero %s image is missing critical loading hints", variant)
+		}
+	}
+}
+
 func TestRTLLanguagesSetDocumentDirection(t *testing.T) {
 	for _, language := range []string{"ar", "fa-IR", "he", "ur_PK"} {
 		if !isRTLLanguage(language) {
