@@ -32,6 +32,34 @@ heading path, language, version, tags, source file, and citation. M-Press also
 loads captured version artifacts when they are available, so an agent can
 filter a search to a specific documentation release.
 
+## Loading limits
+
+The CLI, MCP server and authoring knowledge endpoint apply the same fixed limits:
+
+| Input | Limit |
+| --- | --- |
+| Manifest | 16 MiB |
+| Each artifact, stored and decompressed | 256 MiB |
+| One bundle, including its manifest | 512 MiB |
+| Current bundle and all mounted bundles combined | 1 GiB |
+| Entries in the mounted `versions/` directory | 256 |
+| Mounted version directories, including those without knowledge | 64 |
+
+Bundle and combined budgets count decompressed bytes and are shared across
+reads. A file must also fit the remaining budget in its stored form. Limits
+apply before JSON decoding; decompression stops at the limit. Truncated gzip,
+checksum failures, unsupported manifest/index schemas and mismatched bundle
+digests fail loading. These serialized-input limits do not bound the larger
+parsed store or peak process memory. An invalid or partly replaced bundle
+returns an error; retry after a complete build.
+
+Repeated or unnamed headings receive distinct deterministic section IDs.
+Supported older bundles with duplicate section IDs are repaired in memory after
+digest verification, without rewriting their files. This repair rebuilds the
+search index and costs additional loading time and allocations. Duplicate page
+or term identities are rejected. Mounted resource IDs include their snapshot
+location and remain distinct from current resources even when versions match.
+
 ## Connect an MCP client
 
 Run the server over standard input and output:

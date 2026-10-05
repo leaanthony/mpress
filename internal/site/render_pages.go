@@ -12,6 +12,7 @@ import (
 	"unsafe"
 
 	"github.com/leaanthony/mpress/internal/check"
+	"github.com/leaanthony/mpress/internal/routes"
 )
 
 // bytesToString creates an immutable string view over data for read-only use.
@@ -175,6 +176,9 @@ func newRenderBuffer() *bytes.Buffer {
 func renderAndWrite(outputDir string, i int, prepare func(i int) (string, templateData, error), reuse *bytes.Buffer, createdDirs *sync.Map, collectLinks bool) (renderedPageResult, error) {
 	pageOut, data, err := prepare(i)
 	if err != nil {
+		return renderedPageResult{}, err
+	}
+	if err := routes.Output(pageOut); err != nil {
 		return renderedPageResult{}, err
 	}
 	// The caller does not retain page bytes, so render into the worker's buffer.

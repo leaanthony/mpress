@@ -8,7 +8,6 @@ import (
 	"fmt"
 	"math"
 	"math/big"
-	"os"
 	"path/filepath"
 	"strings"
 	"sync"
@@ -16,6 +15,7 @@ import (
 	"unicode/utf8"
 
 	"github.com/leaanthony/mpress/internal/config"
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 // ProjectEstimate describes the approximate provider workload for one complete
@@ -64,18 +64,28 @@ type ModelComparison struct {
 // EstimateProject measures the actual translatable segments and then estimates
 // tokens for the same JSON and schema shape used by the translation provider.
 func EstimateProject(project string, cfg config.Config) (ProjectEstimate, error) {
-	engine := NewEngine(project, cfg, nil)
-	files, err := engine.sourceFiles("")
+	return NewEngine(project, cfg, nil).Estimate()
+}
+
+// Estimate measures existing translation work through one project boundary.
+func (e *Engine) Estimate() (ProjectEstimate, error) {
+	cfg := e.Config
+	root, closeFiles, err := e.projectFiles()
 	if err != nil {
 		return ProjectEstimate{}, err
 	}
-	styleGuide, err := readOptionalProjectFile(project, cfg.Translation.StyleGuide, 128<<10)
+	defer closeFiles()
+	files, err := e.sourceFilesWithRoot(root, "")
+	if err != nil {
+		return ProjectEstimate{}, err
+	}
+	styleGuide, err := readOptionalProjectFileRoot(root, cfg.Translation.StyleGuide, 128<<10)
 	if err != nil {
 		return ProjectEstimate{}, err
 	}
 	var estimate ProjectEstimate
 	for _, sourceFile := range files {
-		data, readErr := os.ReadFile(filepath.Join(cfg.ContentPath(project), filepath.FromSlash(sourceFile)))
+		data, readErr := root.ReadFile(filepath.Join(cfg.ContentPath(e.Project), filepath.FromSlash(sourceFile)))
 		if readErr != nil {
 			return ProjectEstimate{}, readErr
 		}
@@ -109,7 +119,7 @@ func EstimateProject(project string, cfg config.Config) (ProjectEstimate, error)
 			estimate.OutputTokens += int(math.Ceil(float64(outputCharacters) / 3.0))
 		}
 	}
-	targets, err := engine.targetLanguages("")
+	targets, err := e.targetLanguages("")
 	if err != nil {
 		// Model setup is still useful before the first target is added.
 		targets = nil
@@ -118,7 +128,7 @@ func EstimateProject(project string, cfg config.Config) (ProjectEstimate, error)
 	if len(targets) == 0 || estimate.Segments == 0 {
 		return estimate, nil
 	}
-	report, err := engine.Run(context.Background(), Options{Scope: "stale", DryRun: true})
+	report, err := e.RunRoot(context.Background(), root, Options{Scope: "stale", DryRun: true})
 	if err != nil {
 		return ProjectEstimate{}, err
 	}
@@ -150,29 +160,40 @@ func CompareProjectModels(ctx context.Context, project string, cfg config.Config
 // CompareProjectModelsForFile compares a compact random sample from one page.
 // An empty sourceFile keeps the site-wide random sampling behaviour.
 func CompareProjectModelsForFile(ctx context.Context, project string, cfg config.Config, language, sourceFile string, candidates []ComparisonCandidate) (ModelComparison, error) {
+	return NewEngine(project, cfg, nil).CompareModels(ctx, language, sourceFile, candidates)
+}
+
+// CompareModels borrows configured project IO while preserving the read-only,
+// shared random sample and independently validated provider outputs.
+func (e *Engine) CompareModels(ctx context.Context, language, sourceFile string, candidates []ComparisonCandidate) (ModelComparison, error) {
+	cfg := e.Config
 	if len(candidates) != 2 || strings.TrimSpace(candidates[0].Model) == "" || strings.TrimSpace(candidates[1].Model) == "" {
 		return ModelComparison{}, errors.New("choose exactly two translation models")
 	}
 	if candidates[0].Model == candidates[1].Model {
 		return ModelComparison{}, errors.New("choose two different translation models")
 	}
-	engine := NewEngine(project, cfg, nil)
-	languages, err := engine.targetLanguages(language)
+	languages, err := e.targetLanguages(language)
 	if err != nil || len(languages) != 1 {
 		if err != nil {
 			return ModelComparison{}, err
 		}
 		return ModelComparison{}, errors.New("choose one target language")
 	}
-	document, sourceFile, sample, err := randomComparisonSample(project, cfg, sourceFile)
+	root, closeFiles, err := e.projectFiles()
 	if err != nil {
 		return ModelComparison{}, err
 	}
-	styleGuide, err := readOptionalProjectFile(project, cfg.Translation.StyleGuide, 128<<10)
+	defer closeFiles()
+	document, sourceFile, sample, err := e.comparisonSample(root, sourceFile)
 	if err != nil {
 		return ModelComparison{}, err
 	}
-	glossary, err := loadGlossary(project, cfg.Translation.Glossary)
+	styleGuide, err := readOptionalProjectFileRoot(root, cfg.Translation.StyleGuide, 128<<10)
+	if err != nil {
+		return ModelComparison{}, err
+	}
+	glossary, err := loadGlossaryRoot(root, cfg.Translation.Glossary)
 	if err != nil {
 		return ModelComparison{}, err
 	}
@@ -258,7 +279,17 @@ func CompareProjectModelsForFile(ctx context.Context, project string, cfg config
 
 func randomComparisonSample(project string, cfg config.Config, sourceFile string) (*Document, string, []RequestSegment, error) {
 	engine := NewEngine(project, cfg, nil)
-	files, err := engine.sourceFiles(sourceFile)
+	root, closeFiles, err := engine.projectFiles()
+	if err != nil {
+		return nil, "", nil, err
+	}
+	defer closeFiles()
+	return engine.comparisonSample(root, sourceFile)
+}
+
+func (e *Engine) comparisonSample(root *projectfs.FS, sourceFile string) (*Document, string, []RequestSegment, error) {
+	cfg := e.Config
+	files, err := e.sourceFilesWithRoot(root, sourceFile)
 	if err != nil {
 		return nil, "", nil, err
 	}
@@ -272,7 +303,7 @@ func randomComparisonSample(project string, cfg config.Config, sourceFile string
 		if filepath.ToSlash(sourceFile) == filepath.ToSlash(cfg.Build.NavFile) {
 			continue
 		}
-		data, readErr := os.ReadFile(filepath.Join(cfg.ContentPath(project), filepath.FromSlash(sourceFile)))
+		data, readErr := root.ReadFile(filepath.Join(cfg.ContentPath(e.Project), filepath.FromSlash(sourceFile)))
 		if readErr != nil {
 			return nil, "", nil, readErr
 		}

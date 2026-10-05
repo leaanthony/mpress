@@ -2,12 +2,14 @@ package translate
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/leaanthony/mpress/internal/config"
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 // ConvertedDocument holds both sides of a planned project format conversion.
@@ -22,9 +24,11 @@ type ConvertedState struct {
 	RequiresReview int
 }
 
-// PlanConversionStates validates and serializes sidecars before a project
-// converter writes documents or removes the original triplets.
-func PlanConversionStates(root string, cfg config.Config, documents []ConvertedDocument, markdownToMPD func(string) (string, error)) ([]ConvertedState, error) {
+// PlanConversionStatesRoot borrows the already pinned project state boundary.
+func PlanConversionStatesRoot(files *projectfs.FS, root string, cfg config.Config, documents []ConvertedDocument, markdownToMPD func(string) (string, error)) ([]ConvertedState, error) {
+	if files == nil {
+		return nil, fmt.Errorf("conversion state project root is required")
+	}
 	byFile := map[string]ConvertedDocument{}
 	for _, doc := range documents {
 		byFile[doc.SourceFile] = doc
@@ -43,12 +47,12 @@ func PlanConversionStates(root string, cfg config.Config, documents []ConvertedD
 			if err != nil {
 				return nil, err
 			}
-			if _, err = os.Stat(path); os.IsNotExist(err) {
+			if _, err = files.Stat(path); errors.Is(err, os.ErrNotExist) {
 				continue
 			} else if err != nil {
 				return nil, err
 			}
-			old, err := loadState(path, doc.SourceFile, cfg.Translation.SourceLanguage, language, "")
+			old, err := loadStateRoot(files, path, doc.SourceFile, cfg.Translation.SourceLanguage, language, "")
 			if err != nil {
 				return nil, err
 			}

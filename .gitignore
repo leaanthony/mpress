@@ -7,3 +7,9 @@ coverage.out
 /.stitch/
 /audits/
 .env.local
+
+# Local audit output and optional Ripwire state
+/audit/*/evidence/
+/audit/*/results/
+/audit/**/__pycache__/
+/.ripwire*

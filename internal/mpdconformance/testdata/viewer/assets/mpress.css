@@ -1581,7 +1581,7 @@ body.docs-page { position: relative; }
 .header-contribute { width: 34px; min-width: 34px; height: 34px; padding: 0; border-color: transparent; color: var(--accent); }
 .header-contribute span { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); clip-path: inset(50%); white-space: nowrap; }
 .footer-contribute { min-height: 32px; padding-block: .28rem; }
-.mpress-contribute-dialog { width: min(92vw, 720px); padding: 0; overflow: hidden; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-solid); color: var(--text); box-shadow: 0 32px 90px rgb(0 0 0 / .48); }
+.mpress-contribute-dialog { width: min(92vw, 720px); padding: 0; overflow: auto; overscroll-behavior: contain; scroll-padding-block: .5rem; border: 1px solid var(--border); border-radius: 10px; background: var(--surface-solid); color: var(--text); box-shadow: 0 32px 90px rgb(0 0 0 / .48); }
 .mpress-contribute-dialog::backdrop { background: rgb(3 6 12 / .72); backdrop-filter: blur(4px); }
 .mpress-contribute-dialog > header { display: flex; align-items: flex-start; justify-content: space-between; gap: 1rem; padding: 1.4rem 1.5rem 1.15rem; border-bottom: 1px solid var(--border); }
 .mpress-contribute-heading { display: flex; min-width: 0; align-items: center; gap: .9rem; }

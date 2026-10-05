@@ -1178,14 +1178,14 @@ func (r *pageRenderer) renderLanding() {
 				r.url(r.data.Root + strings.Trim(hero.Image.Light, "/"))
 				r.raw(`" alt="`)
 				r.attr(hero.Image.Alt)
-				r.raw(`">`)
+				r.raw(`" loading="eager" fetchpriority="high" decoding="async">`)
 			}
 			if hero.Image.Dark != "" {
 				r.raw(`<img class="hero-logo-dark" src="`)
 				r.url(r.data.Root + strings.Trim(hero.Image.Dark, "/"))
 				r.raw(`" alt="`)
 				r.attr(hero.Image.Alt)
-				r.raw(`">`)
+				r.raw(`" loading="eager" fetchpriority="high" decoding="async">`)
 			}
 			r.raw(`</span>`)
 		}

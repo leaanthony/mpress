@@ -1,0 +1,4 @@
+tools/*.json
+tools/*.log
+tools/lcp/*.json
+tools/lcp/*.log

@@ -71,3 +71,35 @@ func writeFixture(t *testing.T, root, name, value string) {
 		t.Fatal(err)
 	}
 }
+
+func TestCreateRetainsInternalStateAliasAndRemovesOwnedWorkspace(t *testing.T) {
+	root := t.TempDir()
+	if err := config.Save(root, config.Default()); err != nil {
+		t.Fatal(err)
+	}
+	writeFixture(t, root, "content/index.md", "# Home\n")
+	writeFixture(t, root, "state/sentinel", "must survive")
+	if err := os.Symlink("state", filepath.Join(root, ".mpress")); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	archive := filepath.Join(t.TempDir(), "docs.zip")
+	if _, err := Create(root, archive, Options{Strict: true}); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(root, "state", "sentinel"))
+	if err != nil || string(data) != "must survive" {
+		t.Error("export cleanup changed unrelated state")
+	}
+	entries, err := os.ReadDir(filepath.Join(root, "state"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, entry := range entries {
+		if strings.HasPrefix(entry.Name(), "export-") {
+			t.Error("export left its workspace behind")
+		}
+	}
+	if _, err := os.Readlink(filepath.Join(root, ".mpress")); err != nil {
+		t.Error("export replaced the safe state alias")
+	}
+}
