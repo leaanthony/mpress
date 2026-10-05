@@ -6,7 +6,6 @@ import (
 	"encoding/hex"
 	"encoding/json"
 	"fmt"
-	"os"
 	"path/filepath"
 	"runtime"
 	"strings"
@@ -17,6 +16,7 @@ import (
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/content"
 	"github.com/leaanthony/mpress/internal/mpd"
+	"github.com/leaanthony/mpress/internal/projectfs"
 	"github.com/leaanthony/mpress/internal/quickedit"
 )
 
@@ -25,8 +25,8 @@ import (
 // changes that produce different output for identical Markdown.
 // Increment this whenever parser or component rendering changes can alter the
 // cached page HTML without changing the source document.
-// v21 removes the English prefix from generated D2 descriptions.
-const parseCacheVersion = "mpress-parse-v21"
+// v22 validates and canonicalizes page routes before caching their output paths.
+const parseCacheVersion = "mpress-parse-v22"
 
 const maxParseWorkers = 8
 
@@ -54,6 +54,7 @@ type parseCacheEntry struct {
 }
 
 type parseCache struct {
+	files     *projectfs.FS
 	dir       string
 	hasLegacy bool
 	decoders  sync.Pool
@@ -62,11 +63,26 @@ type parseCache struct {
 var parseCacheEncoder = glint.NewEncoder[parseCacheEntry]()
 
 func newParseCache(projectDir string) *parseCache {
-	dir := filepath.Join(projectDir, ".mpress", "cache", "parse")
-	if err := os.MkdirAll(dir, 0o755); err != nil {
+	files, err := projectfs.Open(projectDir)
+	if err != nil {
 		return nil
 	}
-	cache := &parseCache{dir: dir, hasLegacy: dirHasSuffix(dir, ".json")}
+	cache := newParseCacheWithFS(projectDir, files)
+	if cache == nil {
+		files.Close()
+		return nil
+	}
+	// Standalone caches are used by tests; Build shares and closes its own root.
+	runtime.AddCleanup(cache, func(files *projectfs.FS) { files.Close() }, files)
+	return cache
+}
+
+func newParseCacheWithFS(projectDir string, files *projectfs.FS) *parseCache {
+	dir := filepath.Join(projectDir, ".mpress", "cache", "parse")
+	if err := files.MkdirAll(dir, 0o755); err != nil {
+		return nil
+	}
+	cache := &parseCache{files: files, dir: dir, hasLegacy: dirHasSuffix(files, dir, ".json")}
 	cache.decoders.New = func() any { return glint.NewDecoder[parseCacheEntry]() }
 	return cache
 }
@@ -74,8 +90,8 @@ func newParseCache(projectDir string) *parseCache {
 // dirHasSuffix reports whether any entry in dir ends with suffix. It reads the
 // directory once so the load path can skip the per-page legacy-cache probe when
 // no legacy entries exist, which is every cache written since the Glint format.
-func dirHasSuffix(dir, suffix string) bool {
-	entries, err := os.ReadDir(dir)
+func dirHasSuffix(files *projectfs.FS, dir, suffix string) bool {
+	entries, err := files.ReadDir(dir)
 	if err != nil {
 		return false
 	}
@@ -103,7 +119,7 @@ func (c *parseCache) loadEntry(key string) (parseCacheEntry, bool) {
 	if c == nil {
 		return parseCacheEntry{}, false
 	}
-	if data, err := os.ReadFile(filepath.Join(c.dir, key+".glint")); err == nil {
+	if data, err := c.files.ReadFile(filepath.Join(c.dir, key+".glint")); err == nil {
 		entry, err := c.decode(data)
 		if err == nil && entry.Page != nil {
 			return entry, true
@@ -115,7 +131,7 @@ func (c *parseCache) loadEntry(key string) (parseCacheEntry, bool) {
 	if !c.hasLegacy {
 		return parseCacheEntry{}, false
 	}
-	data, err := os.ReadFile(filepath.Join(c.dir, key+".json"))
+	data, err := c.files.ReadFile(filepath.Join(c.dir, key+".json"))
 	if err != nil {
 		return parseCacheEntry{}, false
 	}
@@ -145,26 +161,7 @@ func (c *parseCache) saveWithQuickEdit(key string, page *content.Page, diags []c
 	buffer := glint.NewBufferFromPoolWithCap(len(page.HTML) + len(page.PlainText) + 1024)
 	defer buffer.ReturnToPool()
 	parseCacheEncoder.Marshal(&parseCacheEntry{Page: page, Diagnostics: diags, QuickEdit: document}, buffer)
-	tmp, err := os.CreateTemp(c.dir, ".parse-*")
-	if err != nil {
-		return
-	}
-	tmpName := tmp.Name()
-	if _, err = tmp.Write(buffer.Bytes); err == nil {
-		err = tmp.Close()
-	} else {
-		_ = tmp.Close()
-	}
-	if err != nil {
-		os.Remove(tmpName)
-		return
-	}
-	// Only remove the temp file if the atomic rename fails. Removing it
-	// unconditionally fired a failing unlink on every successful save, since the
-	// temp no longer exists once it has been renamed into place.
-	if err = os.Rename(tmpName, filepath.Join(c.dir, key+".glint")); err != nil {
-		os.Remove(tmpName)
-	}
+	_ = c.files.WriteCache(filepath.Join(c.dir, key+".glint"), buffer.Bytes)
 }
 
 func (c *parseCache) decode(data []byte) (entry parseCacheEntry, err error) {
@@ -200,7 +197,7 @@ func parseDiscoveredPages(projectDir, contentDir string, cfg config.Config, disc
 			})
 		}
 	}
-	cache := newParseCache(projectDir)
+	cache := newParseCacheWithFS(projectDir, opts.files)
 	results := make([]parseResult, len(jobs))
 	workerCount := runtime.GOMAXPROCS(0)
 	if workerCount < 1 {
@@ -251,7 +248,7 @@ func parseDiscoveredPages(projectDir, contentDir string, cfg config.Config, disc
 			defer workers.Done()
 			renderer := content.NewRenderer()
 			for job := range queue {
-				results[job.index] = parseOne(renderer, cache, saveFn, job, cfg.Contribution.Enabled && opts.Development)
+				results[job.index] = parseOne(opts.files, renderer, cache, saveFn, job, cfg.Contribution.Enabled && opts.Development)
 			}
 		}()
 	}
@@ -276,7 +273,7 @@ type saveTask struct {
 	document *quickedit.Document
 }
 
-func parseOne(renderer *content.Renderer, cache *parseCache, save func(string, *content.Page, []content.Diagnostic, *quickedit.Document), job parseJob, wantQuickEdit bool) parseResult {
+func parseOne(files *projectfs.FS, renderer *content.Renderer, cache *parseCache, save func(string, *content.Page, []content.Diagnostic, *quickedit.Document), job parseJob, wantQuickEdit bool) parseResult {
 	result := parseResult{job: job}
 	if job.override {
 		result.page, result.diags, result.err = parseContentSource(renderer, job.rel, job.lang, []byte(job.source))
@@ -291,7 +288,7 @@ func parseOne(renderer *content.Renderer, cache *parseCache, save func(string, *
 		return result
 	}
 
-	source, modified, err := readSourceWithModTime(job.sourcePath)
+	source, modified, err := readSourceWithModTime(files, job.sourcePath)
 	if err != nil {
 		result.err = err
 		return result
@@ -367,8 +364,8 @@ func parseContentSource(renderer *content.Renderer, rel, lang string, source []b
 // readSourceWithModTime reads a source file and its modification time from a
 // single open file handle, avoiding a separate stat syscall per page and sizing
 // the read buffer from the file length so the content is read in one call.
-func readSourceWithModTime(path string) ([]byte, time.Time, error) {
-	file, err := os.Open(path)
+func readSourceWithModTime(files *projectfs.FS, path string) ([]byte, time.Time, error) {
+	file, err := files.Open(path)
 	if err != nil {
 		return nil, time.Time{}, err
 	}

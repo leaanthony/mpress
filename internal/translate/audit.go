@@ -10,6 +10,8 @@ import (
 	"regexp"
 	"sort"
 	"strings"
+
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 type AuditFinding struct {
@@ -68,20 +70,24 @@ func (report AuditReport) JSON() string {
 }
 
 func (e *Engine) Audit(language, sourceFile string) (AuditReport, error) {
-	report, _, err := e.auditPairs(language, sourceFile)
-	return report, err
+	return e.AuditWithReviewer(context.Background(), language, sourceFile, nil)
 }
 
 func (e *Engine) AuditWithReviewer(ctx context.Context, language, sourceFile string, reviewer AuditReviewer) (AuditReport, error) {
-	report, pairs, err := e.auditPairs(language, sourceFile)
+	root, closeFiles, err := e.projectFiles()
+	if err != nil {
+		return AuditReport{}, err
+	}
+	defer closeFiles()
+	report, pairs, err := e.auditPairs(root, language, sourceFile)
 	if err != nil || reviewer == nil || len(pairs) == 0 {
 		return report, err
 	}
-	styleGuide, err := readOptionalProjectFile(e.Project, e.Config.Translation.StyleGuide, 128<<10)
+	styleGuide, err := readOptionalProjectFileRoot(root, e.Config.Translation.StyleGuide, 128<<10)
 	if err != nil {
 		return report, fmt.Errorf("read translation style guide: %w", err)
 	}
-	glossaries, err := loadGlossary(e.Project, e.Config.Translation.Glossary)
+	glossaries, err := loadGlossaryRoot(root, e.Config.Translation.Glossary)
 	if err != nil {
 		return report, err
 	}
@@ -128,7 +134,7 @@ func auditPairBatches(pairs []AuditPair, maxCharacters int) [][]AuditPair {
 	return batches
 }
 
-func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPair, error) {
+func (e *Engine) auditPairs(root *projectfs.FS, language, sourceFile string) (AuditReport, []AuditPair, error) {
 	languages, err := e.targetLanguages(language)
 	if err != nil {
 		return AuditReport{}, nil, err
@@ -137,11 +143,11 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 		return AuditReport{}, nil, errors.New("translation audit requires one target language")
 	}
 	language = languages[0]
-	files, err := e.sourceFiles(sourceFile)
+	files, err := e.sourceFilesWithRoot(root, sourceFile)
 	if err != nil {
 		return AuditReport{}, nil, err
 	}
-	glossaries, err := loadGlossary(e.Project, e.Config.Translation.Glossary)
+	glossaries, err := loadGlossaryRoot(root, e.Config.Translation.Glossary)
 	if err != nil {
 		return AuditReport{}, nil, err
 	}
@@ -150,7 +156,7 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 	contentDir := e.Config.ContentPath(e.Project)
 	for _, file := range files {
 		report.Files++
-		source, readErr := os.ReadFile(filepath.Join(contentDir, filepath.FromSlash(file)))
+		source, readErr := root.ReadFile(filepath.Join(contentDir, filepath.FromSlash(file)))
 		if readErr != nil {
 			return report, pairs, readErr
 		}
@@ -159,7 +165,7 @@ func (e *Engine) auditPairs(language, sourceFile string) (AuditReport, []AuditPa
 			return report, pairs, extractErr
 		}
 		targetPath := filepath.Join(contentDir, filepath.FromSlash(language), filepath.FromSlash(file))
-		target, readErr := os.ReadFile(targetPath)
+		target, readErr := root.ReadFile(targetPath)
 		if errors.Is(readErr, os.ErrNotExist) {
 			report.add(AuditFinding{Severity: "error", Code: "missing-file", File: file, Message: "translated file does not exist"})
 			continue

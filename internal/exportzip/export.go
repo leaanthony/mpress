@@ -12,6 +12,7 @@ import (
 	"time"
 
 	"github.com/leaanthony/mpress/internal/content"
+	"github.com/leaanthony/mpress/internal/projectfs"
 	"github.com/leaanthony/mpress/internal/site"
 )
 
@@ -80,15 +81,16 @@ func Create(projectDir, destination string, options Options) (Result, error) {
 		return Result{}, fmt.Errorf("export directory does not exist: %s", parent)
 	}
 
-	temporaryRoot := filepath.Join(projectDir, ".mpress")
-	if err := os.MkdirAll(temporaryRoot, 0o755); err != nil {
-		return Result{}, err
-	}
-	workspace, err := os.MkdirTemp(temporaryRoot, "export-")
+	files, err := projectfs.Open(projectDir)
 	if err != nil {
 		return Result{}, err
 	}
-	defer os.RemoveAll(workspace)
+	defer files.Close()
+	workspace, err := files.MkdirTemp(filepath.Join(projectDir, ".mpress"), "export-")
+	if err != nil {
+		return Result{}, err
+	}
+	defer files.RemoveAll(workspace)
 	output := filepath.Join(workspace, "site")
 	build, buildErr := site.Build(projectDir, site.BuildOptions{Strict: options.Strict, IncludeDrafts: options.IncludeDrafts, MinifyAssets: true, PurgeUnusedCSS: true, OutputDir: output})
 	if buildErr != nil {
@@ -106,7 +108,7 @@ func Create(projectDir, destination string, options Options) (Result, error) {
 			_ = os.Remove(temporaryName)
 		}
 	}()
-	if err := writeArchive(temporary, output); err != nil {
+	if err := writeArchive(temporary, output, files); err != nil {
 		_ = temporary.Close()
 		return Result{}, err
 	}
@@ -136,9 +138,9 @@ func Create(projectDir, destination string, options Options) (Result, error) {
 	}, nil
 }
 
-func writeArchive(destination io.Writer, source string) error {
+func writeArchive(destination io.Writer, source string, files *projectfs.FS) error {
 	archive := zip.NewWriter(destination)
-	walkErr := filepath.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
+	walkErr := files.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -166,7 +168,7 @@ func writeArchive(destination io.Writer, source string) error {
 		if err != nil {
 			return err
 		}
-		file, err := os.Open(path)
+		file, err := files.Open(path)
 		if err != nil {
 			return err
 		}

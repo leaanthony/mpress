@@ -5,7 +5,6 @@ import (
 	"crypto/subtle"
 	"errors"
 	"net/http"
-	"os"
 	"path/filepath"
 	"strings"
 
@@ -147,7 +146,7 @@ func (s *Server) newMCPHandler() http.Handler {
 			var files []mcpFileEntry
 			for _, name := range []string{s.cfg.Build.ContentDir, s.cfg.Build.StaticDir, config.Filename} {
 				path := filepath.Join(s.project, filepath.FromSlash(name))
-				if _, err := os.Stat(path); err != nil {
+				if _, err := s.files.Stat(path); err != nil {
 					continue
 				}
 				node, err := s.readTree(path)
@@ -177,7 +176,7 @@ func (s *Server) newMCPHandler() http.Handler {
 			if len(input.Content) > maxSourceSize {
 				return nil, mcpWriteFileOutput{}, errors.New("file is too large to edit")
 			}
-			if _, err := os.Stat(path); err == nil && strings.TrimSpace(input.Revision) == "" {
+			if _, err := s.files.Stat(path); err == nil && strings.TrimSpace(input.Revision) == "" {
 				return nil, mcpWriteFileOutput{}, errors.New("revision is required when replacing an existing file")
 			}
 			if err := s.writeSource(path, []byte(input.Content), input.Revision); err != nil {
@@ -190,7 +189,7 @@ func (s *Server) newMCPHandler() http.Handler {
 
 	mcp.AddTool(server, &mcp.Tool{Name: "get_config", Title: "Get the complete M-Press configuration", Description: "Return every supported M-Press configuration field with a safe-write revision.", Annotations: readOnly},
 		func(_ context.Context, _ *mcp.CallToolRequest, _ mcpEmptyInput) (*mcp.CallToolResult, mcpGetConfigOutput, error) {
-			data, err := os.ReadFile(filepath.Join(s.project, config.Filename))
+			data, err := s.files.ReadFile(filepath.Join(s.project, config.Filename))
 			return nil, mcpGetConfigOutput{Config: s.cfg, Revision: revision(data)}, err
 		})
 
@@ -286,7 +285,7 @@ func (s *Server) mcpReadFile(name string) (mcpFileOutput, error) {
 	if err != nil {
 		return mcpFileOutput{}, err
 	}
-	data, err := os.ReadFile(path)
+	data, err := s.files.ReadFile(path)
 	if err != nil {
 		return mcpFileOutput{}, err
 	}

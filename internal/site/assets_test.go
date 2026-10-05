@@ -151,6 +151,30 @@ func TestPurgeUnusedCSSKeepsRuntimeAndAtRules(t *testing.T) {
 	}
 }
 
+func TestPurgeUnusedCSSKeepsInlineScriptClasses(t *testing.T) {
+	css := `.title-line { display: inline-flex; }
+.word-title { display: inline-block; }
+.word-out { opacity: 0; }
+.ready .word-title { opacity: 1; }
+.unused-widget { display: none; }`
+	pages := []string{`<main><h1>Build apps</h1></main>
+<SCRIPT type="module">
+const line = document.createElement('span');
+line.className = 'title-line word-title';
+line.classList.add("word-out");
+document.body.classList.add(` + "`ready`" + `);
+</SCRIPT >`}
+	got := purgeUnusedCSS(css, pages, "")
+	for _, selector := range []string{".title-line", ".word-title", ".word-out", ".ready"} {
+		if !strings.Contains(got, selector) {
+			t.Errorf("inline script state %s was removed: %s", selector, got)
+		}
+	}
+	if strings.Contains(got, ".unused-widget") {
+		t.Fatalf("unreferenced rule was retained: %s", got)
+	}
+}
+
 func TestBuildOptimizesProductionAssets(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, "mpress.yaml", `site:
@@ -161,8 +185,8 @@ build:
   outputDir: site
   customCSS: custom.css
 `)
-	writeFixture(t, root, "content/index.md", "---\ntitle: Home\n---\n\n# Home\n\n<div class=\"keep-production\">Ready</div>\n")
-	writeFixture(t, root, "custom.css", ".keep-production { color: green; }\n.remove-production { display: none; }\n")
+	writeFixture(t, root, "content/index.md", "---\ntitle: Home\n---\n\n# Home\n\n<div class=\"keep-production\">Ready</div>\n<script>document.body.classList.add('dynamic-production');</script>\n")
+	writeFixture(t, root, "custom.css", ".keep-production { color: green; }\n.dynamic-production { color: blue; }\n.remove-production { display: none; }\n")
 	if err := os.MkdirAll(filepath.Join(root, "static"), 0o755); err != nil {
 		t.Fatal(err)
 	}
@@ -175,6 +199,9 @@ build:
 	}
 	if strings.Contains(string(css), "remove-production") || !strings.Contains(string(css), "keep-production") {
 		t.Fatalf("production CSS purge result is incorrect: %s", css)
+	}
+	if !strings.Contains(string(css), "dynamic-production") {
+		t.Fatalf("production purge removed an inline-script class: %s", css)
 	}
 	if strings.Contains(string(css), "\n") {
 		t.Fatal("production CSS was not minified")

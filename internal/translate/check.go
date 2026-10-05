@@ -46,6 +46,15 @@ func (e *Engine) Check(options CheckOptions) (CheckReport, error) {
 		return report, err
 	}
 	report.Languages = languages
+	root, closeFiles, err := e.projectFiles()
+	if err != nil {
+		return report, err
+	}
+	defer closeFiles()
+	// Keep discovery, coverage, audit and exception hashes on the same root.
+	borrowed := *e
+	borrowed.projectRoot = root
+	e = &borrowed
 	sources, err := e.sourceFiles("")
 	if err != nil {
 		return report, err
@@ -61,15 +70,17 @@ func (e *Engine) Check(options CheckOptions) (CheckReport, error) {
 		report.ExcludedAudit = append(report.ExcludedAudit, file)
 	}
 	sort.Strings(report.ExcludedAudit)
-	discovered, err := content.Discover(e.Config.ContentPath(e.Project), e.Config.Site.Languages, e.Config.Site.DefaultLanguage)
+	discovered, err := content.DiscoverRoot(root, e.Config.ContentPath(e.Project), e.Config.Site.Languages, e.Config.Site.DefaultLanguage)
 	if err != nil {
 		return report, err
 	}
 	for _, language := range languages {
 		targets := discovered[language]
 		nav := filepath.ToSlash(e.Config.Build.NavFile)
-		if _, err := os.Stat(filepath.Join(e.Config.ContentPath(e.Project), language, filepath.FromSlash(nav))); err == nil {
+		if _, err := root.Stat(filepath.Join(e.Config.ContentPath(e.Project), language, filepath.FromSlash(nav))); err == nil {
 			targets = append(targets, nav)
+		} else if !os.IsNotExist(err) {
+			return report, err
 		}
 		report.Errors = append(report.Errors, e.checkCoverage(language, sources, targets)...)
 		e.checkLanguageAudit(language, options, excluded, &report)
@@ -116,6 +127,11 @@ func auditExclusions(sources, exclusions []string) (map[string]bool, error) {
 }
 
 func (e *Engine) checkCoverage(language string, sources, targets []string) []string {
+	root, closeFiles, err := e.projectFiles()
+	if err != nil {
+		return []string{language + ": " + err.Error()}
+	}
+	defer closeFiles()
 	var problems []string
 	sourceSet := map[string]bool{}
 	targetSet := map[string]bool{}
@@ -129,7 +145,7 @@ func (e *Engine) checkCoverage(language string, sources, targets []string) []str
 			problems = append(problems, location+": missing translation")
 			continue
 		}
-		data, err := os.ReadFile(filepath.Join(e.Config.ContentPath(e.Project), language, filepath.FromSlash(file)))
+		data, err := root.ReadFile(filepath.Join(e.Config.ContentPath(e.Project), language, filepath.FromSlash(file)))
 		if err != nil {
 			problems = append(problems, location+": "+err.Error())
 			continue
@@ -153,16 +169,21 @@ func (e *Engine) acceptedFinding(language string, finding AuditFinding, exceptio
 	if !safeAuditPath(finding.File) || !safeAuditPath(language) {
 		return false
 	}
+	files, closeFiles, err := e.projectFiles()
+	if err != nil {
+		return false
+	}
+	defer closeFiles()
 	for _, entry := range exceptions {
 		if entry.Language != language || entry.File != finding.File || entry.Segment != finding.Segment || entry.Code != finding.Code || strings.TrimSpace(entry.Reason) == "" {
 			continue
 		}
 		root := e.Config.ContentPath(e.Project)
-		source, err := os.ReadFile(filepath.Join(root, filepath.FromSlash(finding.File)))
+		source, err := files.ReadFile(filepath.Join(root, filepath.FromSlash(finding.File)))
 		if err != nil {
 			return false
 		}
-		target, err := os.ReadFile(filepath.Join(root, language, filepath.FromSlash(finding.File)))
+		target, err := files.ReadFile(filepath.Join(root, language, filepath.FromSlash(finding.File)))
 		if err != nil {
 			return false
 		}

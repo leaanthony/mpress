@@ -12,6 +12,7 @@ import (
 
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/mpd"
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 // MigrationReport describes a sidecar-only operation. Content files are never
@@ -36,7 +37,21 @@ type migrationWrite struct {
 // MigrateState reads original source/target/state triplets from a project
 // snapshot. All files are planned before the first sidecar is written.
 func (e *Engine) MigrateState(from, language, file string, write bool) (MigrationReport, error) {
-	oldConfig, err := config.Load(from)
+	files, closeFiles, err := e.projectFiles()
+	if err != nil {
+		return MigrationReport{}, err
+	}
+	defer closeFiles()
+	from, err = filepath.Abs(from)
+	if err != nil {
+		return MigrationReport{}, err
+	}
+	previous, err := projectfs.Open(from)
+	if err != nil {
+		return MigrationReport{}, err
+	}
+	defer previous.Close()
+	oldConfig, err := config.LoadWithReadFile(from, previous.ReadFile)
 	if err != nil {
 		return MigrationReport{}, err
 	}
@@ -44,14 +59,14 @@ func (e *Engine) MigrateState(from, language, file string, write bool) (Migratio
 	if err != nil {
 		return MigrationReport{}, err
 	}
-	files, err := e.sourceFiles(file)
+	sources, err := e.sourceFilesWithRoot(files, file)
 	if err != nil {
 		return MigrationReport{}, err
 	}
 	report := MigrationReport{}
 	var writes []migrationWrite
 	for _, lang := range languages {
-		for _, name := range files {
+		for _, name := range sources {
 			path, err := statePath(e.Project, e.Config.Translation.StateDir, lang, name)
 			if err != nil {
 				return report, err
@@ -60,16 +75,16 @@ func (e *Engine) MigrateState(from, language, file string, write bool) (Migratio
 			if err != nil {
 				return report, err
 			}
-			if _, err = os.Stat(oldPath); os.IsNotExist(err) {
+			if _, err = previous.Stat(oldPath); errors.Is(err, os.ErrNotExist) {
 				continue
 			} else if err != nil {
 				return report, err
 			}
-			old, err := loadState(oldPath, name, oldConfig.Translation.SourceLanguage, lang, "")
+			old, err := loadStateRoot(previous, oldPath, name, oldConfig.Translation.SourceLanguage, lang, "")
 			if err != nil {
 				return report, err
 			}
-			destination, err := loadState(path, name, e.Config.Translation.SourceLanguage, lang, "")
+			destination, err := loadStateRoot(files, path, name, e.Config.Translation.SourceLanguage, lang, "")
 			if err != nil {
 				return report, err
 			}
@@ -79,7 +94,7 @@ func (e *Engine) MigrateState(from, language, file string, write bool) (Migratio
 				report.Files = append(report.Files, item)
 				continue
 			}
-			state, conflicts, err := e.migrateTriplet(from, oldConfig, name, lang, old)
+			state, conflicts, err := e.migrateTriplet(files, previous, from, oldConfig, name, lang, old)
 			if err != nil {
 				return report, fmt.Errorf("migrate %s/%s: %w", lang, name, err)
 			}
@@ -94,7 +109,7 @@ func (e *Engine) MigrateState(from, language, file string, write bool) (Migratio
 	}
 	if write {
 		for _, item := range writes {
-			if err := saveState(item.path, item.state); err != nil {
+			if err := saveStateRoot(files, item.path, item.state); err != nil {
 				return report, err
 			}
 			report.Written++
@@ -201,7 +216,7 @@ func migrationSegments(doc *Document) map[string]Segment {
 	return result
 }
 
-func (e *Engine) migrateTriplet(from string, oldConfig config.Config, file, language string, old *FileState) (*FileState, int, error) {
+func (e *Engine) migrateTriplet(files, previous *projectfs.FS, from string, oldConfig config.Config, file, language string, old *FileState) (*FileState, int, error) {
 	oldFile := old.SourceFile
 	if _, err := statePath(from, oldConfig.Translation.StateDir, language, oldFile); err != nil {
 		return nil, 0, err
@@ -209,22 +224,19 @@ func (e *Engine) migrateTriplet(from string, oldConfig config.Config, file, lang
 	if old.TargetLanguage != language || old.SourceLanguage != e.Config.Translation.SourceLanguage {
 		return nil, 0, fmt.Errorf("sidecar languages do not match the requested migration")
 	}
-	read := func(root, name string) ([]byte, error) {
-		return os.ReadFile(filepath.Join(root, filepath.FromSlash(name)))
-	}
-	oldSource, err := read(oldConfig.ContentPath(from), oldFile)
+	oldSource, err := previous.ReadFile(filepath.Join(oldConfig.ContentPath(from), filepath.FromSlash(oldFile)))
 	if err != nil {
 		return nil, 0, err
 	}
-	oldTarget, err := read(oldConfig.ContentPath(from), filepath.ToSlash(filepath.Join(language, oldFile)))
+	oldTarget, err := previous.ReadFile(filepath.Join(oldConfig.ContentPath(from), language, filepath.FromSlash(oldFile)))
 	if err != nil {
 		return nil, 0, err
 	}
-	source, err := read(e.Config.ContentPath(e.Project), file)
+	source, err := files.ReadFile(filepath.Join(e.Config.ContentPath(e.Project), filepath.FromSlash(file)))
 	if err != nil {
 		return nil, 0, err
 	}
-	target, err := read(e.Config.ContentPath(e.Project), filepath.ToSlash(filepath.Join(language, file)))
+	target, err := files.ReadFile(filepath.Join(e.Config.ContentPath(e.Project), language, filepath.FromSlash(file)))
 	if err != nil {
 		return nil, 0, err
 	}

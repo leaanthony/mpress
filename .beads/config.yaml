@@ -1,0 +1,3 @@
+sync.remote: "git+https://github.com/leaanthony/mpress.git"
+export:
+    auto: true

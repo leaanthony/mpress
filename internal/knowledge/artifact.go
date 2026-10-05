@@ -17,6 +17,8 @@ import (
 
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/content"
+	"github.com/leaanthony/mpress/internal/projectfs"
+	"github.com/leaanthony/mpress/internal/routes"
 	nethtml "golang.org/x/net/html"
 	"golang.org/x/net/html/atom"
 )
@@ -264,7 +266,8 @@ func makeChunks(page Page, renderedHTML string) ([]Chunk, error) {
 			})
 		}
 	}
-	return chunks, nil
+	_, err = uniqueChunkIdentities(chunks)
+	return chunks, err
 }
 
 func sectionsFromHTML(renderedHTML, pageTitle string) ([]section, error) {
@@ -546,26 +549,41 @@ func cleanTags(values []string) []string {
 
 // Load reads and verifies a generated knowledge bundle.
 func Load(output string) (*Store, error) {
-	directory := filepath.Join(output, Directory)
-	var manifest Manifest
-	if err := readJSON(filepath.Join(directory, ManifestFile), &manifest); err != nil {
+	site, err := projectfs.Open(output)
+	if err != nil {
 		return nil, err
 	}
-	if manifest.Schema != 1 && manifest.Schema != Schema {
-		return nil, fmt.Errorf("knowledge schema %d is not supported", manifest.Schema)
+	defer site.Close()
+	return loadSite(site)
+}
+
+func loadSite(site *projectfs.FS) (*Store, error) {
+	return loadSiteBudget(site, newLoadBudget(defaultLoadLimits()))
+}
+
+func loadSiteBudget(site *projectfs.FS, budget *loadBudget) (*Store, error) {
+	files, err := site.Sub(Directory)
+	if err != nil {
+		return nil, err
+	}
+	defer files.Close()
+	bundle := int64(0)
+	manifest, err := readLoadManifest(files, budget, &bundle)
+	if err != nil {
+		return nil, err
 	}
 	var pages []Page
 	var chunks []Chunk
 	var index Index
-	pageData, err := readArtifact(filepath.Join(directory, manifest.Artifacts.Pages))
+	pageData, err := budget.read(files, manifest.Artifacts.Pages, budget.limits.artifact, &bundle)
 	if err != nil {
 		return nil, err
 	}
-	chunkData, err := readArtifact(filepath.Join(directory, manifest.Artifacts.Chunks))
+	chunkData, err := budget.read(files, manifest.Artifacts.Chunks, budget.limits.artifact, &bundle)
 	if err != nil {
 		return nil, err
 	}
-	indexData, err := readArtifact(filepath.Join(directory, manifest.Artifacts.Index))
+	indexData, err := budget.read(files, manifest.Artifacts.Index, budget.limits.artifact, &bundle)
 	if err != nil {
 		return nil, err
 	}
@@ -578,6 +596,9 @@ func Load(output string) (*Store, error) {
 	if err := json.Unmarshal(indexData, &index); err != nil {
 		return nil, err
 	}
+	if index.Schema != 1 {
+		return nil, fmt.Errorf("knowledge index schema %d is not supported", index.Schema)
+	}
 	digestHash := sha256.New()
 	_, _ = digestHash.Write(pageData)
 	_, _ = digestHash.Write(chunkData)
@@ -585,7 +606,27 @@ func Load(output string) (*Store, error) {
 	if digest := hex.EncodeToString(digestHash.Sum(nil)); digest != manifest.Digest {
 		return nil, errors.New("knowledge artifact digest does not match manifest")
 	}
-	return newStore(manifest, pages, chunks, index), nil
+	return checkedStore(manifest, pages, chunks, index)
+}
+
+func readLoadManifest(files *projectfs.FS, budget *loadBudget, bundle *int64) (Manifest, error) {
+	var manifest Manifest
+	manifestData, err := budget.read(files, ManifestFile, budget.limits.manifest, bundle)
+	if err != nil {
+		return Manifest{}, err
+	}
+	if err := json.Unmarshal(manifestData, &manifest); err != nil {
+		return Manifest{}, err
+	}
+	if manifest.Schema != 1 && manifest.Schema != Schema {
+		return Manifest{}, fmt.Errorf("knowledge schema %d is not supported", manifest.Schema)
+	}
+	for _, name := range []string{manifest.Artifacts.Pages, manifest.Artifacts.Chunks, manifest.Artifacts.Index} {
+		if err := routes.Output(name); err != nil {
+			return Manifest{}, fmt.Errorf("knowledge artifact filename %q: %w", name, err)
+		}
+	}
+	return manifest, nil
 }
 
 // LoadAll loads the current artifact and any captured version artifacts mounted
@@ -593,11 +634,34 @@ func Load(output string) (*Store, error) {
 // version filters and resource identifiers cannot collide with the current
 // corpus or with each other.
 func LoadAll(output string) (*Store, error) {
-	current, err := Load(output)
+	site, err := projectfs.Open(output)
 	if err != nil {
 		return nil, err
 	}
-	entries, err := os.ReadDir(filepath.Join(output, "versions"))
+	defer site.Close()
+	return LoadAllRoot(site)
+}
+
+// LoadAllRoot reads a bundle through an already pinned site boundary. The caller
+// retains ownership of site, allowing authoring to pin it from the project root.
+func LoadAllRoot(site *projectfs.FS) (*Store, error) {
+	return loadAllBudget(site, newLoadBudget(defaultLoadLimits()))
+}
+
+func loadAllBudget(site *projectfs.FS, budget *loadBudget) (*Store, error) {
+	current, err := loadSiteBudget(site, budget)
+	if err != nil {
+		return nil, err
+	}
+	versions, err := site.Sub("versions")
+	if os.IsNotExist(err) {
+		return current, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer versions.Close()
+	entries, err := boundedVersionEntries(versions, budget.limits)
 	if os.IsNotExist(err) {
 		return current, nil
 	}
@@ -610,20 +674,21 @@ func LoadAll(output string) (*Store, error) {
 		if !entry.IsDir() {
 			continue
 		}
-		root := filepath.Join(output, "versions", entry.Name())
-		if _, statErr := os.Stat(filepath.Join(root, Directory, ManifestFile)); os.IsNotExist(statErr) {
-			continue
-		} else if statErr != nil {
-			return nil, statErr
-		}
-		snapshot, loadErr := Load(root)
+		snapshot, loadErr := loadVersionSite(versions, entry.Name(), budget)
 		if loadErr != nil {
 			return nil, fmt.Errorf("load knowledge version %s: %w", entry.Name(), loadErr)
+		}
+		if snapshot == nil {
+			continue
 		}
 		versionPages, versionChunks := relabelVersion(snapshot.Pages, snapshot.Chunks, entry.Name(), current.Manifest.BaseURL)
 		pages = append(pages, versionPages...)
 		chunks = append(chunks, versionChunks...)
 	}
+	return sortedVersionStore(current.Manifest, pages, chunks)
+}
+
+func sortedVersionStore(manifest Manifest, pages []Page, chunks []Chunk) (*Store, error) {
 	sort.Slice(pages, func(i, j int) bool {
 		if pages[i].Version != pages[j].Version {
 			return pages[i].Version < pages[j].Version
@@ -645,7 +710,25 @@ func LoadAll(output string) (*Store, error) {
 		}
 		return chunks[i].ID < chunks[j].ID
 	})
-	return newStore(current.Manifest, pages, chunks, makeIndex(chunks)), nil
+	return checkedStore(manifest, pages, chunks, makeIndex(chunks))
+}
+
+func loadVersionSite(versions *projectfs.FS, name string, budget *loadBudget) (*Store, error) {
+	site, err := versions.Sub(name)
+	if os.IsNotExist(err) {
+		return nil, nil
+	}
+	if err != nil {
+		return nil, err
+	}
+	defer site.Close()
+	if _, err := site.Stat(filepath.Join(Directory, ManifestFile)); err != nil {
+		if os.IsNotExist(err) {
+			return nil, nil
+		}
+		return nil, err
+	}
+	return loadSiteBudget(site, budget)
 }
 
 func relabelVersion(pages []Page, chunks []Chunk, version, baseURL string) ([]Page, []Chunk) {
@@ -656,9 +739,9 @@ func relabelVersion(pages []Page, chunks []Chunk, version, baseURL string) ([]Pa
 		oldID := page.ID
 		originalRoute := page.Route
 		page.Version = version
-		page.ID = stableID("page", page.Language, version, strings.Trim(originalRoute, "/"))
-		page.ResourceURI = "mpress://knowledge/page/" + page.ID
 		page.Route = "/versions/" + version + originalRoute
+		page.ID = stableID("page", page.Language, version, strings.Trim(page.Route, "/"))
+		page.ResourceURI = "mpress://knowledge/page/" + page.ID
 		page.URL = page.Route
 		if baseURL != "" {
 			page.URL = strings.TrimRight(baseURL, "/") + page.Route
@@ -669,9 +752,10 @@ func relabelVersion(pages []Page, chunks []Chunk, version, baseURL string) ([]Pa
 	relabelledChunks := make([]Chunk, len(chunks))
 	for index, chunk := range chunks {
 		page := pageIDs[chunk.PageID]
+		originalID := chunk.ID
 		chunk.Version = version
 		chunk.PageID = page.id
-		chunk.ID = stableID("chunk", chunk.PageID, chunk.HeadingID, fmt.Sprint(chunk.Part))
+		chunk.ID = stableID("chunk", chunk.PageID, originalID)
 		chunk.ResourceURI = "mpress://knowledge/section/" + chunk.ID
 		chunk.Route = page.route
 		chunk.URL = page.url
@@ -681,12 +765,4 @@ func relabelVersion(pages []Page, chunks []Chunk, version, baseURL string) ([]Pa
 		relabelledChunks[index] = chunk
 	}
 	return relabelledPages, relabelledChunks
-}
-
-func readJSON(path string, target any) error {
-	data, err := os.ReadFile(path)
-	if err != nil {
-		return err
-	}
-	return json.Unmarshal(data, target)
 }

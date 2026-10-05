@@ -4,7 +4,6 @@ import (
 	"context"
 	"errors"
 	"fmt"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
@@ -34,7 +33,12 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 		return RefinementReport{}, errors.New("translation refinement requires one target language")
 	}
 	language = languages[0]
-	files, err := e.sourceFiles(sourceFile)
+	root, closeFiles, err := e.projectFiles()
+	if err != nil {
+		return RefinementReport{}, err
+	}
+	defer closeFiles()
+	files, err := e.sourceFilesWithRoot(root, sourceFile)
 	if err != nil {
 		return RefinementReport{}, err
 	}
@@ -52,11 +56,11 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 	if len(requested) == 0 {
 		return report, nil
 	}
-	styleGuide, err := readOptionalProjectFile(e.Project, e.Config.Translation.StyleGuide, 128<<10)
+	styleGuide, err := readOptionalProjectFileRoot(root, e.Config.Translation.StyleGuide, 128<<10)
 	if err != nil {
 		return report, fmt.Errorf("read translation style guide: %w", err)
 	}
-	glossaries, err := loadGlossary(e.Project, e.Config.Translation.Glossary)
+	glossaries, err := loadGlossaryRoot(root, e.Config.Translation.Glossary)
 	if err != nil {
 		return report, err
 	}
@@ -67,12 +71,12 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			continue
 		}
 		report.Files++
-		sourceBytes, readErr := os.ReadFile(filepath.Join(contentDir, filepath.FromSlash(file)))
+		sourceBytes, readErr := root.ReadFile(filepath.Join(contentDir, filepath.FromSlash(file)))
 		if readErr != nil {
 			return report, readErr
 		}
 		targetPath := filepath.Join(contentDir, filepath.FromSlash(language), filepath.FromSlash(file))
-		targetBytes, readErr := os.ReadFile(targetPath)
+		targetBytes, readErr := root.ReadFile(targetPath)
 		if readErr != nil {
 			return report, readErr
 		}
@@ -88,7 +92,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 		if stateErr != nil {
 			return report, stateErr
 		}
-		state, stateErr := loadState(stateFile, file, e.Config.Site.DefaultLanguage, language, sourceDoc.TranslationKey)
+		state, stateErr := loadStateRoot(root, stateFile, file, e.Config.Site.DefaultLanguage, language, sourceDoc.TranslationKey)
 		if stateErr != nil {
 			return report, stateErr
 		}
@@ -177,7 +181,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 				return report, applyErr
 			}
 		}
-		if writeErr := writeAtomic(targetPath, output); writeErr != nil {
+		if writeErr := root.WriteAtomic(targetPath, output); writeErr != nil {
 			return report, writeErr
 		}
 		for _, segment := range sourceDoc.Segments {
@@ -205,7 +209,7 @@ func (e *Engine) RefineWithProvider(ctx context.Context, language, sourceFile st
 			state.Segments[segment.ID] = entry
 			report.Segments++
 		}
-		if stateErr = saveState(stateFile, state); stateErr != nil {
+		if stateErr = saveStateRoot(root, stateFile, state); stateErr != nil {
 			return report, stateErr
 		}
 		report.Written++
