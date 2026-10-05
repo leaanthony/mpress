@@ -10,10 +10,11 @@ import (
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/importer"
 	"github.com/leaanthony/mpress/internal/mpd"
+	"github.com/leaanthony/mpress/internal/projectfs"
 	"github.com/leaanthony/mpress/internal/translate"
 )
 
-// Result describes a complete, atomic project content conversion.
+// Result describes a successfully validated project content conversion.
 type Result struct {
 	Count           int    `json:"count"`
 	Directory       string `json:"directory"`
@@ -33,19 +34,55 @@ type conversion struct {
 // Run converts every document of the source format and removes the originals
 // only after every target has converted and validated successfully.
 func Run(root string, cfg *config.Config, directory, format string) (Result, error) {
+	projectFiles, err := projectfs.Open(root)
+	if err != nil {
+		return Result{}, err
+	}
+	defer projectFiles.Close()
+	contentFiles := projectFiles
+	// An explicit CLI selection owns a separate directory boundary. Default
+	// project content and borrowed authoring operations stay inside the project.
+	if strings.TrimSpace(directory) != "" {
+		selected := conversionDirectory(root, cfg, directory)
+		if _, err := projectFiles.Relative(selected); errors.Is(err, projectfs.ErrOutside) {
+			contentFiles, err = projectfs.Open(selected)
+			if err != nil {
+				return Result{}, err
+			}
+			defer contentFiles.Close()
+		}
+	}
+	return runConversion(root, cfg, directory, format, projectFiles, contentFiles)
+}
+
+// RunRoot confines an authoring conversion to its borrowed project boundary.
+func RunRoot(root string, files *projectfs.FS, cfg *config.Config, directory, format string) (Result, error) {
+	if files == nil {
+		return Result{}, errors.New("conversion project root is required")
+	}
+	return runConversion(root, cfg, directory, format, files, files)
+}
+
+func conversionDirectory(root string, cfg *config.Config, directory string) string {
+	if strings.TrimSpace(directory) == "" {
+		return cfg.ContentPath(root)
+	}
+	if !filepath.IsAbs(directory) {
+		return filepath.Join(root, filepath.FromSlash(directory))
+	}
+	return directory
+}
+
+func runConversion(root string, cfg *config.Config, directory, format string, projectFiles, contentFiles *projectfs.FS) (Result, error) {
 	format = strings.ToLower(strings.TrimSpace(format))
 	if format != "mpd" && format != "markdown" {
 		return Result{}, errors.New("target format must be mpd or markdown")
 	}
-	if strings.TrimSpace(directory) == "" {
-		directory = cfg.ContentPath(root)
-	} else if !filepath.IsAbs(directory) {
-		directory = filepath.Join(root, filepath.FromSlash(directory))
-	}
+	directory = conversionDirectory(root, cfg, directory)
 
 	var conversions []conversion
 	var documents []translate.ConvertedDocument
-	err := filepath.WalkDir(directory, func(path string, entry os.DirEntry, walkErr error) error {
+	err := contentFiles.WalkDir(directory, func(path string, entry os.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -61,12 +98,12 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 			targetExtension = ".md"
 		}
 		target := strings.TrimSuffix(path, filepath.Ext(path)) + targetExtension
-		if _, statErr := os.Stat(target); statErr == nil {
+		if _, statErr := contentFiles.Stat(target); statErr == nil {
 			return fmt.Errorf("refusing to replace existing target file %s", target)
 		} else if !errors.Is(statErr, os.ErrNotExist) {
 			return statErr
 		}
-		source, readErr := os.ReadFile(path)
+		source, readErr := contentFiles.ReadFile(path)
 		if readErr != nil {
 			return readErr
 		}
@@ -94,7 +131,7 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 			}
 			converted = result
 		}
-		info, infoErr := entry.Info()
+		info, infoErr := contentFiles.Stat(path)
 		if infoErr != nil {
 			return infoErr
 		}
@@ -122,7 +159,7 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 		return Result{}, errors.New("no MPD documents were found")
 	}
 
-	states, err := translate.PlanConversionStates(root, *cfg, documents, importer.MarkdownToMPD)
+	states, err := translate.PlanConversionStatesRoot(projectFiles, root, *cfg, documents, importer.MarkdownToMPD)
 	if err != nil {
 		return Result{}, err
 	}
@@ -134,12 +171,11 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 	}
 
 	for _, item := range conversions {
-		temporary := item.target + ".tmp"
-		if err := os.WriteFile(temporary, item.data, item.mode); err != nil {
-			return Result{}, err
+		files := contentFiles
+		if item.source == item.target {
+			files = projectFiles
 		}
-		if err := os.Rename(temporary, item.target); err != nil {
-			_ = os.Remove(temporary)
+		if err := files.WriteAtomicMode(item.target, item.data, item.mode); err != nil {
 			return Result{}, err
 		}
 	}
@@ -147,7 +183,7 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 		if item.source == item.target {
 			continue
 		}
-		if err := os.Remove(item.source); err != nil {
+		if err := contentFiles.Remove(item.source); err != nil {
 			return Result{}, err
 		}
 	}
@@ -175,7 +211,7 @@ func Run(root string, cfg *config.Config, directory, format string) (Result, err
 		}
 	}
 	if configChanged {
-		if err := config.Save(root, *cfg); err != nil {
+		if err := config.SaveRoot(projectFiles, *cfg); err != nil {
 			return Result{}, fmt.Errorf("update converted configuration paths: %w", err)
 		}
 	}

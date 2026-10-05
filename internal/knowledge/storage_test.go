@@ -12,6 +12,7 @@ import (
 
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/content"
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 func TestCompressedKnowledgeRoundTrip(t *testing.T) {
@@ -94,7 +95,12 @@ func TestKnowledgeCompressionThreshold(t *testing.T) {
 			t.Fatal(err)
 		}
 	}
-	data, err := readArtifact(filepath.Join(output, artifacts.Index))
+	root, err := projectfs.Open(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	defer root.Close()
+	data, err := readArtifact(root, artifacts.Index)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -102,13 +108,13 @@ func TestKnowledgeCompressionThreshold(t *testing.T) {
 	if err := json.Unmarshal(data, &index); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := readArtifact(filepath.Join(output, "missing.gz")); err == nil {
+	if _, err := readArtifact(root, "missing.gz"); err == nil {
 		t.Fatal("missing gzip accepted")
 	}
 	if err := os.WriteFile(filepath.Join(output, "invalid.gz"), []byte("invalid"), 0600); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := readArtifact(filepath.Join(output, "invalid.gz")); err == nil {
+	if _, err := readArtifact(root, "invalid.gz"); err == nil {
 		t.Fatal("invalid gzip accepted")
 	}
 }

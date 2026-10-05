@@ -1,6 +1,8 @@
 package knowledge
 
 import (
+	"errors"
+	"fmt"
 	"sort"
 	"strings"
 )
@@ -49,6 +51,53 @@ func newStore(manifest Manifest, pages []Page, chunks []Chunk, index Index) *Sto
 		store.terms[term.Term] = term.Postings
 	}
 	return store
+}
+
+// checkedStore checks the existing lookup maps without a separate validation
+// pass. Legacy generated chunk collisions are repaired before they are served.
+func checkedStore(manifest Manifest, pages []Page, chunks []Chunk, index Index) (*Store, error) {
+	store := newStore(manifest, pages, chunks, index)
+	if len(store.pages) != len(pages) {
+		return nil, errors.New("knowledge artifacts contain duplicate page identities")
+	}
+	if len(store.terms) != len(index.Terms) {
+		return nil, errors.New("knowledge artifacts contain duplicate term identities")
+	}
+	if len(store.chunks) != len(chunks) {
+		if _, err := uniqueChunkIdentities(chunks); err != nil {
+			return nil, err
+		}
+		// Legacy indexes refer to ambiguous IDs, so rebuild their postings once.
+		store = newStore(manifest, pages, chunks, makeIndex(chunks))
+	}
+	return store, nil
+}
+
+// uniqueChunkIdentities preserves original IDs when possible. A repeated
+// section gets a deterministic per-page occurrence suffix; the same rule repairs
+// schema 1/2 bundles produced before repeated/unnamed headings were distinguished.
+func uniqueChunkIdentities(chunks []Chunk) (bool, error) {
+	seen := make(map[string]bool, len(chunks))
+	positions := make(map[string]int)
+	changed := false
+	for i := range chunks {
+		chunk := &chunks[i]
+		position := positions[chunk.PageID]
+		positions[chunk.PageID] = position + 1
+		if seen[chunk.ID] {
+			original := chunk.ID
+			for attempt := 0; seen[chunk.ID] && attempt <= len(chunks); attempt++ {
+				chunk.ID = stableID("chunk", original, chunk.PageID, fmt.Sprint(position), fmt.Sprint(attempt))
+			}
+			if seen[chunk.ID] {
+				return false, errors.New("cannot assign distinct knowledge chunk identities")
+			}
+			chunk.ResourceURI = "mpress://knowledge/section/" + chunk.ID
+			changed = true
+		}
+		seen[chunk.ID] = true
+	}
+	return changed, nil
 }
 
 func (s *Store) Page(id string) (*Page, bool) {

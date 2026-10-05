@@ -36,6 +36,7 @@ import (
 	"github.com/leaanthony/mpress/internal/lighthouse"
 	"github.com/leaanthony/mpress/internal/operations"
 	"github.com/leaanthony/mpress/internal/projectconvert"
+	"github.com/leaanthony/mpress/internal/projectfs"
 	"github.com/leaanthony/mpress/internal/site"
 	"github.com/leaanthony/mpress/internal/translate"
 	docversion "github.com/leaanthony/mpress/internal/version"
@@ -89,6 +90,7 @@ type BuildState struct {
 
 type Server struct {
 	project                string
+	files                  *projectfs.FS
 	cfg                    config.Config
 	options                Options
 	token                  string
@@ -127,6 +129,7 @@ func Serve(project string, options Options) error {
 		_ = listener.Close()
 		return err
 	}
+	defer server.Close()
 	server.rebuild(false)
 	go server.watch()
 	localURL := fmt.Sprintf("http://localhost:%d", actualPort)
@@ -178,7 +181,17 @@ func NewServer(project string, options Options) (*Server, error) {
 	if err != nil {
 		return nil, err
 	}
-	cfg, err := config.Load(abs)
+	files, err := projectfs.Open(abs)
+	if err != nil {
+		return nil, err
+	}
+	keepFiles := false
+	defer func() {
+		if !keepFiles {
+			_ = files.Close()
+		}
+	}()
+	cfg, err := config.LoadWithReadFile(abs, files.ReadFile)
 	if err != nil {
 		return nil, err
 	}
@@ -193,12 +206,16 @@ func NewServer(project string, options Options) (*Server, error) {
 			return nil, err
 		}
 	}
-	previewDir := filepath.Join(abs, ".mpress", "live-preview")
-	if err := os.RemoveAll(previewDir); err != nil {
+	previewDir, err := cfg.SafePreviewPool(abs)
+	if err != nil {
+		return nil, err
+	}
+	if err := files.RemoveAll(previewDir); err != nil {
 		return nil, err
 	}
 	s := &Server{
 		project:                abs,
+		files:                  files,
 		cfg:                    cfg,
 		options:                options,
 		token:                  token,
@@ -206,13 +223,17 @@ func NewServer(project string, options Options) (*Server, error) {
 		events:                 newHub(),
 		state:                  BuildState{Status: "starting"},
 		previewDir:             previewDir,
-		fileServer:             http.FileServer(http.Dir(cfg.OutputPath(abs))),
-		previewFileServer:      http.FileServer(http.Dir(previewDir)),
+		fileServer:             http.FileServer(projectHTTPFS{files: files, base: cfg.OutputPath(abs)}),
+		previewFileServer:      http.FileServer(projectHTTPFS{files: files, base: previewDir}),
 		translationComparisons: map[string]translationComparisonState{},
 	}
 	s.mcpHandler = s.newMCPHandler()
+	keepFiles = true
 	return s, nil
 }
+
+// Close releases the project's rooted filesystem handle when serving ends.
+func (s *Server) Close() error { return s.files.Close() }
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
@@ -267,7 +288,7 @@ func (s *Server) handleKnowledge(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"enabled": false, "ready": false})
 		return
 	}
-	store, err := knowledge.LoadAll(s.cfg.OutputPath(s.project))
+	store, err := s.loadKnowledge()
 	if err != nil {
 		writeJSON(w, http.StatusOK, map[string]any{"enabled": true, "ready": false, "error": err.Error()})
 		return
@@ -286,6 +307,15 @@ func (s *Server) handleKnowledge(w http.ResponseWriter, r *http.Request) {
 		"digest": store.Manifest.Digest, "pages": len(store.Pages), "sections": len(store.Chunks),
 		"languages": store.Manifest.Languages, "versions": len(versions), "query": query, "results": results,
 	})
+}
+
+func (s *Server) loadKnowledge() (*knowledge.Store, error) {
+	site, err := s.files.Sub(s.cfg.OutputPath(s.project))
+	if err != nil {
+		return nil, err
+	}
+	defer site.Close()
+	return knowledge.LoadAllRoot(site)
 }
 
 func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
@@ -361,7 +391,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, response)
 			return
 		}
-		report, err := translate.NewEngine(s.project, s.cfg, nil).Run(r.Context(), translate.Options{
+		report, err := translate.NewEngine(s.project, s.cfg, nil).RunRoot(r.Context(), s.files, translate.Options{
 			Language: language, File: file, DryRun: true,
 			Scope: r.URL.Query().Get("scope"), Force: r.URL.Query().Get("force") == "true",
 		})
@@ -391,7 +421,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if input.Action == "convert-mpd" {
-			result, convertErr := projectconvert.Run(s.project, &s.cfg, "", "mpd")
+			result, convertErr := projectconvert.RunRoot(s.project, s.files, &s.cfg, "", "mpd")
 			if convertErr != nil {
 				writeAPIError(w, http.StatusBadRequest, convertErr)
 				return
@@ -439,7 +469,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			path := filepath.Join(s.project, config.Filename)
-			current, err := os.ReadFile(path)
+			current, err := s.files.ReadFile(path)
 			if err != nil {
 				writeAPIError(w, http.StatusInternalServerError, err)
 				return
@@ -462,7 +492,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if input.Action == "mark" {
-			report, markErr := translate.NewEngine(s.project, s.cfg, nil).Mark(input.Language, input.File, input.Status)
+			report, markErr := translate.NewEngine(s.project, s.cfg, nil).MarkRoot(s.files, input.Language, input.File, input.Status)
 			if markErr != nil {
 				writeAPIError(w, http.StatusBadRequest, markErr)
 				return
@@ -474,7 +504,11 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			capabilities := translate.DetectModelCapabilities(s.cfg)
 			draft, _ := translate.SelectBestTranslationModel(translate.ModelSelectionRequest{Task: translate.TaskDraft, TargetLanguage: input.Language, Capabilities: capabilities})
 			auditSelection, hasAudit := translate.SelectBestTranslationModel(translate.ModelSelectionRequest{Task: translate.TaskAudit, TargetLanguage: input.Language, PreviousProvider: draft.Provider, Capabilities: capabilities})
-			engine := translate.NewEngine(s.project, s.cfg, nil)
+			engine, rootErr := translate.NewEngine(s.project, s.cfg, nil).BorrowRoot(s.files)
+			if rootErr != nil {
+				writeAPIError(w, http.StatusBadRequest, rootErr)
+				return
+			}
 			var report translate.AuditReport
 			var auditErr error
 			if hasAudit {
@@ -552,7 +586,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
 		}
-		report, err := engine.Run(r.Context(), translate.Options{Language: input.Language, File: input.File, Scope: input.Scope, Force: input.Force, Workers: input.Workers})
+		report, err := engine.RunRoot(r.Context(), s.files, translate.Options{Language: input.Language, File: input.File, Scope: input.Scope, Force: input.Force, Workers: input.Workers})
 		if err != nil {
 			writeAPIError(w, http.StatusBadGateway, err)
 			return
@@ -692,7 +726,7 @@ func (s *Server) contributorGuide() *contributorGuide {
 		if err != nil {
 			continue
 		}
-		data, err := os.ReadFile(path)
+		data, err := s.files.ReadFile(path)
 		if err != nil || len(data) > maxSourceSize {
 			continue
 		}
@@ -1143,7 +1177,7 @@ func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
 	var nodes []treeNode
 	for _, name := range []string{s.cfg.Build.ContentDir, s.cfg.Build.StaticDir, config.Filename} {
 		path := filepath.Join(s.project, filepath.FromSlash(name))
-		if _, err := os.Stat(path); err != nil {
+		if _, err := s.files.Stat(path); err != nil {
 			continue
 		}
 		node, err := s.readTree(path)
@@ -1157,17 +1191,30 @@ func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) readTree(path string) (treeNode, error) {
-	info, err := os.Stat(path)
+	return s.readTreeBranch(path, map[string]bool{})
+}
+
+func (s *Server) readTreeBranch(path string, active map[string]bool) (treeNode, error) {
+	physical, err := s.files.Relative(path)
+	if err != nil {
+		return treeNode{}, err
+	}
+	info, err := s.files.Stat(path)
 	if err != nil {
 		return treeNode{}, err
 	}
 	rel, _ := filepath.Rel(s.project, path)
-	node := treeNode{Name: info.Name(), Path: filepath.ToSlash(rel), Kind: "file"}
+	node := treeNode{Name: filepath.Base(path), Path: filepath.ToSlash(rel), Kind: "file"}
 	if !info.IsDir() {
 		return node, nil
 	}
 	node.Kind = "directory"
-	entries, err := os.ReadDir(path)
+	if active[physical] {
+		return node, nil
+	}
+	active[physical] = true
+	defer delete(active, physical)
+	entries, err := s.files.ReadDir(path)
 	if err != nil {
 		return node, err
 	}
@@ -1175,7 +1222,10 @@ func (s *Server) readTree(path string) (treeNode, error) {
 		if entry.Name() == ".git" || entry.Name() == ".mpress" || entry.Name() == s.cfg.Build.OutputDir {
 			continue
 		}
-		child, err := s.readTree(filepath.Join(path, entry.Name()))
+		child, err := s.readTreeBranch(filepath.Join(path, entry.Name()), active)
+		if errors.Is(err, projectfs.ErrOutside) || errors.Is(err, os.ErrNotExist) {
+			continue
+		}
 		if err != nil {
 			return node, err
 		}
@@ -1205,7 +1255,7 @@ func (s *Server) handleFile(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
 		}
-		data, err := os.ReadFile(path)
+		data, err := s.files.ReadFile(path)
 		if err != nil {
 			writeAPIError(w, http.StatusNotFound, err)
 			return
@@ -1245,7 +1295,7 @@ func (s *Server) handleFile(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		s.rebuild(true)
-		data, _ := os.ReadFile(path)
+		data, _ := s.files.ReadFile(path)
 		payload.Revision = revision(data)
 		payload.Route = s.routeFor(payload.Path, payload.Content)
 		writeJSON(w, http.StatusOK, map[string]any{"file": payload, "state": s.currentState()})
@@ -1287,7 +1337,7 @@ func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, errors.New("live preview is available for Markdown files"))
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := s.files.ReadFile(path)
 	if err != nil {
 		writeAPIError(w, http.StatusNotFound, err)
 		return
@@ -1314,20 +1364,24 @@ func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
 	default:
 	}
 	buildID := revision([]byte(payload.Path + "\x00" + payload.Content))
+	if _, err := s.cfg.SafePreviewPool(s.project); err != nil {
+		writeAPIError(w, http.StatusBadRequest, err)
+		return
+	}
 	buildDir := filepath.Join(s.previewDir, buildID)
 	result, buildErr := site.Build(s.project, site.BuildOptions{
 		Strict: true, IncludeDrafts: true, OutputDir: buildDir,
 		SourceOverrides: map[string]string{filepath.ToSlash(contentRel): payload.Content},
 	})
 	if buildErr != nil {
-		_ = os.RemoveAll(buildDir)
+		_ = s.removePreview(buildDir)
 		writeJSON(w, http.StatusOK, map[string]any{"ok": false, "error": buildErr.Error(), "diagnostics": result.Diagnostics})
 		return
 	}
-	entries, _ := os.ReadDir(s.previewDir)
+	entries, _ := s.files.ReadDir(s.previewDir)
 	for _, entry := range entries {
 		if entry.IsDir() && entry.Name() != buildID {
-			_ = os.RemoveAll(filepath.Join(s.previewDir, entry.Name()))
+			_ = s.removePreview(filepath.Join(s.previewDir, entry.Name()))
 		}
 	}
 	route := s.routeFor(payload.Path, payload.Content)
@@ -1339,6 +1393,17 @@ func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
 		"ok": true, "url": previewURL, "route": route,
 		"pages": result.Pages, "files": result.Files, "durationMs": result.Duration.Milliseconds(), "diagnostics": result.Diagnostics,
 	})
+}
+
+func (s *Server) removePreview(directory string) error {
+	if _, err := s.cfg.SafePreviewPool(s.project); err != nil {
+		return err
+	}
+	validated, err := s.cfg.SafeOutputPath(s.project, directory)
+	if err != nil {
+		return err
+	}
+	return s.files.RemoveAll(validated)
 }
 
 type blockPayload struct {
@@ -1367,7 +1432,7 @@ func (s *Server) handleBlock(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, err)
 		return
 	}
-	data, err := os.ReadFile(path)
+	data, err := s.files.ReadFile(path)
 	if err != nil {
 		writeAPIError(w, http.StatusNotFound, err)
 		return
@@ -1401,7 +1466,7 @@ func (s *Server) handleBlocks(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, err)
 		return
 	}
-	data, err := os.ReadFile(path)
+	data, err := s.files.ReadFile(path)
 	if err != nil {
 		writeAPIError(w, http.StatusNotFound, err)
 		return
@@ -1441,7 +1506,7 @@ func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 	}
 	target := filepath.Join(s.cfg.ContentPath(s.project), name)
 	existingRevision := ""
-	if existing, err := os.ReadFile(target); err == nil {
+	if existing, err := s.files.ReadFile(target); err == nil {
 		if r.FormValue("replaceStarter") != "true" || !s.onboarding() {
 			writeAPIError(w, http.StatusConflict, fmt.Errorf("%s already exists", name))
 			return
@@ -1923,7 +1988,7 @@ Default target: [text](deploy.default){placeholder="production"}
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 	path := filepath.Join(s.project, config.Filename)
-	current, err := os.ReadFile(path)
+	current, err := s.files.ReadFile(path)
 	if err != nil {
 		writeAPIError(w, http.StatusInternalServerError, err)
 		return
@@ -2093,7 +2158,7 @@ func (s *Server) handleDeployment(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
 		}
-		current, err := os.ReadFile(filepath.Join(s.project, config.Filename))
+		current, err := s.files.ReadFile(filepath.Join(s.project, config.Filename))
 		if err != nil {
 			writeAPIError(w, http.StatusInternalServerError, err)
 			return
@@ -2173,7 +2238,7 @@ func (s *Server) handleOnboarding(w http.ResponseWriter, r *http.Request) {
 		writeJSON(w, http.StatusOK, map[string]any{"starter": starter, "state": s.currentState()})
 		return
 	}
-	if err := os.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
+	if err := s.files.Remove(path); err != nil && !errors.Is(err, os.ErrNotExist) {
 		writeAPIError(w, http.StatusInternalServerError, err)
 		return
 	}
@@ -2187,21 +2252,21 @@ func (s *Server) replaceStarterWithMinimalSite() error {
 	content := s.cfg.ContentPath(s.project)
 	index := "---\ntitle: Welcome\ndescription: Start writing your documentation.\n---\n\nReplace this page with your documentation.\n"
 	navigation := "- label: Welcome\n  link: /\n"
-	if err := os.WriteFile(filepath.Join(content, "index.md"), []byte(index), 0o644); err != nil {
+	if err := s.files.WriteAtomic(filepath.Join(content, "index.md"), []byte(index)); err != nil {
 		return err
 	}
-	return os.WriteFile(filepath.Join(content, s.cfg.Build.NavFile), []byte(navigation), 0o644)
+	return s.files.WriteAtomic(filepath.Join(content, s.cfg.Build.NavFile), []byte(navigation))
 }
 
 func (s *Server) removeGeneratedStarter() error {
 	content := s.cfg.ContentPath(s.project)
 	for _, name := range []string{"index.md", "getting-started.md", "components.md", s.cfg.Build.NavFile} {
-		if err := os.Remove(filepath.Join(content, name)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := s.files.Remove(filepath.Join(content, name)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 	}
 	for _, name := range []string{"component-light.svg", "component-dark.svg"} {
-		if err := os.Remove(filepath.Join(s.cfg.StaticPath(s.project), "images", name)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := s.files.Remove(filepath.Join(s.cfg.StaticPath(s.project), "images", name)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 	}
@@ -2209,7 +2274,7 @@ func (s *Server) removeGeneratedStarter() error {
 }
 
 func (s *Server) onboarding() bool {
-	_, err := os.Stat(filepath.Join(s.project, ".mpress", "onboarding"))
+	_, err := s.files.Stat(filepath.Join(s.project, ".mpress", "onboarding"))
 	return err == nil
 }
 
@@ -2353,12 +2418,12 @@ func (s *Server) handleImageAsset(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	target := filepath.Join(s.project, s.cfg.Build.StaticDir, folder, name)
-	if _, err := os.Stat(target); err == nil && r.FormValue("overwrite") != "true" {
+	if _, err := s.files.Stat(target); err == nil && r.FormValue("overwrite") != "true" {
 		ext := filepath.Ext(name)
 		stem := strings.TrimSuffix(name, ext)
 		suggested := stem + "-edited" + ext
 		for index := 2; ; index++ {
-			if _, statErr := os.Stat(filepath.Join(filepath.Dir(target), suggested)); errors.Is(statErr, os.ErrNotExist) {
+			if _, statErr := s.files.Stat(filepath.Join(filepath.Dir(target), suggested)); errors.Is(statErr, os.ErrNotExist) {
 				break
 			}
 			suggested = fmt.Sprintf("%s-edited-%d%s", stem, index, ext)
@@ -2421,7 +2486,7 @@ func (s *Server) handleBlogPosts(w http.ResponseWriter, r *http.Request) {
 				writeAPIError(w, http.StatusBadRequest, errors.New("choose a blog post inside the default blog directory"))
 				return
 			}
-			data, err := os.ReadFile(target)
+			data, err := s.files.ReadFile(target)
 			if err != nil {
 				writeAPIError(w, http.StatusNotFound, err)
 				return
@@ -2434,7 +2499,7 @@ func (s *Server) handleBlogPosts(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, post)
 			return
 		}
-		entries, err := os.ReadDir(blogRoot)
+		entries, err := s.files.ReadDir(blogRoot)
 		if errors.Is(err, os.ErrNotExist) {
 			writeJSON(w, http.StatusOK, map[string]any{"posts": []blogPostResponse{}})
 			return
@@ -2453,7 +2518,7 @@ func (s *Server) handleBlogPosts(w http.ResponseWriter, r *http.Request) {
 				continue
 			}
 			target := filepath.Join(blogRoot, entry.Name())
-			data, readErr := os.ReadFile(target)
+			data, readErr := s.files.ReadFile(target)
 			if readErr != nil {
 				continue
 			}
@@ -2503,7 +2568,7 @@ func (s *Server) handleBlogPosts(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			target = filepath.Join(blogRoot, payload.Slug+".md")
-			if _, err = os.Stat(target); err == nil {
+			if _, err = s.files.Stat(target); err == nil {
 				writeAPIError(w, http.StatusConflict, errors.New("a blog post already uses this URL"))
 				return
 			}
@@ -2513,7 +2578,7 @@ func (s *Server) handleBlogPosts(w http.ResponseWriter, r *http.Request) {
 				writeAPIError(w, http.StatusBadRequest, errors.New("choose a blog post inside the default blog directory"))
 				return
 			}
-			current, err = os.ReadFile(target)
+			current, err = s.files.ReadFile(target)
 			if err != nil {
 				writeAPIError(w, http.StatusNotFound, err)
 				return
@@ -2714,7 +2779,7 @@ func (s *Server) handleVersions(w http.ResponseWriter, r *http.Request) {
 		for _, label := range labels {
 			manifestPath := filepath.Join(s.cfg.ArtifactsPath(s.project), label, "mpress-version.json")
 			var manifest docversion.Manifest
-			if data, readErr := os.ReadFile(manifestPath); readErr == nil {
+			if data, readErr := s.files.ReadFile(manifestPath); readErr == nil {
 				_ = json.Unmarshal(data, &manifest)
 			}
 			items = append(items, item{Label: label, CreatedAt: manifest.CreatedAt})
@@ -2795,7 +2860,7 @@ func (s *Server) captureVersion(payload versionActionPayload) error {
 	defer s.buildMu.Unlock()
 
 	configurationPath := filepath.Join(s.project, config.Filename)
-	previousSource, err := os.ReadFile(configurationPath)
+	previousSource, err := s.files.ReadFile(configurationPath)
 	if err != nil {
 		return err
 	}
@@ -2809,7 +2874,7 @@ func (s *Server) captureVersion(payload versionActionPayload) error {
 		return err
 	}
 	restore := func(cause error) error {
-		current, readErr := os.ReadFile(configurationPath)
+		current, readErr := s.files.ReadFile(configurationPath)
 		if readErr != nil {
 			return fmt.Errorf("%v; could not restore configuration: %w", cause, readErr)
 		}
@@ -2837,7 +2902,7 @@ func (s *Server) saveConfiguration(updated config.Config) error {
 		return err
 	}
 	path := filepath.Join(s.project, config.Filename)
-	current, err := os.ReadFile(path)
+	current, err := s.files.ReadFile(path)
 	if err != nil {
 		return err
 	}
@@ -2920,7 +2985,7 @@ func (s *Server) handleBlogImage(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, err)
 		return
 	}
-	current, err := os.ReadFile(path)
+	current, err := s.files.ReadFile(path)
 	if err != nil {
 		writeAPIError(w, http.StatusNotFound, err)
 		return
@@ -3008,7 +3073,7 @@ func validBlogImageBackground(value string) bool {
 }
 
 func (s *Server) sourceForRoute(rawURL string) (string, error) {
-	data, err := os.ReadFile(filepath.Join(s.cfg.OutputPath(s.project), "mpress-manifest.json"))
+	data, err := s.files.ReadFile(filepath.Join(s.cfg.OutputPath(s.project), "mpress-manifest.json"))
 	if err != nil {
 		return "", err
 	}
@@ -3283,6 +3348,9 @@ func (s *Server) sourcePath(name string, mutation bool) (string, error) {
 	if err != nil || rel == ".." || strings.HasPrefix(rel, ".."+string(filepath.Separator)) {
 		return "", errors.New("source path must stay inside the project")
 	}
+	if _, err := s.files.Relative(abs); err != nil {
+		return "", err
+	}
 	return abs, nil
 }
 
@@ -3301,7 +3369,7 @@ func editableExtension(path string) bool {
 var errRevisionConflict = errors.New("the file changed since it was opened; reload it before saving")
 
 func (s *Server) writeSource(path string, data []byte, expected string) error {
-	current, err := os.ReadFile(path)
+	current, err := s.files.ReadFile(path)
 	if err == nil {
 		if expected != "" && revision(current) != expected {
 			return errRevisionConflict
@@ -3312,28 +3380,7 @@ func (s *Server) writeSource(path string, data []byte, expected string) error {
 	} else if !errors.Is(err, os.ErrNotExist) {
 		return err
 	}
-	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
-		return err
-	}
-	tmp, err := os.CreateTemp(filepath.Dir(path), ".mpress-write-*")
-	if err != nil {
-		return err
-	}
-	tmpName := tmp.Name()
-	defer os.Remove(tmpName)
-	if _, err = tmp.Write(data); err == nil {
-		err = tmp.Sync()
-	}
-	if closeErr := tmp.Close(); err == nil {
-		err = closeErr
-	}
-	if err != nil {
-		return err
-	}
-	if err := os.Chmod(tmpName, 0o644); err != nil {
-		return err
-	}
-	return os.Rename(tmpName, path)
+	return s.files.WriteAtomic(path, data)
 }
 
 func (s *Server) backup(path string, data []byte) error {
@@ -3343,10 +3390,7 @@ func (s *Server) backup(path string, data []byte) error {
 	}
 	dir := time.Now().UTC().Format("20060102T150405.000000000Z")
 	target := filepath.Join(s.project, ".mpress", "backups", dir, rel)
-	if err := os.MkdirAll(filepath.Dir(target), 0o755); err != nil {
-		return err
-	}
-	return os.WriteFile(target, data, 0o644)
+	return s.files.WriteAtomic(target, data)
 }
 
 func revision(data []byte) string {

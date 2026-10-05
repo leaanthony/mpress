@@ -10,6 +10,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/leaanthony/mpress/internal/projectfs"
+	"github.com/leaanthony/mpress/internal/routes"
 	"gopkg.in/yaml.v3"
 )
 
@@ -299,7 +301,12 @@ func validLayoutLength(value string, allowPercent bool) bool {
 }
 
 func Load(projectDir string) (Config, error) {
-	data, err := os.ReadFile(filepath.Join(projectDir, Filename))
+	return LoadWithReadFile(projectDir, os.ReadFile)
+}
+
+// LoadWithReadFile lets project callers retain a confined filesystem boundary.
+func LoadWithReadFile(projectDir string, readFile func(string) ([]byte, error)) (Config, error) {
+	data, err := readFile(filepath.Join(projectDir, Filename))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
 			return Default(), fmt.Errorf("%s not found", Filename)
@@ -325,10 +332,7 @@ func Parse(data []byte) (Config, error) {
 }
 
 func Save(projectDir string, cfg Config) error {
-	if err := cfg.Validate(); err != nil {
-		return err
-	}
-	data, err := yaml.Marshal(cfg)
+	data, err := marshalConfiguration(cfg)
 	if err != nil {
 		return err
 	}
@@ -352,6 +356,25 @@ func Save(projectDir string, cfg Config) error {
 		return err
 	}
 	return os.Rename(tmpName, path)
+}
+
+// SaveRoot persists configuration through the caller's pinned project root.
+func SaveRoot(files *projectfs.FS, cfg Config) error {
+	if files == nil {
+		return errors.New("configuration project root is required")
+	}
+	data, err := marshalConfiguration(cfg)
+	if err != nil {
+		return err
+	}
+	return files.WriteAtomic(Filename, data)
+}
+
+func marshalConfiguration(cfg Config) ([]byte, error) {
+	if err := cfg.Validate(); err != nil {
+		return nil, err
+	}
+	return yaml.Marshal(cfg)
 }
 
 func (c *Config) Validate() error {
@@ -502,6 +525,9 @@ func (c *Config) Validate() error {
 	for _, lang := range c.Site.Languages {
 		if lang == "" || seen[lang] {
 			return fmt.Errorf("site.languages contains an empty or duplicate language %q", lang)
+		}
+		if err := routes.Component(lang); err != nil {
+			return fmt.Errorf("site.languages: %w", err)
 		}
 		seen[lang] = true
 		if lang == c.Site.DefaultLanguage {

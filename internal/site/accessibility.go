@@ -54,7 +54,7 @@ html[data-a11y-site-width="fixed"] .docs-page .layout { width: min(100%, 1500px)
 .mpress-accessibility-tabs button:hover { background: color-mix(in srgb, var(--text) 6%, transparent); color: var(--text); }
 .mpress-accessibility-tabs button[aria-selected="true"] { border-bottom-color: var(--accent); background: color-mix(in srgb, var(--accent) 8%, transparent); color: var(--accent); }
 .mpress-accessibility-tabs button:focus-visible { outline: none; background: color-mix(in srgb, var(--accent) 10%, transparent); color: var(--accent); box-shadow: inset 0 -2px var(--accent); }
-.mpress-accessibility-body { min-height: 400px; overflow-y: auto; overscroll-behavior: contain; }
+.mpress-accessibility-body { min-height: 0; overflow-y: auto; overscroll-behavior: contain; scroll-padding-block: .5rem; }
 .mpress-accessibility-section { padding: .9rem 1rem 1rem; }
 .mpress-accessibility-section[hidden] { display: none; }
 .mpress-accessibility-section h3 { margin: 0 0 .2rem; color: var(--text); font-size: 13px; font-weight: 700; letter-spacing: normal; text-transform: none; }
@@ -169,7 +169,11 @@ html[data-theme="dark"][data-a11y-colour="low"] { --accent: #d5d8de !important; 
 @media (max-width: 760px) {
   .accessibility-select { display: inline-flex; }
   .accessibility-select .utility-menu-trigger { width: 34px; min-width: 34px; }
-  .mpress-accessibility-panel[popover] { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); overflow-y: auto; }
+  .mpress-accessibility-panel[popover] { width: calc(100vw - 1rem); max-height: calc(100dvh - 1rem); }
+}
+@media (max-width: 760px), (max-height: 600px) {
+  .mpress-accessibility-panel[popover] { grid-template-rows: repeat(4, max-content); overflow-y: auto; overscroll-behavior: contain; scroll-padding-block: .5rem; }
+  .mpress-accessibility-body { overflow: visible; }
 }
 `
 

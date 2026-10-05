@@ -30,7 +30,13 @@ func (item Item) LabelFor(language string) (string, bool) {
 }
 
 func Load(path string, pages []*content.Page) ([]Item, error) {
-	data, err := os.ReadFile(path)
+	return LoadWithReadFile(path, pages, os.ReadFile)
+}
+
+// LoadWithReadFile retains navigation parsing and fallback behaviour while
+// allowing project callers to supply their confined reader.
+func LoadWithReadFile(path string, pages []*content.Page, readFile func(string) ([]byte, error)) ([]Item, error) {
+	data, err := readFile(path)
 	if err != nil {
 		if os.IsNotExist(err) {
 			return Generate(pages), nil

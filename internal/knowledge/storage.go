@@ -3,10 +3,14 @@ package knowledge
 import (
 	"bytes"
 	"compress/gzip"
+	"errors"
+	"fmt"
 	"io"
 	"os"
 	"path/filepath"
 	"strings"
+
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 // Large artifacts use deterministic gzip files. The manifest retains the same
@@ -40,21 +44,68 @@ func encodeArtifacts(pages, chunks, index []byte, threshold int) (map[string][]b
 	return files, artifacts, schema, nil
 }
 
-func readArtifact(path string) ([]byte, error) {
-	if !strings.HasSuffix(path, ".gz") {
-		return os.ReadFile(path)
-	}
-	file, err := os.Open(path)
+// ErrResourceLimit identifies a bundle rejected before unbounded allocation.
+var ErrResourceLimit = errors.New("knowledge resource limit exceeded")
+
+func readArtifact(files *projectfs.FS, path string) ([]byte, error) {
+	return readArtifactLimit(files, path, defaultLoadLimits().artifact)
+}
+
+func readArtifactLimit(files *projectfs.FS, path string, maximum int64) ([]byte, error) {
+	file, err := files.Open(path)
 	if err != nil {
 		return nil, err
 	}
 	defer file.Close()
-	reader, err := gzip.NewReader(file)
+	info, err := file.Stat()
 	if err != nil {
 		return nil, err
 	}
-	defer reader.Close()
-	return io.ReadAll(reader)
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("not a regular knowledge file: %s", path)
+	}
+	if maximum < 0 || info.Size() > maximum {
+		return nil, fmt.Errorf("%w: %s exceeds %d bytes", ErrResourceLimit, path, maximum)
+	}
+	encoded := &io.LimitedReader{R: file, N: maximum + 1}
+	if !strings.HasSuffix(path, ".gz") {
+		return readSizedArtifact(encoded, info.Size(), maximum)
+	}
+	compressed, err := gzip.NewReader(encoded)
+	if err != nil {
+		return nil, err
+	}
+	defer compressed.Close()
+	data, err := io.ReadAll(io.LimitReader(compressed, maximum+1))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(data)) > maximum || encoded.N == 0 {
+		return nil, fmt.Errorf("%w: %s exceeds %d bytes", ErrResourceLimit, path, maximum)
+	}
+	return data, nil
+}
+
+// A plain file's observed size avoids repeated buffer growth. The size is only
+// a hint: shrinking files are read to EOF, and growth still obeys the byte cap.
+func readSizedArtifact(reader io.Reader, size, maximum int64) ([]byte, error) {
+	data := make([]byte, min(size, maximum)+1)
+	n, err := io.ReadFull(reader, data)
+	if err != nil && err != io.EOF && err != io.ErrUnexpectedEOF {
+		return nil, err
+	}
+	data = data[:n]
+	if err == nil && int64(n) <= maximum {
+		tail, err := io.ReadAll(io.LimitReader(reader, maximum+1-int64(n)))
+		if err != nil {
+			return nil, err
+		}
+		data = append(data, tail...)
+	}
+	if int64(len(data)) > maximum {
+		return nil, ErrResourceLimit
+	}
+	return data, nil
 }
 
 // Rebuilding into the same output must not leave an oversized uncompressed

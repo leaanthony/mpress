@@ -120,12 +120,13 @@ func TestDefaultTOCNeverScrollsHorizontally(t *testing.T) {
 	}
 }
 
-func TestAccessibilityPanelUsesTallerResponsiveBody(t *testing.T) {
+// Generated-CSS touch/focus reachability is exercised by
+// TestAccessibilityViewportReachability in the audit tools module.
+func TestAccessibilityPanelKeepsViewportBudget(t *testing.T) {
 	for _, want := range []string{
 		`display: grid;`,
 		`max-height: min(820px, calc(100dvh - 1rem));`,
 		`grid-template-rows: auto auto minmax(0, 1fr) auto;`,
-		`.mpress-accessibility-body { min-height: 400px; overflow-y: auto; overscroll-behavior: contain; }`,
 	} {
 		if !strings.Contains(accessibilityCSS, want) {
 			t.Errorf("accessibility panel CSS is missing %q", want)
