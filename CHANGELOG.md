@@ -1,5 +1,11 @@
 # Changelog
 
+## v1.0.24 — 2026-10-26
+
+### Fixed
+
+- Synchronise source-owned code blocks and layout in existing translations even when no prose needs translating. Preserve manual prose, avoid provider requests for protected-only updates, create code-only target pages, and retain no-op runs without rewriting files. Beads `mp-b52.12`.
+
 ## v1.0.23 — 2026-10-26
 
 ### Fixed

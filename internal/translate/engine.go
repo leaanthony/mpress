@@ -644,9 +644,6 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 		return report, nil
 	}
 	needsRelocation := targetReadPath != targetPath || statePathToLoad != stateFile
-	if len(pending) == 0 && !needsRelocation {
-		return report, nil
-	}
 	if len(pending) > 0 && e.Provider == nil {
 		return report, errors.New("translation provider is not configured")
 	}
@@ -763,6 +760,12 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 			return report, err
 		}
 	}
+	// Prose can be current while source-owned code blocks or layout changed.
+	// Reconstruct first, then retain true no-op runs without rewriting files.
+	unchanged, err := translationOutputUnchanged(files, targetPath, output)
+	if err != nil || (len(pending) == 0 && !needsRelocation && unchanged) {
+		return report, err
+	}
 	if err := files.WriteAtomic(targetPath, output); err != nil {
 		return report, err
 	}
@@ -776,6 +779,15 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 	}
 	report.Written = true
 	return report, nil
+}
+
+// A protected-only page may not have a target yet; that requires a write too.
+func translationOutputUnchanged(files *projectfs.FS, targetPath string, output []byte) (bool, error) {
+	previous, err := files.ReadFile(targetPath)
+	if errors.Is(err, os.ErrNotExist) {
+		return false, nil
+	}
+	return bytes.Equal(previous, output), err
 }
 
 type translationRelocation struct {
