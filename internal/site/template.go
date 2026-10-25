@@ -148,6 +148,7 @@ func (r *pageRenderer) render() {
 
 func (r *pageRenderer) renderHead() {
 	d := r.data
+	imageURL := r.socialImageURL()
 	pageTitle := d.Page.Title + " · " + d.Config.Site.Title
 	description := d.Page.Description
 	if description == "" {
@@ -178,7 +179,7 @@ func (r *pageRenderer) renderHead() {
 		r.raw(`website`)
 	}
 	r.raw(`"><meta name="twitter:card" content="`)
-	if d.Config.Site.SocialImage != "" && d.Config.Site.BaseURL != "" {
+	if imageURL != "" {
 		r.raw(`summary_large_image`)
 	} else {
 		r.raw(`summary`)
@@ -191,7 +192,7 @@ func (r *pageRenderer) renderHead() {
 	if d.NotFound {
 		r.raw(`<meta name="robots" content="noindex,follow">`)
 	}
-	if imageURL := r.socialImageURL(); imageURL != "" {
+	if imageURL != "" {
 		r.raw(`<meta property="og:image" content="`)
 		r.url(imageURL)
 		r.raw(`"><meta name="twitter:image" content="`)
@@ -294,14 +295,21 @@ func isRTLLanguage(language string) bool {
 }
 
 func (r *pageRenderer) socialImageURL() string {
-	value := strings.TrimSpace(r.data.Config.Site.SocialImage)
-	if value == "" || strings.TrimSpace(r.data.Config.Site.BaseURL) == "" {
+	value := strings.TrimSpace(r.data.Page.Meta.Image)
+	if value == "" {
+		value = strings.TrimSpace(r.data.Config.Site.SocialImage)
+	}
+	if value == "" {
 		return ""
 	}
 	if strings.HasPrefix(value, "http://") || strings.HasPrefix(value, "https://") {
 		return value
 	}
-	return strings.TrimRight(r.data.Config.Site.BaseURL, "/") + "/" + strings.TrimLeft(value, "/")
+	baseURL := strings.TrimSpace(r.data.Config.Site.BaseURL)
+	if baseURL == "" {
+		return ""
+	}
+	return strings.TrimRight(baseURL, "/") + "/" + strings.TrimLeft(value, "/")
 }
 
 func (r *pageRenderer) renderHeader() {

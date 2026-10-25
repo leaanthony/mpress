@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.0.21 — 2026-10-25
+
+### Fixed
+
+- Use each page’s frontmatter image for Open Graph and X cards, falling back to the site social image. Emit matching absolute image URLs and select large-image cards whenever an image is available. Beads `mp-b52.7`.
+
 ## v1.0.20 — 2026-10-25
 
 ### Fixed
