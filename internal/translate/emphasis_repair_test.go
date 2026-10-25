@@ -76,6 +76,7 @@ func TestEmphasisRepairDoesNotGuessMissingOrReorderedMarkers(t *testing.T) {
 	translated := tokens[0] + "상태." + tokens[1] + " " + tokens[2] + "(결정 보류)" + tokens[3] + "로 표시됩니다."
 	for _, value := range []string{
 		segment.Text,
+		strings.Replace(translated, "상태.", "", 1),
 		strings.Replace(translated, tokens[2], "", 1),
 		translated + tokens[0],
 		strings.ReplaceAll(strings.ReplaceAll(translated, tokens[0], "SWAP"), tokens[1], tokens[0]),
