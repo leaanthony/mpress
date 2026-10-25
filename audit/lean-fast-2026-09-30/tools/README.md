@@ -45,6 +45,20 @@ page scrolling after closing. Without `MPRESS_TOUCH_SITE`, this test skips;
 a skip does not qualify browser behaviour. It is a focused regression, while
 the broader overflow-family matrix remains Beads task `mp-b52.2.4`.
 
+For responsive article navigation, run the generated default site and the Wails
+release site through the same browser regression:
+
+```sh
+MPRESS_TOC_SITE=/absolute/path/to/generated/site go test -count=1 -run '^TestResponsiveTOC$' -v .
+MPRESS_TOC_SITE=/absolute/path/to/wails/docs/mpress/site MPRESS_TOC_ROUTE=/quick-start/installation/ go test -count=1 -run '^TestResponsiveTOC$' -v .
+```
+
+It checks native touch opening, keyboard selection and focus, Escape, reaching
+the last section in a scrolling chooser, site-menu overlap, desktop resizing,
+both themes, and the no-JavaScript fallback. Run against purged and unpurged
+production CSS. Set `MPRESS_TOC_SCREENSHOTS` to an external directory to save
+screenshots. Without `MPRESS_TOC_SITE` the test skips.
+
 Historical public evidence is linked from the [audit summary](../README.md);
 keep new generated reports outside Git or in an ignored results directory. Raw private conformance logs and private
 fixtures are deliberately kept in the private test environment. To run that

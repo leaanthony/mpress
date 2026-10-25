@@ -656,6 +656,44 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
   }
 
   const toc = document.querySelector('.toc');
+  const tocDisclosure = toc?.querySelector('.toc-disclosure');
+  const compactTOC = window.matchMedia('(max-width: 1180px)');
+  if (tocDisclosure) {
+    const tocSummary = tocDisclosure.querySelector('summary');
+    const syncTOCLayout = () => {
+      const header = document.querySelector('body > header');
+      doc.style.setProperty('--mpress-header-height', (header?.offsetHeight || 58) + 'px');
+      toc.style.setProperty('--mpress-toc-left', (mobileNavigation.matches ? 0 : sidebar?.getBoundingClientRect().right || 0) + 'px');
+    };
+    const closeTOC = restoreFocus => {
+      if (!compactTOC.matches) return;
+      tocDisclosure.open = false;
+      if (restoreFocus) tocSummary.focus();
+    };
+    tocDisclosure.open = !compactTOC.matches;
+    syncTOCLayout();
+    compactTOC.addEventListener('change', () => { tocDisclosure.open = !compactTOC.matches; });
+    window.addEventListener('resize', syncTOCLayout);
+    toc.addEventListener('click', event => {
+      const link = event.target.closest('a[href^="#"]');
+      if (!link || !compactTOC.matches) return;
+      closeTOC(false);
+      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      if (target) {
+        if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+        target.focus({preventScroll: true});
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && tocDisclosure.open && compactTOC.matches && toc.contains(event.target)) {
+        event.preventDefault();
+        closeTOC(true);
+      }
+    });
+    document.addEventListener('click', event => {
+      if (!toc.contains(event.target)) closeTOC(false);
+    });
+  }
   const tocLinks = toc ? [...toc.querySelectorAll('a[href^="#"]')] : [];
   const tocItems = tocLinks.map(link => ({
     link,
@@ -678,7 +716,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
         if (active) item.link.setAttribute('aria-current', 'location');
         else item.link.removeAttribute('aria-current');
       });
-      if (toc.clientHeight > 0) {
+      if (toc.clientHeight > 0 && current.link.getClientRects().length) {
         const tocRect = toc.getBoundingClientRect();
         const linkRect = current.link.getBoundingClientRect();
         if (linkRect.top < tocRect.top + 12) toc.scrollTop -= tocRect.top + 12 - linkRect.top;

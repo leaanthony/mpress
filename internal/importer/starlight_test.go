@@ -548,7 +548,6 @@ func TestStarlightCustomCSSUsesStrongAccent(t *testing.T) {
 		"@media (max-width: 1050px) {\n  .docs-page .layout { grid-template-columns: 295px minmax(0, 1fr); gap: 0; }",
 		`.docs-page .docs-stage { display: block; width: 100%; }`,
 		`.docs-page article > h1 + .page-lead { width: calc(100% + 32px); margin-left: -16px; padding-right: 16px; padding-left: 16px; }`,
-		`.docs-page .toc { position: fixed; z-index: 8; top: 64px; right: 0; left: 295px; display: flex;`,
 		`.landing-page .mpress-frontmatter-hero-tagline { margin-top: 16px; }`,
 		`.mpress-frontmatter-hero-action:not(.mpress-frontmatter-hero-action-primary) { border-color: var(--text); background: transparent; color: var(--text); }`,
 		`.landing-page > footer { width: min(1080px, calc(100% - 3rem)); max-width: none; padding-inline: 0; }`,
@@ -563,6 +562,9 @@ func TestStarlightCustomCSSUsesStrongAccent(t *testing.T) {
 	}
 	if strings.Contains(got, `grid-template-columns: 300px minmax(0, 710px)`) {
 		t.Error("Starlight import still pins the article to a fixed left-aligned grid track")
+	}
+	if strings.Contains(got, `.docs-page .toc > a { display: none;`) {
+		t.Error("Starlight import must not hide article sections on small screens")
 	}
 }
 

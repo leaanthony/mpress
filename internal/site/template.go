@@ -1299,11 +1299,15 @@ func (r *pageRenderer) renderDocs() {
 		r.text(d.Next.Label)
 		r.raw(`</strong></a>`)
 	}
-	r.raw("</nav></main><aside class=\"toc\"><strong><span>")
+	r.raw("</nav></main><aside class=\"toc\"><strong class=\"toc-heading\">")
+	r.uiText("On this page")
+	r.raw("</strong><details class=\"toc-disclosure\" open><summary><span>")
 	r.uiText("On this page")
 	r.raw("</span><span class=\"toc-mobile-icon\">")
 	r.icon("chevron-right", 14)
-	r.raw("</span></strong><a class=\"toc-level-1\" href=\"#content\">")
+	r.raw("</span></summary><nav aria-label=\"")
+	r.uiText("On this page")
+	r.raw("\"><a class=\"toc-level-1\" href=\"#content\">")
 	r.uiText("Overview")
 	r.raw("</a>")
 	for _, heading := range d.Page.Headings {
@@ -1318,7 +1322,7 @@ func (r *pageRenderer) renderDocs() {
 		r.text(heading.Text)
 		r.raw(`</a>`)
 	}
-	r.raw(`</aside></div></div>`)
+	r.raw(`</nav></details></aside></div></div>`)
 }
 
 func (r *pageRenderer) renderNav(items []navigation.Item, current string) {

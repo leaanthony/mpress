@@ -45,17 +45,38 @@ func documentationLayoutCSS(layout config.LayoutConfig) string {
     margin-inline: auto;
     padding-inline: 1.5rem;
   }
-  .toc { display: none; }
+  .docs-page .docs-stage > .toc {
+    position: fixed; z-index: 8; top: var(--mpress-header-height, 58px); right: 0;
+    left: var(--mpress-toc-left, var(--layout-sidebar-width)); display: block;
+    width: auto; height: auto; max-height: calc(100dvh - var(--mpress-header-height, 58px) - var(--mpress-devbar-height, 0px));
+    padding: 0 1rem; overflow: auto; border: 0; border-bottom: 1px solid var(--border);
+    background: var(--surface-solid); scrollbar-gutter: auto;
+  }
+  .docs-page .toc > .toc-heading, .docs-page .docs-stage > .toc::after { display: none; }
+  .docs-page .toc .toc-disclosure > summary {
+    display: flex; min-height: 44px; align-items: center; justify-content: space-between;
+    gap: .75rem; color: var(--text); font-size: 14px; font-weight: 600;
+  }
+  .docs-page .toc .toc-mobile-icon { display: inline-flex; }
+  .docs-page .toc .toc-disclosure > nav { padding-bottom: .5rem; }
+  .docs-page .toc .toc-disclosure a {
+    display: flex; width: 100%%; max-width: none; min-height: 44px; align-items: center;
+    margin: 0; padding-block: .5rem; white-space: normal;
+  }
+  .docs-page .docs-stage > main { padding-top: calc(2rem + 44px); }
+  .docs-page article :is(h2, h3, h4, h5, h6) { scroll-margin-top: calc(var(--mpress-header-height, 58px) + 60px); }
+  body.nav-open .docs-stage > .toc { visibility: hidden; }
 }
 @media (max-width: 760px) {
   .docs-stage, .docs-page-wide .docs-stage { width: 100%%; padding: 0; }
+  .docs-page .docs-stage > .toc { left: 0; }
 }
 `, sidebarWidth, contentWidth, wideContentWidth, tocWidth, contentTOCGap,
 		contentTOCGap, contentWidth, tocWidth, contentWidth, tocWidth,
 		contentTOCGap, wideContentWidth, tocWidth, wideContentWidth, tocWidth,
 		responsiveWidth)
 	if layout.TOC == "hidden" {
-		css += ".docs-stage, .docs-page-wide .docs-stage { grid-template-columns: var(--layout-stage-fill) minmax(0, var(--layout-content-width)) minmax(var(--layout-stage-fill), 1fr); }\n.docs-stage .toc { display: none; }\n"
+		css += ".docs-stage, .docs-page-wide .docs-stage { grid-template-columns: var(--layout-stage-fill) minmax(0, var(--layout-content-width)) minmax(var(--layout-stage-fill), 1fr); }\n.docs-page .docs-stage > .toc { display: none; }\n@media (max-width: 1180px) { .docs-page .docs-stage > main { padding-top: 2.4rem; } }\n"
 	}
 	return css
 }

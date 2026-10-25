@@ -496,6 +496,12 @@ body.mpress-workspace-document .mpress-workspace-sidebar .mpress-workspace-link.
 .toc { display: flex; min-width: 0; flex-direction: column; gap: .15rem; padding: 2.4rem 1rem 2rem 1.2rem; overflow-x: hidden; border-left: 1px solid var(--border); }
 .toc strong { margin-bottom: .55rem; font-size: 18px; font-weight: 600; letter-spacing: normal; line-height: 1.2; }
 .toc-mobile-icon { display: none; }
+.toc-disclosure { min-width: 0; }
+.toc-disclosure > summary { display: none; cursor: pointer; list-style: none; }
+.toc-disclosure > summary::-webkit-details-marker { display: none; }
+.toc-disclosure > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.toc-disclosure > nav { display: flex; flex-direction: column; gap: .15rem; }
+.toc-disclosure[open] > summary .lucide { transform: rotate(90deg); }
 .toc a { max-width: calc(100% + 1.23rem); margin-left: -1.23rem; padding: .3rem 0 .3rem 1.2rem; overflow-wrap: anywhere; border-left: 2px solid transparent; color: var(--muted); font-size: 13px; font-weight: 400; line-height: 1.25; text-decoration: none; transition: border-color .15s, color .15s, background-color .15s; }
 .toc a.toc-level-3 { padding-left: 2.2rem; }
 .toc a:hover { color: var(--text); }
@@ -1799,10 +1805,31 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
     margin-inline: auto;
     padding-inline: 1.5rem;
   }
-  .toc { display: none; }
+  .docs-page .docs-stage > .toc {
+    position: fixed; z-index: 8; top: var(--mpress-header-height, 58px); right: 0;
+    left: var(--mpress-toc-left, var(--layout-sidebar-width)); display: block;
+    width: auto; height: auto; max-height: calc(100dvh - var(--mpress-header-height, 58px) - var(--mpress-devbar-height, 0px));
+    padding: 0 1rem; overflow: auto; border: 0; border-bottom: 1px solid var(--border);
+    background: var(--surface-solid); scrollbar-gutter: auto;
+  }
+  .docs-page .toc > .toc-heading, .docs-page .docs-stage > .toc::after { display: none; }
+  .docs-page .toc .toc-disclosure > summary {
+    display: flex; min-height: 44px; align-items: center; justify-content: space-between;
+    gap: .75rem; color: var(--text); font-size: 14px; font-weight: 600;
+  }
+  .docs-page .toc .toc-mobile-icon { display: inline-flex; }
+  .docs-page .toc .toc-disclosure > nav { padding-bottom: .5rem; }
+  .docs-page .toc .toc-disclosure a {
+    display: flex; width: 100%; max-width: none; min-height: 44px; align-items: center;
+    margin: 0; padding-block: .5rem; white-space: normal;
+  }
+  .docs-page .docs-stage > main { padding-top: calc(2rem + 44px); }
+  .docs-page article :is(h2, h3, h4, h5, h6) { scroll-margin-top: calc(var(--mpress-header-height, 58px) + 60px); }
+  body.nav-open .docs-stage > .toc { visibility: hidden; }
 }
 @media (max-width: 760px) {
   .docs-stage, .docs-page-wide .docs-stage { width: 100%; padding: 0; }
+  .docs-page .docs-stage > .toc { left: 0; }
 }
 
 /* Project custom CSS */

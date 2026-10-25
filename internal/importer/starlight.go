@@ -1502,11 +1502,6 @@ html[data-theme="light"] .docs-page .mpress-admonition-danger { --notice: hsl(33
   .docs-page main { padding: 96px 16px 6rem; }
   .docs-page article > h1 + .page-lead { width: calc(100%% + 32px); margin-left: -16px; padding-right: 16px; padding-left: 16px; }
   .docs-page article > h1:not(:has(+ .page-lead)) { width: calc(100%% + 32px); margin-left: -16px; padding-right: 16px; padding-left: 16px; }
-  .docs-page .toc { position: fixed; z-index: 8; top: 64px; right: 0; left: 295px; display: flex; width: auto; height: 46px; align-items: center; flex-direction: row; gap: 8px; padding: 7px 16px; overflow: hidden; border: 0; border-bottom: 1px solid var(--surface); background: var(--surface); }
-  .docs-page .toc strong { display: inline-flex; min-width: 126px; height: 30px; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--muted); font-size: 13px; font-weight: 500; }
-  .docs-page .toc-mobile-icon { display: inline-flex; }
-  .docs-page .toc > a { display: none; flex: 0 0 auto; margin: 0; padding: 5px 0; border: 0; font-size: 13px; white-space: nowrap; }
-  .docs-page .toc > a.active { display: block; }
 }
 
 @media (max-width: 720px) {
@@ -1527,11 +1522,6 @@ html[data-theme="light"] .docs-page .mpress-admonition-danger { --notice: hsl(33
   .docs-page .mpress-tabs [role="tablist"] { max-width: 100%%; overflow-x: auto; scrollbar-width: thin; }
   .docs-page .mpress-tabs [role="tab"] { min-width: 108px; padding-inline: 12px; }
   .docs-page .mpress-step { grid-template-columns: 28px minmax(0, 1fr); gap: 14px; }
-  .docs-page .toc { position: fixed; z-index: 8; top: 58px; right: 0; left: 0; display: flex; width: 100%%; height: 42px; align-items: center; flex-direction: row; gap: 8px; padding: 7px 16px; overflow: hidden; border: 0; border-bottom: 1px solid var(--bg); background: var(--surface); }
-  .docs-page .toc strong { display: inline-flex; min-width: 126px; height: 30px; align-items: center; justify-content: space-between; gap: 10px; margin: 0; padding: 5px 10px; border: 1px solid var(--border); border-radius: 6px; background: var(--bg); color: var(--muted); font-size: 13px; font-weight: 500; }
-  .docs-page .toc-mobile-icon { display: inline-flex; }
-  .docs-page .toc > a { display: none; flex: 0 0 auto; margin: 0; padding: 5px 0; border: 0; font-size: 13px; white-space: nowrap; }
-  .docs-page .toc > a.active { display: block; }
   .docs-page main { padding-top: 86px; }
   :is(.landing-page, .blog-index-page, .blog-article-page) .search:not(:focus-within) input { border-color: transparent; background: transparent; box-shadow: none; }
   :is(.landing-page, .blog-index-page, .blog-article-page) .header-links { padding-right: 0; }

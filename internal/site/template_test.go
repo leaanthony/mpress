@@ -428,7 +428,7 @@ func TestDocumentationLayoutCSSSupportsFixedPercentageAndHiddenTOC(t *testing.T)
 		ContentWidth: "720px", WideContentWidth: "1024px", SidebarWidth: "300px",
 		TOCWidth: "256px", ContentTOCGap: "40px", Alignment: "cluster", TOC: "hidden",
 	})
-	if !strings.Contains(hidden, `.docs-stage .toc { display: none; }`) || !strings.Contains(hidden, `grid-template-columns: var(--layout-stage-fill) minmax(0, var(--layout-content-width)) minmax(var(--layout-stage-fill), 1fr)`) {
+	if !strings.Contains(hidden, `.docs-page .docs-stage > .toc { display: none; }`) || !strings.Contains(hidden, `grid-template-columns: var(--layout-stage-fill) minmax(0, var(--layout-content-width)) minmax(var(--layout-stage-fill), 1fr)`) {
 		t.Fatalf("hidden TOC layout CSS is incorrect: %s", hidden)
 	}
 }

@@ -498,6 +498,12 @@ body.mpress-workspace-document .mpress-workspace-sidebar .mpress-workspace-link.
 .toc { display: flex; min-width: 0; flex-direction: column; gap: .15rem; padding: 2.4rem 1rem 2rem 1.2rem; overflow-x: hidden; border-left: 1px solid var(--border); }
 .toc strong { margin-bottom: .55rem; font-size: 18px; font-weight: 600; letter-spacing: normal; line-height: 1.2; }
 .toc-mobile-icon { display: none; }
+.toc-disclosure { min-width: 0; }
+.toc-disclosure > summary { display: none; cursor: pointer; list-style: none; }
+.toc-disclosure > summary::-webkit-details-marker { display: none; }
+.toc-disclosure > summary:focus-visible { outline: 2px solid var(--accent); outline-offset: -2px; }
+.toc-disclosure > nav { display: flex; flex-direction: column; gap: .15rem; }
+.toc-disclosure[open] > summary .lucide { transform: rotate(90deg); }
 .toc a { max-width: calc(100% + 1.23rem); margin-left: -1.23rem; padding: .3rem 0 .3rem 1.2rem; overflow-wrap: anywhere; border-left: 2px solid transparent; color: var(--muted); font-size: 13px; font-weight: 400; line-height: 1.25; text-decoration: none; transition: border-color .15s, color .15s, background-color .15s; }
 .toc a.toc-level-3 { padding-left: 2.2rem; }
 .toc a:hover { color: var(--text); }
@@ -2424,6 +2430,44 @@ const defaultThemeJS = `
   }
 
   const toc = document.querySelector('.toc');
+  const tocDisclosure = toc?.querySelector('.toc-disclosure');
+  const compactTOC = window.matchMedia('(max-width: 1180px)');
+  if (tocDisclosure) {
+    const tocSummary = tocDisclosure.querySelector('summary');
+    const syncTOCLayout = () => {
+      const header = document.querySelector('body > header');
+      doc.style.setProperty('--mpress-header-height', (header?.offsetHeight || 58) + 'px');
+      toc.style.setProperty('--mpress-toc-left', (mobileNavigation.matches ? 0 : sidebar?.getBoundingClientRect().right || 0) + 'px');
+    };
+    const closeTOC = restoreFocus => {
+      if (!compactTOC.matches) return;
+      tocDisclosure.open = false;
+      if (restoreFocus) tocSummary.focus();
+    };
+    tocDisclosure.open = !compactTOC.matches;
+    syncTOCLayout();
+    compactTOC.addEventListener('change', () => { tocDisclosure.open = !compactTOC.matches; });
+    window.addEventListener('resize', syncTOCLayout);
+    toc.addEventListener('click', event => {
+      const link = event.target.closest('a[href^="#"]');
+      if (!link || !compactTOC.matches) return;
+      closeTOC(false);
+      const target = document.getElementById(decodeURIComponent(link.hash.slice(1)));
+      if (target) {
+        if (!target.hasAttribute('tabindex')) target.tabIndex = -1;
+        target.focus({preventScroll: true});
+      }
+    });
+    document.addEventListener('keydown', event => {
+      if (event.key === 'Escape' && tocDisclosure.open && compactTOC.matches && toc.contains(event.target)) {
+        event.preventDefault();
+        closeTOC(true);
+      }
+    });
+    document.addEventListener('click', event => {
+      if (!toc.contains(event.target)) closeTOC(false);
+    });
+  }
   const tocLinks = toc ? [...toc.querySelectorAll('a[href^="#"]')] : [];
   const tocItems = tocLinks.map(link => ({
     link,
@@ -2446,7 +2490,7 @@ const defaultThemeJS = `
         if (active) item.link.setAttribute('aria-current', 'location');
         else item.link.removeAttribute('aria-current');
       });
-      if (toc.clientHeight > 0) {
+      if (toc.clientHeight > 0 && current.link.getClientRects().length) {
         const tocRect = toc.getBoundingClientRect();
         const linkRect = current.link.getBoundingClientRect();
         if (linkRect.top < tocRect.top + 12) toc.scrollTop -= tocRect.top + 12 - linkRect.top;
