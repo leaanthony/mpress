@@ -699,6 +699,8 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 		machineText := item.Old.MachineText
 		machineHash := item.Old.MachineHash
 		if newlyTranslated {
+			item.Segment = repairMarkdownEmphasis(sourceDoc.Format, item.Segment, value)
+			sourceDoc.Segments[itemIndex] = item.Segment
 			restored, restoreErr := restore(item.Segment, value, preservesMarkdownSyntax(sourceDoc.Format))
 			if restoreErr != nil {
 				return report, restoreErr
