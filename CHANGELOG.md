@@ -2,9 +2,20 @@
 
 ## Unreleased
 
+## v1.0.20 — 2026-10-25
+
 ### Fixed
 
 - Restore mobile and tablet article navigation with a native section disclosure, keyboard focus and Escape handling, scrollable touch targets, and anchors below the fixed header. Keep the article bar behind site navigation, including existing Starlight-imported themes. Beads `mp-b52.2.12`; Wails [#6338](https://github.com/wailsapp/wails/issues/6338).
+
+### Security
+
+- Build releases with Go 1.26.10 and update the Go networking dependencies to clear the current vulnerability gate. Beads `mp-b52.5.9`.
+
+## Earlier changes
+
+### Fixed
+
 - Preserve literal class and ID tokens from inline page scripts during production CSS purging, including class lists and template strings. Pages with runtime animation classes can retain their styles while removing unused CSS.
 - Mark frontmatter hero images as eager, high-priority resources with asynchronous decoding for both light and dark themes.
 
