@@ -55,10 +55,23 @@ func markdownStrongRepairTokens(segment Segment, translated string) []string {
 	for i := 0; i < len(tokens); i += 2 {
 		start := strings.Index(translated, tokens[i]) + len(tokens[i])
 		end := strings.Index(translated, tokens[i+1])
-		span := translationPlaceholderPattern.ReplaceAllString(translated[start:end], "")
-		if segment.Placeholders[tokens[i]] != segment.Placeholders[tokens[i+1]] || !containsLetterOrNumber(span) {
+		span := translated[start:end]
+		sourceStart := strings.Index(segment.Text, tokens[i]) + len(tokens[i])
+		sourceEnd := strings.Index(segment.Text, tokens[i+1])
+		if segment.Placeholders[tokens[i]] != segment.Placeholders[tokens[i+1]] || !markdownStrongSpanHasContent(segment, span, segment.Text[sourceStart:sourceEnd]) {
 			return nil
 		}
 	}
 	return tokens
+}
+
+func markdownStrongSpanHasContent(segment Segment, span, sourceSpan string) bool {
+	visible := translationPlaceholderPattern.ReplaceAllStringFunc(span, func(token string) string {
+		value := segment.Placeholders[token]
+		if strings.Contains(sourceSpan, token) && strings.HasPrefix(value, "`") && strings.HasSuffix(value, "`") {
+			return strings.Trim(value, "`")
+		}
+		return ""
+	})
+	return containsLetterOrNumber(visible)
 }

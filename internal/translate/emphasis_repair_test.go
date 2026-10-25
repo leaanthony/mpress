@@ -108,3 +108,45 @@ func TestEmphasisRepairDoesNotGuessMissingOrReorderedMarkers(t *testing.T) {
 		}
 	}
 }
+
+func TestEmphasisRepairKeepsBoldInlineCode(t *testing.T) {
+	doc, err := ExtractMarkdown([]byte("Templates live in **`internal/templates/`**.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	segment := doc.Segments[0]
+	tokens := orderedPlaceholderTokens(segment)
+	value := "템플릿은 " + tokens[0] + tokens[1] + tokens[2] + "에 있습니다."
+	adjusted := repairMarkdownEmphasis(markdownTranslationFormat, segment, value)
+	changed := *doc
+	changed.Segments = []Segment{adjusted}
+	output, err := Apply(&changed, map[string]string{segment.ID: value})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := Validate(doc, output); err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(string(output), "<strong>`internal/templates/`</strong>") {
+		t.Fatalf("bold code was not preserved: %s", output)
+	}
+	missing := strings.Replace(value, tokens[1], "", 1)
+	empty := repairMarkdownEmphasis(markdownTranslationFormat, segment, missing)
+	if !maps.Equal(empty.Placeholders, segment.Placeholders) {
+		t.Fatal("repaired missing code")
+	}
+}
+
+func TestEmphasisRepairDoesNotFillEmptySpanWithMovedCode(t *testing.T) {
+	doc, err := ExtractMarkdown([]byte("**Status** uses `private`.\n"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	segment := doc.Segments[0]
+	tokens := orderedPlaceholderTokens(segment)
+	value := tokens[0] + tokens[2] + tokens[1] + "를 사용합니다."
+	adjusted := repairMarkdownEmphasis(markdownTranslationFormat, segment, value)
+	if !maps.Equal(adjusted.Placeholders, segment.Placeholders) {
+		t.Fatal("repaired an empty prose span using code from outside it")
+	}
+}

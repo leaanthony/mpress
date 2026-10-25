@@ -1,5 +1,13 @@
 # Changelog
 
+## v1.0.23 — 2026-10-26
+
+### Fixed
+
+- Repair preserved bold inline-code spans beside CJK text without treating visible code as an empty span. Missing code and genuinely empty spans remain rejected. Beads `mp-b52.11`.
+
+- Preserve the intrinsic proportions of same-origin interactive SVG objects in articles, including tall contributor grids, while keeping explicit author sizing and safely ignoring inaccessible cross-origin documents. Beads `mp-b52.10`.
+
 ## v1.0.22 — 2026-10-25
 
 ### Fixed
