@@ -1,10 +1,10 @@
 # Changelog
 
-## Unreleased
+## v1.0.22 — 2026-10-25
 
 ### Fixed
 
-- Automatically repair preserved bold delimiters that stop parsing beside CJK punctuation by emitting equivalent strong tags at the same placeholder boundaries. Missing, duplicated or reordered markers remain rejected, and full protected-content validation still applies. Beads `mp-b52.8`.
+- Automatically repair preserved bold delimiters that stop parsing beside CJK punctuation by emitting equivalent strong tags at the same placeholder boundaries. Missing, duplicated or reordered markers and empty bold spans remain rejected, and full protected-content validation still applies. Beads `mp-b52.8`.
 
 ## v1.0.21 — 2026-10-25
 
