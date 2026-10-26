@@ -1708,7 +1708,7 @@ func authoringFixture(t *testing.T) string {
 	return root
 }
 
-func writeDevFixture(t *testing.T, root, name, value string) {
+func writeDevFixture(t testing.TB, root, name, value string) {
 	t.Helper()
 	path := filepath.Join(root, filepath.FromSlash(name))
 	if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {

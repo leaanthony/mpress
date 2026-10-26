@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Refresh live preview after creating, deleting, renaming or editing files even when timestamps do not advance, including changes within large assets and configured navigation outside the content directory. Save bursts are coalesced, scanning errors are reported, and generated output and unrelated files do not trigger rebuilds. Beads `mp-b52.3.1`.
+
 - Keep the localized phone search launcher correctly sized and clickable: normalize its mobile button box so the 44px target stays in the header, and keep theme, accessibility and language controls visible and usable after search closes while focus returns to the launcher. Beads `mp-b52.2.13`.
 
 - Give repeated interactive components on one documentation page independent identities. Tabs, carousels, data tables, preview/file tabs and API playgrounds allocate document-scoped IDs during rendering, keep local ARIA and popover references paired, and report duplicate authored IDs without rewriting them. Repeated builds and concurrent page renders now produce stable bytes. Beads `mp-b52.2.7`.

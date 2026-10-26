@@ -87,6 +87,19 @@ func (f *FS) ReadFile(name string) ([]byte, error) {
 }
 
 func (f *FS) readPath(name string, allowDirectory bool) (string, error) {
+	if rel, ok := localRelative(name); ok {
+		// A lexically local relative name cannot leave the pinned root, so the
+		// root performs its own containment check without canonicalising every
+		// ancestor first. Absolute links and reported unsafe paths still fall
+		// back to Relative for their existing resolution and diagnostics.
+		info, err := f.root.Stat(rel)
+		if err == nil {
+			if err := regularOrDirectory(name, info, allowDirectory); err != nil {
+				return "", err
+			}
+			return rel, nil
+		}
+	}
 	rel, err := f.Relative(name)
 	if err != nil {
 		return "", err
@@ -95,10 +108,28 @@ func (f *FS) readPath(name string, allowDirectory bool) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	if !info.Mode().IsRegular() && !(allowDirectory && info.IsDir()) {
-		return "", fmt.Errorf("not a regular project file: %s", name)
+	if err := regularOrDirectory(name, info, allowDirectory); err != nil {
+		return "", err
 	}
 	return rel, nil
+}
+
+func localRelative(name string) (string, bool) {
+	if filepath.IsAbs(name) || !filepath.IsLocal(name) {
+		return "", false
+	}
+	rel := filepath.Clean(name)
+	if rel == "." {
+		return "", false
+	}
+	return rel, true
+}
+
+func regularOrDirectory(name string, info fs.FileInfo, allowDirectory bool) error {
+	if info.Mode().IsRegular() || (allowDirectory && info.IsDir()) {
+		return nil
+	}
+	return fmt.Errorf("not a regular project file: %s", name)
 }
 
 func (f *FS) Stat(name string) (fs.FileInfo, error) {

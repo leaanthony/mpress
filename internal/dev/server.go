@@ -131,7 +131,9 @@ func Serve(project string, options Options) error {
 	}
 	defer server.Close()
 	server.rebuild(false)
-	go server.watch()
+	watchContext, cancelWatch := context.WithCancel(context.Background())
+	defer cancelWatch()
+	go server.watch(watchContext)
 	localURL := fmt.Sprintf("http://localhost:%d", actualPort)
 	fmt.Println("M-Press site:   " + localURL)
 	if options.Workspace != nil {
@@ -3458,41 +3460,6 @@ func (s *Server) currentState() BuildState {
 	s.stateMu.RLock()
 	defer s.stateMu.RUnlock()
 	return s.state
-}
-
-func (s *Server) watch() {
-	last := latest(s.project, s.cfg.OutputPath(s.project))
-	ticker := time.NewTicker(500 * time.Millisecond)
-	defer ticker.Stop()
-	for range ticker.C {
-		next := latest(s.project, s.cfg.OutputPath(s.project))
-		if next.After(last) {
-			last = next
-			s.rebuild(true)
-		}
-	}
-}
-
-func latest(root, output string) time.Time {
-	var latest time.Time
-	absOutput, _ := filepath.Abs(output)
-	_ = filepath.WalkDir(root, func(path string, entry os.DirEntry, err error) error {
-		if err != nil {
-			return nil
-		}
-		absPath, _ := filepath.Abs(path)
-		if entry.IsDir() {
-			if path != root && (absPath == absOutput || entry.Name() == ".git" || entry.Name() == ".mpress") {
-				return fs.SkipDir
-			}
-			return nil
-		}
-		if info, infoErr := entry.Info(); infoErr == nil && info.ModTime().After(latest) {
-			latest = info.ModTime()
-		}
-		return nil
-	})
-	return latest
 }
 
 type hub struct {
