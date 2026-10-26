@@ -282,7 +282,7 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 			opts.LinkCollector.AddHTML(relative, data)
 		}
 		return nil
-	}); err != nil && !os.IsNotExist(err) {
+	}); err != nil {
 		return result, err
 	}
 	// Emit host-neutral cache rules for the static adapters supported by
@@ -870,6 +870,23 @@ func writeManifest(output string, cfg config.Config, pages map[string][]*content
 	return os.WriteFile(filepath.Join(output, "mpress-manifest.json"), data, 0o644)
 }
 func copyTree(files *projectfs.FS, src, dst string, onFile func(relative, target string) error) error {
+	// The configured static tree is optional, so an absent root is a supported
+	// success. A root that exists but cannot be resolved is a dangling asset,
+	// as is any entry that disappears while the tree is walked. Those failures
+	// must reach the caller instead of publishing a partial site.
+	if _, err := files.Stat(src); err != nil {
+		if !os.IsNotExist(err) {
+			return err
+		}
+		_, lstatErr := files.Lstat(src)
+		if lstatErr == nil {
+			return err
+		}
+		if !os.IsNotExist(lstatErr) {
+			return lstatErr
+		}
+		return nil
+	}
 	return files.WalkDir(src, func(path string, e fs.DirEntry, err error) error {
 		if err != nil {
 			return err

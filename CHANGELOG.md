@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Refuse builds and exports whose static tree contains an unreadable entry, such as a dangling asset link, and keep the previous published site or archive intact instead of silently publishing an incomplete result. Projects without an optional static directory still build normally. Beads `mp-b52.1.4` (audit S04).
+
 - Keep site settings saved at the very end of a format conversion: the final configuration publication never replaces a newer author save. The conflict is reported and the newer settings, original configuration and documents are retained. Beads `mp-b52.1.6`.
 
 - Detect conflicting site-settings saves when converting style-guide or glossary paths, preserving newer settings and restoring the original documents. Beads `mp-b52.1.6`.
