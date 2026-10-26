@@ -244,15 +244,19 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 	if err != nil {
 		return Result{}, err
 	}
-	var configState configSnapshot
+	// Capture saved settings before any document change, even when the caller
+	// expects no rewrite. A save landing after this capture is outside the
+	// guarantee.
+	configState, err := captureConfigSnapshot(ops, projectFiles)
+	if err != nil {
+		return Result{}, err
+	}
 	if configChanged {
-		configState, err = captureConfigSnapshot(ops, projectFiles)
-		if err != nil {
-			return Result{}, err
-		}
 		if err := configState.requireCallerConfiguration(*cfg); err != nil {
 			return Result{}, err
 		}
+	} else if err := configState.requireNoSavedReferences(root, conversions); err != nil {
+		return Result{}, err
 	}
 
 	journal := newRecoveryJournal(ops, contentFiles, directory)

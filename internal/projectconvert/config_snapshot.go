@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"os"
 	"reflect"
+	"strings"
 
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/projectfs"
@@ -79,6 +80,35 @@ func (s configSnapshot) requireCallerConfiguration(cfg config.Config) error {
 		return configChangedDuringConversion()
 	}
 	return nil
+}
+
+// requireNoSavedReferences rejects a conversion planned from stale caller
+// settings when the saved configuration references a document this conversion
+// would replace. It also reports saved settings it cannot parse, because an
+// unreadable reference must not be treated as absent.
+func (s configSnapshot) requireNoSavedReferences(root string, conversions []conversion) error {
+	if !s.present || !s.regular {
+		return nil
+	}
+	saved, err := config.Parse(s.data)
+	if err != nil {
+		return fmt.Errorf("inspect saved configuration %s before conversion: %w", config.Filename, err)
+	}
+	updated, changed, err := planConfigurationUpdate(root, &saved, conversions)
+	if err != nil {
+		return err
+	}
+	if !changed {
+		return nil
+	}
+	var references []string
+	if updated.Translation.StyleGuide != saved.Translation.StyleGuide {
+		references = append(references, fmt.Sprintf("translation.styleGuide %q", saved.Translation.StyleGuide))
+	}
+	if updated.Translation.Glossary != saved.Translation.Glossary {
+		references = append(references, fmt.Sprintf("translation.glossary %q", saved.Translation.Glossary))
+	}
+	return fmt.Errorf("saved configuration %s references %s, which this conversion would replace; reload the saved configuration and retry", config.Filename, strings.Join(references, " and "))
 }
 
 // unchanged reports whether the configuration at its original name still

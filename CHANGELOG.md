@@ -4,7 +4,7 @@
 
 ### Fixed
 
-- Preserve settings saved before document conversion by rejecting stale style-guide or glossary reference rewrites before any files change. Reloading the saved configuration permits a normal retry. Beads `mp-b52.1.6`.
+- Preserve saved settings and guide/glossary references during document conversion, including references added outside the editor. Report unreadable or invalid saved settings before any files change; reload valid settings to retry. Beads `mp-b52.1.6`.
 
 - Refuse development-server operations when the selected project directory has moved, been replaced or its alias has changed targets. Report how to restart instead of rebuilding another project at the old path; restoring the original directory permits retry. Beads `mp-b52.1.3`.
 
