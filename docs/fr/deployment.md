@@ -62,6 +62,12 @@ site généré. Choisissez Cloudflare Pages ou Netlify. Le formulaire modifie la
 configuration et exécute les mêmes vérifications de publication que la ligne de commande. Il n'
 écrit un token d'API dans le projet.
 
+Le déploiement intégré publie les fichiers ordinaires du répertoire de sortie.
+Les liens symboliques et les fichiers spéciaux dans ce répertoire sont refusés.
+Si le déploiement signale qu'une ressource a changé après le calcul de son
+empreinte, relancez `mpress deploy` sans modifier la sortie générée pendant
+le déploiement.
+
 ## URL de base et sitemap
 
 Définissez l'origine publique avant un build de production :

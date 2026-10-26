@@ -10,6 +10,7 @@ import (
 	"github.com/leaanthony/mpress/internal/check"
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/deploy"
+	"github.com/leaanthony/mpress/internal/projectfs"
 	"github.com/leaanthony/mpress/internal/site"
 )
 
@@ -84,10 +85,13 @@ func Deploy(ctx context.Context, project, targetName, environment string) (deplo
 	if _, err := Check(project, false); err != nil {
 		return deploy.Result{}, fmt.Errorf("deployment checks failed: %w", err)
 	}
-	cfg, err := config.Load(project)
+	cfg, output, files, err := openDeployment(project)
 	if err != nil {
 		return deploy.Result{}, err
 	}
+	// Read-only roots; close failures cannot change a completed deployment.
+	defer func() { _ = files.Close() }()
+	defer func() { _ = output.Close() }()
 	if targetName == "" {
 		targetName = cfg.Deploy.Default
 	}
@@ -106,10 +110,36 @@ func Deploy(ctx context.Context, project, targetName, environment string) (deplo
 	}
 	switch target.Provider {
 	case "cloudflare-pages":
-		return deploy.CloudflarePages(ctx, cfg.OutputPath(project), targetName, environment, target, deploy.Options{Token: os.Getenv("CLOUDFLARE_API_TOKEN")})
+		return deploy.CloudflarePages(ctx, cfg.OutputPath(project), targetName, environment, target, deploy.Options{Token: os.Getenv("CLOUDFLARE_API_TOKEN"), Files: output})
 	case "netlify":
-		return deploy.NetlifyPages(ctx, cfg.OutputPath(project), targetName, environment, target, deploy.NetlifyOptions{Token: os.Getenv("NETLIFY_AUTH_TOKEN")})
+		return deploy.NetlifyPages(ctx, cfg.OutputPath(project), targetName, environment, target, deploy.NetlifyOptions{Token: os.Getenv("NETLIFY_AUTH_TOKEN"), Files: output})
 	default:
 		return deploy.Result{}, fmt.Errorf("unsupported deploy provider %q", target.Provider)
 	}
+}
+
+// openDeployment pins the project boundary and borrows the configured output
+// subtree from it. A redirected or unsafe output is rejected instead of being
+// reinterpreted as a standalone provider root.
+func openDeployment(project string) (config.Config, *projectfs.FS, *projectfs.FS, error) {
+	files, err := projectfs.Open(project)
+	if err != nil {
+		return config.Config{}, nil, nil, err
+	}
+	cfg, err := config.LoadWithReadFile(project, files.ReadFile)
+	if err != nil {
+		_ = files.Close()
+		return config.Config{}, nil, nil, err
+	}
+	safeOutput, err := cfg.SafeOutputPath(project, cfg.OutputPath(project))
+	if err != nil {
+		_ = files.Close()
+		return config.Config{}, nil, nil, err
+	}
+	output, err := files.Sub(safeOutput)
+	if err != nil {
+		_ = files.Close()
+		return config.Config{}, nil, nil, err
+	}
+	return cfg, output, files, nil
 }

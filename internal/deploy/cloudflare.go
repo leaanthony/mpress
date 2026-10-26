@@ -9,16 +9,17 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"io/fs"
 	"mime"
 	"mime/multipart"
 	"net/http"
-	"os"
 	"path/filepath"
 	"sort"
 	"strings"
 	"time"
 
 	"github.com/leaanthony/mpress/internal/config"
+	"github.com/leaanthony/mpress/internal/projectfs"
 	"github.com/zeebo/blake3"
 )
 
@@ -34,6 +35,9 @@ type Options struct {
 	APIURL    string
 	AssetsURL string
 	Client    *http.Client
+	// Files borrows an already pinned output boundary. When nil, the provider
+	// opens and closes outputDir itself.
+	Files *projectfs.FS
 }
 
 type Result struct {
@@ -48,7 +52,6 @@ type Result struct {
 
 type asset struct {
 	Name        string
-	Path        string
 	Hash        string
 	ContentType string
 	Size        int64
@@ -84,7 +87,12 @@ func CloudflarePages(ctx context.Context, outputDir, targetName, environment str
 	if options.Client == nil {
 		options.Client = &http.Client{Timeout: 90 * time.Second}
 	}
-	files, err := collectAssets(outputDir)
+	root, closeRoot, err := outputRoot(outputDir, options.Files)
+	if err != nil {
+		return Result{}, err
+	}
+	defer closeRoot()
+	files, err := collectAssets(root)
 	if err != nil {
 		return Result{}, err
 	}
@@ -105,7 +113,7 @@ func CloudflarePages(ctx context.Context, outputDir, targetName, environment str
 	if err != nil {
 		return Result{}, err
 	}
-	uploaded, err := uploadAssets(ctx, files, missing, jwt, options)
+	uploaded, err := uploadAssets(ctx, root, files, missing, jwt, options)
 	if err != nil {
 		return Result{}, err
 	}
@@ -120,13 +128,9 @@ func CloudflarePages(ctx context.Context, outputDir, targetName, environment str
 	}, nil
 }
 
-func collectAssets(root string) ([]asset, error) {
-	root, err := filepath.Abs(root)
-	if err != nil {
-		return nil, err
-	}
-	var files []asset
-	err = filepath.WalkDir(root, func(path string, entry os.DirEntry, walkErr error) error {
+func collectAssets(files *projectfs.FS) ([]asset, error) {
+	var collected []asset
+	err := files.WalkDir(".", func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
@@ -137,32 +141,32 @@ func collectAssets(root string) ([]asset, error) {
 		if err != nil {
 			return err
 		}
-		if info.Mode()&os.ModeSymlink != 0 {
-			return nil
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("cannot deploy non-regular file %s", path)
 		}
 		if info.Size() > 25<<20 {
 			return fmt.Errorf("%s is larger than Cloudflare Pages' 25 MiB file limit", path)
 		}
-		data, err := os.ReadFile(path)
+		data, err := files.ReadFile(path)
 		if err != nil {
 			return err
 		}
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
-		}
-		name := filepath.ToSlash(rel)
-		ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(name)), ".")
-		sum := blake3.Sum256([]byte(base64.StdEncoding.EncodeToString(data) + ext))
+		name := filepath.ToSlash(path)
 		contentType := mime.TypeByExtension(filepath.Ext(name))
 		if contentType == "" {
 			contentType = "application/octet-stream"
 		}
-		files = append(files, asset{Name: name, Path: path, Hash: hex.EncodeToString(sum[:16]), ContentType: contentType, Size: info.Size()})
+		collected = append(collected, asset{Name: name, Hash: assetHash(name, data), ContentType: contentType, Size: info.Size()})
 		return nil
 	})
-	sort.Slice(files, func(i, j int) bool { return files[i].Name < files[j].Name })
-	return files, err
+	sort.Slice(collected, func(i, j int) bool { return collected[i].Name < collected[j].Name })
+	return collected, err
+}
+
+func assetHash(name string, data []byte) string {
+	ext := strings.TrimPrefix(strings.ToLower(filepath.Ext(name)), ".")
+	sum := blake3.Sum256([]byte(base64.StdEncoding.EncodeToString(data) + ext))
+	return hex.EncodeToString(sum[:16])
 }
 
 func ensurePagesProject(ctx context.Context, target config.DeployTarget, options Options) error {
@@ -219,7 +223,7 @@ func missingAssets(ctx context.Context, files []asset, jwt string, options Optio
 	return set, nil
 }
 
-func uploadAssets(ctx context.Context, files []asset, missing map[string]bool, jwt string, options Options) (int, error) {
+func uploadAssets(ctx context.Context, files *projectfs.FS, assets []asset, missing map[string]bool, jwt string, options Options) (int, error) {
 	type metadata struct {
 		ContentType string `json:"contentType"`
 	}
@@ -245,7 +249,7 @@ func uploadAssets(ctx context.Context, files []asset, missing map[string]bool, j
 		batchBytes = 0
 		return nil
 	}
-	for _, file := range files {
+	for _, file := range assets {
 		if !missing[file.Hash] {
 			continue
 		}
@@ -254,9 +258,12 @@ func uploadAssets(ctx context.Context, files []asset, missing map[string]bool, j
 				return uploaded, err
 			}
 		}
-		data, err := os.ReadFile(file.Path)
+		data, err := files.ReadFile(filepath.FromSlash(file.Name))
 		if err != nil {
 			return uploaded, err
+		}
+		if assetHash(file.Name, data) != file.Hash {
+			return uploaded, fmt.Errorf("%s changed after its content hash was collected; rebuild before deploying", file.Name)
 		}
 		batch = append(batch, item{Key: file.Hash, Value: base64.StdEncoding.EncodeToString(data), Metadata: metadata{ContentType: file.ContentType}, Base64: true})
 		batchBytes += file.Size

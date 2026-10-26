@@ -12,6 +12,7 @@ import (
 	"testing"
 
 	"github.com/leaanthony/mpress/internal/config"
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 func TestCloudflarePagesUploadsMissingAssetsAndCreatesPreview(t *testing.T) {
@@ -22,7 +23,12 @@ func TestCloudflarePagesUploadsMissingAssetsAndCreatesPreview(t *testing.T) {
 	if err := os.WriteFile(filepath.Join(output, "app.css"), []byte("body{color:#123}"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	assets, err := collectAssets(output)
+	root, err := projectfs.Open(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	closeTestFiles(t, root)
+	assets, err := collectAssets(root)
 	if err != nil {
 		t.Fatal(err)
 	}

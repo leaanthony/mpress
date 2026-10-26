@@ -11,12 +11,12 @@ import (
 	"io/fs"
 	"net/http"
 	"net/url"
-	"os"
 	"path/filepath"
 	"strings"
 	"time"
 
 	"github.com/leaanthony/mpress/internal/config"
+	"github.com/leaanthony/mpress/internal/projectfs"
 )
 
 const (
@@ -32,6 +32,9 @@ type NetlifyOptions struct {
 	Token  string
 	APIURL string
 	Client *http.Client
+	// Files borrows an already pinned output boundary. When nil, the provider
+	// opens and closes outputDir itself.
+	Files *projectfs.FS
 }
 
 type netlifySite struct {
@@ -73,7 +76,12 @@ func NetlifyPages(ctx context.Context, outputDir, targetName, environment string
 	if options.Client == nil {
 		options.Client = &http.Client{Timeout: 90 * time.Second}
 	}
-	archive, files, err := zipOutput(outputDir)
+	root, closeRoot, err := outputRoot(outputDir, options.Files)
+	if err != nil {
+		return Result{}, err
+	}
+	defer closeRoot()
+	archive, files, err := zipOutput(root)
 	if err != nil {
 		return Result{}, err
 	}
@@ -175,43 +183,39 @@ func waitNetlifyDeploy(ctx context.Context, deployment netlifyDeploy, siteID str
 	}
 }
 
-func zipOutput(root string) ([]byte, int, error) {
+func zipOutput(files *projectfs.FS) ([]byte, int, error) {
 	var body bytes.Buffer
 	archive := zip.NewWriter(&body)
-	files := 0
-	err := filepath.WalkDir(root, func(path string, entry fs.DirEntry, walkErr error) error {
+	count := 0
+	err := files.WalkDir(".", func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
 		if entry.IsDir() {
 			return nil
 		}
-		if entry.Type()&os.ModeSymlink != 0 {
-			return nil
-		}
-		files++
-		if files > maxNetlifyFiles {
-			return fmt.Errorf("Netlify deploy contains more than %d files", maxNetlifyFiles)
-		}
 		info, err := entry.Info()
 		if err != nil {
 			return err
 		}
-		rel, err := filepath.Rel(root, path)
-		if err != nil {
-			return err
+		if !info.Mode().IsRegular() {
+			return fmt.Errorf("cannot deploy non-regular file %s", path)
+		}
+		count++
+		if count > maxNetlifyFiles {
+			return fmt.Errorf("netlify deploy contains more than %d files", maxNetlifyFiles)
 		}
 		header, err := zip.FileInfoHeader(info)
 		if err != nil {
 			return err
 		}
-		header.Name = filepath.ToSlash(rel)
+		header.Name = filepath.ToSlash(path)
 		header.Method = zip.Deflate
 		writer, err := archive.CreateHeader(header)
 		if err != nil {
 			return err
 		}
-		file, err := os.Open(path)
+		file, err := files.Open(path)
 		if err != nil {
 			return err
 		}
@@ -229,7 +233,7 @@ func zipOutput(root string) ([]byte, int, error) {
 	if err := archive.Close(); err != nil {
 		return nil, 0, err
 	}
-	return body.Bytes(), files, nil
+	return body.Bytes(), count, nil
 }
 
 func netlifyRequest(ctx context.Context, method, endpoint, token string, body io.Reader, contentType string, result any, options NetlifyOptions) error {

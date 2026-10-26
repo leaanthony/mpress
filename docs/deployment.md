@@ -62,6 +62,11 @@ generated site. Choose Cloudflare Pages or Netlify. The form edits the same
 configuration and runs the same release checks as the command line. It never
 writes an API token to the project.
 
+Built-in deployment publishes regular files from the output directory. Symbolic
+links and special files inside that directory are rejected. If deployment reports
+that an asset changed after hashing, run `mpress deploy` again and avoid modifying
+the generated output while deployment is running.
+
 ## Base URL and sitemap
 
 Set the public origin before a production build:

@@ -63,3 +63,54 @@ func writeOperationFixture(t *testing.T, root, relative, body string) {
 		t.Fatal(err)
 	}
 }
+
+func TestOpenDeploymentBorrowsOutputInsideProject(t *testing.T) {
+	project := t.TempDir()
+	writeOperationFixture(t, project, "mpress.yaml", "build:\n  outputDir: linked\n")
+	writeOperationFixture(t, project, "site/index.html", "<h1>Home</h1>")
+	if err := os.Symlink("site", filepath.Join(project, "linked")); err != nil {
+		t.Skipf("symlinks unavailable: %v", err)
+	}
+	cfg, output, files, err := openDeployment(project)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() {
+		if err := output.Close(); err != nil {
+			t.Errorf("close deployment output: %v", err)
+		}
+		if err := files.Close(); err != nil {
+			t.Errorf("close deployment project: %v", err)
+		}
+	})
+	if cfg.Build.OutputDir != "linked" {
+		t.Fatalf("unexpected output config %q", cfg.Build.OutputDir)
+	}
+	if data, err := output.ReadFile("index.html"); err != nil || string(data) != "<h1>Home</h1>" {
+		t.Fatalf("internal output alias was not borrowed: %q, %v", data, err)
+	}
+}
+
+func TestOpenDeploymentRejectsRedirectedInputs(t *testing.T) {
+	t.Run("config", func(t *testing.T) {
+		project, outside := t.TempDir(), t.TempDir()
+		writeOperationFixture(t, outside, "mpress.yaml", "build:\n  outputDir: site\n")
+		if err := os.Symlink(filepath.Join(outside, "mpress.yaml"), filepath.Join(project, "mpress.yaml")); err != nil {
+			t.Skipf("symlinks unavailable: %v", err)
+		}
+		if _, _, _, err := openDeployment(project); err == nil {
+			t.Fatal("external configuration alias was accepted")
+		}
+	})
+	t.Run("output", func(t *testing.T) {
+		project, outside := t.TempDir(), t.TempDir()
+		writeOperationFixture(t, project, "mpress.yaml", "build:\n  outputDir: linked\n")
+		writeOperationFixture(t, outside, "index.html", "<h1>outside</h1>")
+		if err := os.Symlink(outside, filepath.Join(project, "linked")); err != nil {
+			t.Skipf("symlinks unavailable: %v", err)
+		}
+		if _, _, _, err := openDeployment(project); err == nil {
+			t.Fatal("external output alias was accepted")
+		}
+	})
+}
