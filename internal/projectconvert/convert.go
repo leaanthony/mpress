@@ -78,6 +78,35 @@ func conversionDirectory(root string, cfg *config.Config, directory string) stri
 	return directory
 }
 
+// planConfigurationUpdate derives the caller configuration with converted
+// style-guide and glossary references. It does not touch the filesystem.
+func planConfigurationUpdate(root string, cfg *config.Config, conversions []conversion) (config.Config, bool, error) {
+	updated := *cfg
+	changed := false
+	for _, reference := range []*string{&updated.Translation.StyleGuide, &updated.Translation.Glossary} {
+		if strings.TrimSpace(*reference) == "" {
+			continue
+		}
+		absolute := *reference
+		if !filepath.IsAbs(absolute) {
+			absolute = filepath.Join(root, filepath.FromSlash(absolute))
+		}
+		for _, item := range conversions {
+			if filepath.Clean(absolute) != filepath.Clean(item.source) {
+				continue
+			}
+			relative, err := filepath.Rel(root, item.target)
+			if err != nil {
+				return config.Config{}, false, err
+			}
+			*reference = filepath.ToSlash(relative)
+			changed = true
+			break
+		}
+	}
+	return updated, changed, nil
+}
+
 func runConversion(root string, cfg *config.Config, directory, format string, projectFiles, contentFiles *projectfs.FS) (Result, error) {
 	return runConversionWithOps(root, cfg, directory, format, projectFiles, contentFiles, defaultConversionOps)
 }
@@ -207,6 +236,22 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 		plannedTargets[target] = item.source
 	}
 
+	// Plan the configuration update and capture the configuration present now,
+	// before any document changes. An author save made while the conversion
+	// runs is then visible as a conflict instead of being silently replaced by
+	// the references planned from the caller's snapshot.
+	updated, configChanged, err := planConfigurationUpdate(root, cfg, conversions)
+	if err != nil {
+		return Result{}, err
+	}
+	var configState configSnapshot
+	if configChanged {
+		configState, err = captureConfigSnapshot(ops, projectFiles)
+		if err != nil {
+			return Result{}, err
+		}
+	}
+
 	journal := newRecoveryJournal(ops, contentFiles, directory)
 	fail := func(err error) (Result, error) {
 		if rollbackErr := journal.rollback(); rollbackErr != nil {
@@ -270,43 +315,33 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 		}
 	}
 
-	updated := *cfg
-	configChanged := false
-	for _, reference := range []*string{&updated.Translation.StyleGuide, &updated.Translation.Glossary} {
-		if strings.TrimSpace(*reference) == "" {
-			continue
-		}
-		absolute := *reference
-		if !filepath.IsAbs(absolute) {
-			absolute = filepath.Join(root, filepath.FromSlash(absolute))
-		}
-		for _, item := range conversions {
-			if filepath.Clean(absolute) != filepath.Clean(item.source) {
-				continue
-			}
-			relative, relErr := filepath.Rel(root, item.target)
-			if relErr != nil {
-				return fail(relErr)
-			}
-			*reference = filepath.ToSlash(relative)
-			configChanged = true
-			break
-		}
-	}
 	if configChanged {
-		info, statErr := ops.stat(projectFiles, config.Filename)
-		switch {
-		case statErr == nil && info.Mode().IsRegular():
-			if _, err := journal.moveAside(projectFiles, config.Filename); err != nil {
-				return fail(err)
+		if err := configState.unchanged(ops, projectFiles); err != nil {
+			return fail(err)
+		}
+		if configState.present {
+			info, statErr := ops.stat(projectFiles, config.Filename)
+			switch {
+			case statErr == nil && info.Mode().IsRegular() && configState.regular:
+				index, err := journal.moveAside(projectFiles, config.Filename)
+				if err != nil {
+					return fail(err)
+				}
+				if err := configState.confirmCaptured(ops, projectFiles, journal.entries[index].backup); err != nil {
+					return fail(err)
+				}
+			case statErr == nil && !configState.regular && !info.Mode().IsRegular():
+				// Keep a non-regular destination in place so the save reports it
+				// instead of silently replacing an unrelated directory.
+			case errors.Is(statErr, os.ErrNotExist):
+				return fail(configChangedDuringConversion())
+			case statErr != nil:
+				return fail(statErr)
+			default:
+				return fail(configChangedDuringConversion())
 			}
-		case statErr == nil:
-			// Keep a non-regular destination in place so the save reports it
-			// instead of silently replacing an unrelated directory.
-		case errors.Is(statErr, os.ErrNotExist):
+		} else {
 			journal.recordCreated(projectFiles, config.Filename, nil, 0)
-		default:
-			return fail(statErr)
 		}
 		if err := ops.saveConfig(projectFiles, updated); err != nil {
 			return fail(fmt.Errorf("update converted configuration paths: %w", err))

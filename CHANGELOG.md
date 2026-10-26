@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Detect conflicting site-settings saves when converting style-guide or glossary paths, preserving newer settings and restoring the original documents. Beads `mp-b52.1.6`.
+
 - Preserve translation approval and model changes saved during failed conversion recovery, with diagnostics that identify retained recovery copies. Beads `mp-b52.1.6`.
 
 - Keep retained conversion recovery documents out of generated pages and reader indexes, including live preview. Beads `mp-b52.1.10`.
