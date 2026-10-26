@@ -194,14 +194,17 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 		return result, err
 	}
 	startTiming("prepare", "Prepare output")
-	if err := cfg.RemoveOutput(projectDir, outputDir); err != nil {
+	staged, err := stageBuildOutput(projectDir, files, cfg, outputDir)
+	if err != nil {
 		return result, err
 	}
+	defer staged.discard()
+	outputDir = staged.staging
 	if err := os.MkdirAll(filepath.Join(outputDir, "assets"), 0o755); err != nil {
 		return result, err
 	}
 	if opts.LinkCollector != nil {
-		opts.LinkCollector.Reset(outputDir)
+		opts.LinkCollector.Reset(staged.final)
 	}
 	// usedCSSTokens accumulates the class and id tokens referenced by every
 	// generated and copied HTML file. Collecting the set as pages are produced
@@ -482,20 +485,12 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 		if err := knowledge.Generate(outputDir, cfg, pagesByLang); err != nil {
 			return result, err
 		}
-		if opts.LinkCollector != nil {
-			if err := opts.LinkCollector.IndexDirectory(knowledge.Directory); err != nil {
-				return result, err
-			}
-		}
 	}
 	if _, err := docversion.Mount(projectDir, outputDir); err != nil {
 		return result, err
 	}
 	if opts.LinkCollector != nil && cfg.Version.Enabled {
 		opts.LinkCollector.AddFile("versions/versions.json")
-		if err := opts.LinkCollector.IndexDirectory("versions"); err != nil {
-			return result, err
-		}
 	}
 	if opts.LinkCollector != nil {
 		result.Files = opts.LinkCollector.FileCount()
@@ -504,6 +499,16 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 	}
 	if opts.Strict && hasErrors(result.Diagnostics) {
 		return result, fmt.Errorf("strict build failed with %d error(s)", countSeverity(result.Diagnostics, "error"))
+	}
+	warning, err := staged.finishBuild(opts.LinkCollector, cfg)
+	if err != nil {
+		return result, err
+	}
+	if warning != nil {
+		result.Diagnostics = append(result.Diagnostics, *warning)
+	}
+	if opts.LinkCollector != nil {
+		result.Files = opts.LinkCollector.FileCount()
 	}
 	return result, nil
 }
