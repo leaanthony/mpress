@@ -8,6 +8,8 @@
 
 - Confine version captures to the selected build output subtree. Capture pins the output directory once and reads, walks and copies only through that pinned source, so an output asset link cannot package project-private files from elsewhere in the project while a rejected capture preserves the previous verified snapshot. Internal aliases within the output and internally aliased output directories still work. Beads `mp-b52.1.7`.
 
+- Keep version capture and removal checks inside the existing store lock, preventing transient path errors while another capture replaces the same version. Beads `mp-b52.1.7`.
+
 ## v1.0.25 — 2026-10-26
 
 ### Fixed

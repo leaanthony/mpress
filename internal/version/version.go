@@ -95,15 +95,17 @@ func Remove(project, label string) error {
 		return err
 	}
 	defer files.Close()
-	path := filepath.Join(cfg.ArtifactsPath(project), label)
-	if err := cfg.SafeVersionPath(project, path); err != nil {
-		return err
-	}
 	lock, err := files.Lock(storeLockFile)
 	if err != nil {
 		return err
 	}
 	defer lock.Close()
+	// The label path is mutable store state; validate it under the writer lock
+	// as a concurrent owner may have moved it aside while this call waited.
+	path := filepath.Join(cfg.ArtifactsPath(project), label)
+	if err := cfg.SafeVersionPath(project, path); err != nil {
+		return err
+	}
 	return files.RemoveAll(label)
 }
 func Mount(project, output string) (int, error) {

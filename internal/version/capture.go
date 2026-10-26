@@ -45,9 +45,6 @@ func capture(project, label string, force bool) error {
 		return errMissingOutput
 	}
 	base := cfg.ArtifactsPath(project)
-	if err := cfg.SafeVersionPath(project, filepath.Join(base, label)); err != nil {
-		return err
-	}
 	if err := files.MkdirAll(base, 0755); err != nil {
 		return err
 	}
@@ -61,6 +58,11 @@ func capture(project, label string, force bool) error {
 		return err
 	}
 	defer lock.Close()
+	// Another writer can move the label during promotion. Inspect its path
+	// only while holding the store lock.
+	if err := cfg.SafeVersionPath(project, filepath.Join(base, label)); err != nil {
+		return err
+	}
 	if _, err := store.Stat(label); err == nil && !force {
 		return fmt.Errorf("version %s already exists", label)
 	} else if err != nil && !os.IsNotExist(err) {
