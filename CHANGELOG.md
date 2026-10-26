@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Return optional configuration maps and lists as empty objects and arrays instead of JSON `null` from the authoring MCP server and REST settings endpoint, so reading, editing the title and saving the complete configuration works without client-side normalisation. Beads `mp-b52.3.10`.
+
 - Refuse builds and exports whose static tree contains an unreadable entry, such as a dangling asset link, and keep the previous published site or archive intact instead of silently publishing an incomplete result. Projects without an optional static directory still build normally. Beads `mp-b52.1.4` (audit S04).
 
 - Keep site settings saved at the very end of a format conversion: the final configuration publication never replaces a newer author save. The conflict is reported and the newer settings, original configuration and documents are retained. Beads `mp-b52.1.6`.

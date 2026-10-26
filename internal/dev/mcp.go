@@ -194,6 +194,7 @@ func (s *Server) newMCPHandler() http.Handler {
 				return nil, mcpGetConfigOutput{}, err
 			}
 			cfg, sourceRevision := s.activeConfigState()
+			cfg.EnsureCollections()
 			return nil, mcpGetConfigOutput{Config: cfg, Revision: sourceRevision}, nil
 		})
 

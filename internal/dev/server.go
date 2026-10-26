@@ -2096,6 +2096,7 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		complete, sourceRevision := s.activeConfigState()
+		complete.EnsureCollections()
 		writeJSON(w, http.StatusOK, configPayload{
 			Title: complete.Site.Title, Description: complete.Site.Description, BaseURL: complete.Site.BaseURL,
 			ColorScheme: complete.Theme.ColorScheme, AccentColor: complete.Theme.AccentColor,

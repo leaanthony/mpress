@@ -355,6 +355,28 @@ func (c Config) Clone() Config {
 	return clone
 }
 
+// EnsureCollections replaces nil collection fields with empty values. The
+// configuration schema declares these fields as JSON objects and arrays, so an
+// omitted collection must be returned as an empty object or array rather than
+// null. It operates on a caller-owned snapshot and preserves non-empty values.
+func (c *Config) EnsureCollections() {
+	if c.Site.Languages == nil {
+		c.Site.Languages = []string{}
+	}
+	if c.Site.LanguageLabels == nil {
+		c.Site.LanguageLabels = map[string]string{}
+	}
+	if c.Site.HeaderLinks == nil {
+		c.Site.HeaderLinks = []HeaderLink{}
+	}
+	if c.Translation.LanguageModels == nil {
+		c.Translation.LanguageModels = map[string]TranslationLanguageModel{}
+	}
+	if c.Deploy.Targets == nil {
+		c.Deploy.Targets = map[string]DeployTarget{}
+	}
+}
+
 // Parse loads and validates configuration data while applying the same defaults
 // as Load. Development tools use it before a configuration edit reaches disk.
 func Parse(data []byte) (Config, error) {
