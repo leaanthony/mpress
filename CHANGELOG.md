@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep the localized phone search launcher correctly sized and clickable: normalize its mobile button box so the 44px target stays in the header, and keep theme, accessibility and language controls visible and usable after search closes while focus returns to the launcher. Beads `mp-b52.2.13`.
+
 - Give repeated interactive components on one documentation page independent identities. Tabs, carousels, data tables, preview/file tabs and API playgrounds allocate document-scoped IDs during rendering, keep local ARIA and popover references paired, and report duplicate authored IDs without rewriting them. Repeated builds and concurrent page renders now produce stable bytes. Beads `mp-b52.2.7`.
 
 - Confine version captures to the selected build output subtree. Capture pins the output directory once and reads, walks and copies only through that pinned source, so an output asset link cannot package project-private files from elsewhere in the project while a rejected capture preserves the previous verified snapshot. Internal aliases within the output and internally aliased output directories still work. Beads `mp-b52.1.7`.
