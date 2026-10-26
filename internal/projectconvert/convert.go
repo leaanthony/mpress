@@ -202,10 +202,13 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 			journal.recordWritten(index, item.data)
 			continue
 		}
-		if err := ops.write(contentFiles, item.target, item.data, item.mode); err != nil {
+		published, err := ops.writeNew(contentFiles, item.target, item.data, item.mode)
+		if published {
+			journal.recordCreated(contentFiles, item.target, item.data)
+		}
+		if err != nil {
 			return fail(err)
 		}
-		journal.recordCreated(contentFiles, item.target, item.data)
 	}
 	for _, item := range conversions {
 		if item.source == item.target {

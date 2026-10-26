@@ -252,41 +252,58 @@ func (f *FS) WriteAtomic(name string, data []byte) error {
 
 // WriteAtomicMode preserves the requested permissions before promotion.
 func (f *FS) WriteAtomicMode(name string, data []byte, mode fs.FileMode) error {
-	return f.writeAtomic(name, func(file *os.File) error { _, err := file.Write(data); return err }, mode.Perm(), true)
+	_, err := f.writeAtomic(name, func(file *os.File) error { _, err := file.Write(data); return err }, mode.Perm(), true, true)
+	return err
+}
+
+// WriteNewAtomicMode stages a complete new file and publishes it without
+// replacing an existing path. The returned boolean reports whether the
+// destination became visible, including when only post-publication cleanup
+// failed. A final file, symlink or dangling link is never followed or replaced.
+func (f *FS) WriteNewAtomicMode(name string, data []byte, mode fs.FileMode) (bool, error) {
+	return f.writeAtomic(name, func(file *os.File) error { _, err := file.Write(data); return err }, mode.Perm(), true, false)
 }
 
 // WriteCache atomically replaces recomputable data without a durability sync.
 func (f *FS) WriteCache(name string, data []byte) error {
-	return f.writeAtomic(name, func(file *os.File) error { _, err := file.Write(data); return err }, 0600, false)
+	_, err := f.writeAtomic(name, func(file *os.File) error { _, err := file.Write(data); return err }, 0600, false, true)
+	return err
 }
 
 // WriteFrom atomically copies a stream without a durability sync. It supports
 // owned staging files without allocating the entire input in memory.
 func (f *FS) WriteFrom(name string, source io.Reader) error {
-	return f.writeAtomic(name, func(file *os.File) error { _, err := io.Copy(file, source); return err }, 0644, false)
+	_, err := f.writeAtomic(name, func(file *os.File) error { _, err := io.Copy(file, source); return err }, 0644, false, true)
+	return err
 }
 
-func (f *FS) writeAtomic(name string, write func(*os.File) error, mode fs.FileMode, durable bool) error {
-	parent, leaf, err := f.destination(name)
+func (f *FS) writeAtomic(name string, write func(*os.File) error, mode fs.FileMode, durable, replace bool) (bool, error) {
+	var parent, leaf string
+	var err error
+	if replace {
+		parent, leaf, err = f.destination(name)
+	} else {
+		parent, leaf, err = f.lexicalDestination(name)
+	}
 	if err != nil {
-		return err
+		return false, err
 	}
 	if err := f.root.MkdirAll(parent, 0755); err != nil {
-		return err
+		return false, err
 	}
 	dir, err := f.root.OpenRoot(parent)
 	if err != nil {
-		return err
+		return false, err
 	}
 	defer dir.Close()
 	tmpName := ".mpress-write-" + rand.Text()
 	tmp, err := dir.OpenFile(tmpName, os.O_CREATE|os.O_EXCL|os.O_WRONLY, 0600)
 	if err != nil {
-		return err
+		return false, err
 	}
-	promoted := false
+	published := false
 	defer func() {
-		if !promoted {
+		if !published {
 			_ = dir.Remove(tmpName)
 		}
 	}()
@@ -300,11 +317,24 @@ func (f *FS) writeAtomic(name string, write func(*os.File) error, mode fs.FileMo
 		err = closeErr
 	}
 	if err != nil {
-		return err
+		return false, err
 	}
-	if err := dir.Rename(tmpName, leaf); err != nil {
-		return err
+	if replace {
+		if err := dir.Rename(tmpName, leaf); err != nil {
+			return false, err
+		}
+		published = true
+		return true, nil
 	}
-	promoted = true
-	return nil
+	if err := dir.Link(tmpName, leaf); err != nil {
+		if errors.Is(err, fs.ErrExist) {
+			return false, fmt.Errorf("refusing to replace existing file %s: %w", name, err)
+		}
+		return false, fmt.Errorf("publish new file %s: %w", name, err)
+	}
+	published = true
+	if err := dir.Remove(tmpName); err != nil {
+		return true, fmt.Errorf("remove temporary file %s after publishing %s: %w", tmpName, name, err)
+	}
+	return true, nil
 }

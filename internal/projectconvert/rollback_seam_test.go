@@ -218,14 +218,14 @@ func TestConversionRollbackPreservesReplacedGeneratedTarget(t *testing.T) {
 	external := []byte("External replacement of the generated target.\n")
 	writeFailure := errors.New("target write failed")
 	ops := defaultConversionOps
-	ops.write = func(f *projectfs.FS, name string, data []byte, mode os.FileMode) error {
+	ops.writeNew = func(f *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
 		if filepath.Clean(name) == filepath.Join(root, "content", "b.mpd") {
 			if err := os.WriteFile(filepath.Join(root, "content", "a.mpd"), external, 0644); err != nil {
-				return err
+				return false, err
 			}
-			return writeFailure
+			return false, writeFailure
 		}
-		return f.WriteAtomicMode(name, data, mode)
+		return f.WriteNewAtomicMode(name, data, mode)
 	}
 
 	_, err := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops)
@@ -392,4 +392,63 @@ func TestSuccessfulConversionLeavesNoRecoveryCopies(t *testing.T) {
 	if copies := recoveryCopies(t, root); len(copies) != 0 {
 		t.Fatalf("successful conversion retained recovery copies: %v", copies)
 	}
+}
+
+func TestConversionRejectsDestinationCreatedAfterPlanning(t *testing.T) {
+	cfg := config.Default()
+	root, files := openConversionProject(t, &cfg)
+	a := writeConversionSource(t, filepath.Join(root, "content", "a.md"), 0600, "# Alpha\n\nOriginal alpha.\n")
+	b := writeConversionSource(t, filepath.Join(root, "content", "b.md"), 0640, "# Beta\n\nOriginal beta.\n")
+	external := []byte("# Newly authored\n\nThis document appeared while conversion was running.\n")
+	target := filepath.Join(root, "content", "b.mpd")
+	ops := defaultConversionOps
+	ops.writeNew = func(f *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
+		if filepath.Clean(name) == target {
+			if err := os.WriteFile(target, external, 0644); err != nil {
+				return false, err
+			}
+		}
+		return f.WriteNewAtomicMode(name, data, mode)
+	}
+
+	_, err := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops)
+	if !errors.Is(err, os.ErrExist) {
+		t.Fatalf("new destination created after planning was not rejected: %v", err)
+	}
+	got, readErr := os.ReadFile(target)
+	if readErr != nil || string(got) != string(external) {
+		t.Fatalf("newly authored destination changed: %v %q", readErr, got)
+	}
+	if info, err := os.Stat(target); err != nil || runtime.GOOS != "windows" && info.Mode().Perm() != 0644 {
+		t.Fatalf("newly authored destination mode changed: %v %v", info, err)
+	}
+	assertConversionSource(t, filepath.Join(root, "content", "a.md"), a, 0600)
+	assertConversionSource(t, filepath.Join(root, "content", "b.md"), b, 0640)
+	if _, err := os.Stat(filepath.Join(root, "content", "a.mpd")); !os.IsNotExist(err) {
+		t.Fatalf("earlier generated target survived the rejection: %v", err)
+	}
+	if copies := recoveryCopies(t, root); len(copies) != 0 {
+		t.Fatalf("rejected conversion retained recovery copies: %v", copies)
+	}
+}
+
+func TestConversionRollsBackTargetPublishedBeforeCleanupError(t *testing.T) {
+	cfg := config.Default()
+	root, files := openConversionProject(t, &cfg)
+	source := filepath.Join(root, "content", "page.md")
+	original := writeConversionSource(t, source, 0600, "# Keep this original\n")
+	cleanupError := errors.New("temporary cleanup failed after publication")
+	ops := defaultConversionOps
+	ops.writeNew = func(f *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
+		published, err := f.WriteNewAtomicMode(name, data, mode)
+		if err != nil {
+			return published, err
+		}
+		return published, cleanupError
+	}
+	if _, err := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops); !errors.Is(err, cleanupError) {
+		t.Fatalf("post-publication error was not reported: %v", err)
+	}
+	assertConversionSource(t, source, original, 0600)
+	assertNoMPDTargets(t, cfg.ContentPath(root))
 }

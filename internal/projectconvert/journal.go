@@ -22,6 +22,7 @@ const (
 // to reproduce failures deterministically without process-global hooks.
 type conversionOps struct {
 	write         func(*projectfs.FS, string, []byte, os.FileMode) error
+	writeNew      func(*projectfs.FS, string, []byte, os.FileMode) (bool, error)
 	rename        func(*projectfs.FS, string, string) error
 	renameLexical func(*projectfs.FS, string, string) error
 	remove        func(*projectfs.FS, string) error
@@ -35,6 +36,9 @@ type conversionOps struct {
 var defaultConversionOps = conversionOps{
 	write: func(files *projectfs.FS, name string, data []byte, mode os.FileMode) error {
 		return files.WriteAtomicMode(name, data, mode)
+	},
+	writeNew: func(files *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
+		return files.WriteNewAtomicMode(name, data, mode)
 	},
 	rename:        func(files *projectfs.FS, old, new string) error { return files.Rename(old, new) },
 	renameLexical: func(files *projectfs.FS, old, new string) error { return files.RenameLexical(old, new) },
