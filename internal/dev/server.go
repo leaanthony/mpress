@@ -359,7 +359,25 @@ func (s *Server) Handler() http.Handler {
 	mux.HandleFunc("/__mpress/", s.handleWorkspace)
 	mux.Handle("/__mpress/preview/", http.StripPrefix("/__mpress/preview", s.previewFileServer))
 	mux.HandleFunc("/", s.handleSite)
-	return securityHeaders(mux)
+	return securityHeaders(s.guardProjectRoot(mux))
+}
+
+// guardProjectRoot stops authoring API operations before they reach a handler
+// once the selected pathname no longer names the directory pinned at startup.
+// Serving from the pinned tree and the event stream remain available; only
+// delegated operations that may reopen the path are refused. This is a
+// point-in-time check before dispatch, not a barrier against a replacement that
+// happens later.
+func (s *Server) guardProjectRoot(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if strings.HasPrefix(r.URL.Path, "/__mpress/api/") {
+			if err := s.files.CheckRoot(); err != nil {
+				writeAPIError(w, http.StatusConflict, err)
+				return
+			}
+		}
+		next.ServeHTTP(w, r)
+	})
 }
 
 func (s *Server) handleKnowledge(w http.ResponseWriter, r *http.Request) {
@@ -1466,6 +1484,12 @@ func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
 	buildID := revision([]byte(payload.Path + "\x00" + payload.Content))
 	if _, err := cfg.SafePreviewPool(s.project); err != nil {
 		writeAPIError(w, http.StatusBadRequest, err)
+		return
+	}
+	if err := s.files.CheckRoot(); err != nil {
+		// Recheck immediately before reopening the project path for the build,
+		// even though the API dispatch guard already covers this endpoint.
+		writeAPIError(w, http.StatusConflict, err)
 		return
 	}
 	buildDir := filepath.Join(s.previewDir, buildID)
@@ -3591,6 +3615,12 @@ func (s *Server) rebuild(reload bool) {
 }
 
 func (s *Server) rebuildLocked(reload bool) error {
+	if err := s.files.CheckRoot(); err != nil {
+		state := BuildState{Status: "error", Error: err.Error(), BuiltAt: time.Now(), Revision: s.currentState().Revision + 1}
+		s.setState(state)
+		fmt.Fprintln(os.Stderr, "rebuild:", err)
+		return err
+	}
 	s.setState(BuildState{Status: "building", Revision: s.currentState().Revision + 1})
 	buildGeneration := s.configGenerationAt()
 	result, err := site.Build(s.project, site.BuildOptions{IncludeDrafts: true})

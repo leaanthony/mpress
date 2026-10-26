@@ -14,13 +14,24 @@ import (
 
 var ErrOutside = errors.New("path leaves the project")
 
+// ErrRootChanged reports that the selected pathname no longer names the pinned directory.
+var ErrRootChanged = errors.New("the project directory is no longer the one the server opened; restart the server or select the project again")
+
 type FS struct {
 	project string
 	root    *os.Root
+	// Keep the selected pathname as well as the identity read through the handle.
+	// Resolving the pathname again must not silently select a different project.
+	name     string
+	rootInfo fs.FileInfo
 }
 
 func Open(project string) (*FS, error) {
-	canonical, err := CanonicalPath(project)
+	absolute, err := filepath.Abs(project)
+	if err != nil {
+		return nil, err
+	}
+	canonical, err := CanonicalPath(absolute)
 	if err != nil {
 		return nil, err
 	}
@@ -28,7 +39,12 @@ func Open(project string) (*FS, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &FS{project: canonical, root: root}, nil
+	info, err := root.Stat(".")
+	if err != nil {
+		_ = root.Close()
+		return nil, err
+	}
+	return &FS{project: canonical, root: root, name: absolute, rootInfo: info}, nil
 }
 
 func (f *FS) Close() error { return f.root.Close() }
@@ -48,7 +64,34 @@ func (f *FS) Sub(name string) (*FS, error) {
 	if err != nil {
 		return nil, err
 	}
-	return &FS{project: filepath.Join(f.project, rel), root: root}, nil
+	info, err := root.Stat(".")
+	if err != nil {
+		_ = root.Close()
+		return nil, err
+	}
+	project := filepath.Join(f.project, rel)
+	return &FS{project: project, root: root, name: project, rootInfo: info}, nil
+}
+
+// CheckRoot verifies that the pathname this boundary was opened from still
+// identifies the pinned directory. The pinned identity is read through the root
+// handle rather than the ambient path, so a moved or replaced directory, or a
+// retargeted symbolic link that named it, is reported even though confined file
+// operations continue to reach the original tree.
+//
+// This is a point-in-time check. A directory replaced after it returns is
+// outside this guard.
+func (f *FS) CheckRoot() error {
+	current, err := os.Stat(f.name)
+	if err != nil {
+		// Do not include the absolute path: callers report this error to
+		// remote clients before they have authenticated.
+		return fmt.Errorf("%w: the selected path is no longer available", ErrRootChanged)
+	}
+	if !os.SameFile(f.rootInfo, current) {
+		return fmt.Errorf("%w: the selected path now names a different directory", ErrRootChanged)
+	}
+	return nil
 }
 
 func (f *FS) Open(name string) (*os.File, error) {

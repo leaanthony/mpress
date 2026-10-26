@@ -133,6 +133,15 @@ func (s *Server) newMCPHandler() http.Handler {
 		Instructions: "Use M-Press tools to inspect and maintain the current documentation project. Read a file or configuration before changing it, then send the returned revision with the write.",
 	})
 
+	server.AddReceivingMiddleware(func(next mcp.MethodHandler) mcp.MethodHandler {
+		return func(ctx context.Context, method string, request mcp.Request) (mcp.Result, error) {
+			if err := s.files.CheckRoot(); err != nil {
+				return nil, err
+			}
+			return next(ctx, method, request)
+		}
+	})
+
 	readOnly := &mcp.ToolAnnotations{ReadOnlyHint: true, OpenWorldHint: boolPointer(false)}
 	localWrite := &mcp.ToolAnnotations{DestructiveHint: boolPointer(true), IdempotentHint: true, OpenWorldHint: boolPointer(false)}
 

@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Refuse development-server operations when the selected project directory has moved, been replaced or its alias has changed targets. Report how to restart instead of rebuilding another project at the old path; restoring the original directory permits retry. Beads `mp-b52.1.3`.
+
 - Return optional configuration maps and lists as empty objects and arrays instead of JSON `null` from the authoring MCP server and REST settings endpoint, so reading, editing the title and saving the complete configuration works without client-side normalisation. Beads `mp-b52.3.10`.
 
 - Refuse builds and exports whose static tree contains an unreadable entry, such as a dangling asset link, and keep the previous published site or archive intact instead of silently publishing an incomplete result. Projects without an optional static directory still build normally. Beads `mp-b52.1.4` (audit S04).
