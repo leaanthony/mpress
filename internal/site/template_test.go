@@ -459,7 +459,7 @@ func TestAccessibilityMenuIsEnabledByDefaultAndCanBeRemoved(t *testing.T) {
 	}
 	got := string(markup)
 	for _, want := range []string{
-		`id="accessibility"`, `mpress-accessibility-icon`, `viewBox="0 0 512 512"`, `aria-haspopup="dialog"`,
+		`id="mpress-accessibility-toggle"`, `mpress-accessibility-icon`, `viewBox="0 0 512 512"`, `aria-haspopup="dialog"`,
 		`id="mpress-accessibility-panel"`, `data-utility-panel`, `Bionic reading`,
 		`Focus mode`, `Reading guide`, `Reduce motion`, `High contrast`,
 		`Red and green distinction`, `Saved only in this browser.`,
@@ -497,7 +497,7 @@ func TestAccessibilityMenuIsEnabledByDefaultAndCanBeRemoved(t *testing.T) {
 		t.Fatal(err)
 	}
 	got = string(markup)
-	for _, unwanted := range []string{`id="accessibility"`, `id="mpress-accessibility-panel"`, `mpress-accessibility`} {
+	for _, unwanted := range []string{`id="mpress-accessibility-toggle"`, `id="mpress-accessibility-panel"`, `mpress-accessibility`} {
 		if strings.Contains(got, unwanted) {
 			t.Errorf("disabled accessibility UI still contains %q: %s", unwanted, got)
 		}
@@ -538,7 +538,7 @@ func TestSearchPresentationUsesConfigurationAndCanBeRemoved(t *testing.T) {
 		t.Fatal(err)
 	}
 	got = string(markup)
-	if strings.Contains(got, `id="search"`) || !strings.Contains(got, `class="header-spacer"`) {
+	if strings.Contains(got, `id="mpress-search-toggle"`) || !strings.Contains(got, `class="header-spacer"`) {
 		t.Fatalf("disabled search still renders an interactive control: %s", got)
 	}
 }

@@ -255,7 +255,7 @@ search:
 		`name="twitter:image" content="https://docs.example.test/social-card.png"`,
 		`hreflang="fr" href="https://docs.example.test/fr/"`,
 		`hreflang="x-default" href="https://docs.example.test/"`,
-		`id="search" type="button"`,
+		`id="mpress-search-toggle" type="button"`,
 		`role="combobox" aria-label="Search" aria-autocomplete="list"`,
 		`aria-current="page"`,
 	} {
@@ -719,7 +719,7 @@ Ship confidently.
 	}
 	markup := string(home)
 	markup = strings.Replace(markup, `href="./support/"`, `href="/support/"`, 1)
-	for _, want := range []string{`class="landing-page"`, `data-shortcut-search="Mod+K"`, `data-shortcut-accessibility="Mod+A"`, `<header>`, `class="landing-main"`, `product-hero`, `mpress-section-hero`, `mpress-columns-hero`, `mpress-headline`, `Build clearly.<br>Ship confidently.`, `mpress-button-primary`, `class="theme-logo-light"`, `class="theme-logo-dark"`, `class="primary-links"`, `>Components</a>`, `class="header-link-button header-link-button-outline" href="/support/">Support</a>`, `aria-label="GitHub"`, `aria-label="Discord"`, `aria-label="X"`, `aria-label="Select language: en"`, `lucide-languages`, `id="mpress-language-menu"`, `class="header-utility-cluster"`, `header-contribute`, `aria-label="Accessibility settings"`, `id="mpress-language-menu"`, `aria-current="true"`, `class="search-shortcut" aria-hidden="true">Ctrl K</kbd>`, `id="theme" class="header-group theme-toggle"`, `aria-label="Theme: System. Switch to Dark"`, `lucide-monitor`, `lucide-moon`, `lucide-sun`} {
+	for _, want := range []string{`class="landing-page"`, `data-shortcut-search="Mod+K"`, `data-shortcut-accessibility="Mod+A"`, `<header>`, `class="landing-main"`, `product-hero`, `mpress-section-hero`, `mpress-columns-hero`, `mpress-headline`, `Build clearly.<br>Ship confidently.`, `mpress-button-primary`, `class="theme-logo-light"`, `class="theme-logo-dark"`, `class="primary-links"`, `>Components</a>`, `class="header-link-button header-link-button-outline" href="/support/">Support</a>`, `aria-label="GitHub"`, `aria-label="Discord"`, `aria-label="X"`, `aria-label="Select language: en"`, `lucide-languages`, `id="mpress-language-menu"`, `class="header-utility-cluster"`, `header-contribute`, `aria-label="Accessibility settings"`, `id="mpress-language-menu"`, `aria-current="true"`, `class="search-shortcut" aria-hidden="true">Ctrl K</kbd>`, `id="mpress-theme-toggle" class="header-group theme-toggle"`, `aria-label="Theme: System. Switch to Dark"`, `lucide-monitor`, `lucide-moon`, `lucide-sun`} {
 		if !strings.Contains(markup, want) {
 			t.Errorf("landing page missing %q: %s", want, markup)
 		}
@@ -727,12 +727,12 @@ Ship confidently.
 	if strings.Contains(markup, "@section") || strings.Contains(markup, "@end") {
 		t.Fatalf("native landing directives leaked into generated HTML: %s", markup)
 	}
-	if strings.Contains(markup, `<select id="theme"`) || strings.Contains(markup, `>Auto</option>`) {
+	if strings.Contains(markup, `<select id="mpress-theme-toggle"`) || strings.Contains(markup, `>Auto</option>`) {
 		t.Error("landing page still renders the old theme selector")
 	}
 	socialIndex := strings.Index(markup, `class="header-group social-links"`)
 	languageIndex := strings.Index(markup, `class="header-group utility-select utility-menu language-select"`)
-	themeIndex := strings.Index(markup, `id="theme" class="header-group theme-toggle"`)
+	themeIndex := strings.Index(markup, `id="mpress-theme-toggle" class="header-group theme-toggle"`)
 	if socialIndex < 0 || languageIndex < 0 || themeIndex < 0 || socialIndex > languageIndex || languageIndex > themeIndex {
 		t.Errorf("language and theme controls are not in the expected order: %s", markup)
 	}
@@ -928,7 +928,7 @@ build:
 	if err != nil {
 		t.Fatal(err)
 	}
-	for _, want := range []string{".blog-hero", ".blog-grid", `.blog-layout[data-blog-landing-style="list"] .blog-grid`, ".blog-filter.active { background: var(--accent-fill); color: var(--accent-fill-text);", ".blog-article-main", ".blog-article-link.active { background: var(--accent-fill); color: var(--accent-fill-text);", ":is(.blog-index-page, .blog-article-page) #menu", `.blog-hero[data-blog-image-fit="contain"]`, `.blog-hero[data-blog-image-mode="floating"]`, `--blog-image-default-background: #fff`, `--blog-image-default-background: #000`, `[data-blog-tags-visible="false"]`, `[data-blog-heading-size="large"]`, `var(--blog-image-background`, `var(--blog-floating-image-width, 100%)`} {
+	for _, want := range []string{".blog-hero", ".blog-grid", `.blog-layout[data-blog-landing-style="list"] .blog-grid`, ".blog-filter.active { background: var(--accent-fill); color: var(--accent-fill-text);", ".blog-article-main", ".blog-article-link.active { background: var(--accent-fill); color: var(--accent-fill-text);", ":is(.blog-index-page, .blog-article-page) #mpress-menu-toggle", `.blog-hero[data-blog-image-fit="contain"]`, `.blog-hero[data-blog-image-mode="floating"]`, `--blog-image-default-background: #fff`, `--blog-image-default-background: #000`, `[data-blog-tags-visible="false"]`, `[data-blog-heading-size="large"]`, `var(--blog-image-background`, `var(--blog-floating-image-width, 100%)`} {
 		if !strings.Contains(string(theme), want) {
 			t.Errorf("generated theme missing blog rule %q", want)
 		}
