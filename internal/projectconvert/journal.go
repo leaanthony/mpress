@@ -14,7 +14,7 @@ import (
 )
 
 const (
-	recoveryPrefix = ".mpress-conversion-recovery-"
+	recoveryPrefix = config.ConversionRecoveryPrefix
 	recoverySuffix = ".recovery"
 )
 

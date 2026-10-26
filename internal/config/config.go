@@ -21,6 +21,12 @@ import (
 
 const Filename = "mpress.yaml"
 
+// ConversionRecoveryPrefix marks directories in which a failed format
+// conversion retains the author's original documents. Readers skip nested
+// directories with this prefix; an explicitly configured content or conversion
+// root remains authoritative even when it carries the prefix.
+const ConversionRecoveryPrefix = ".mpress-conversion-recovery-"
+
 type Config struct {
 	Site          SiteConfig          `yaml:"site" json:"site"`
 	Build         BuildConfig         `yaml:"build" json:"build"`

@@ -9,7 +9,9 @@ import (
 	"testing"
 
 	"github.com/leaanthony/mpress/internal/config"
+	"github.com/leaanthony/mpress/internal/knowledge"
 	"github.com/leaanthony/mpress/internal/projectfs"
+	"github.com/leaanthony/mpress/internal/site"
 )
 
 type conversionTreeEntry struct {
@@ -176,12 +178,16 @@ func TestConversionExplicitRecoveryNamedRootsStayAuthoritative(t *testing.T) {
 func TestConversionRetryAfterFailurePreservesNamedRecoveryTree(t *testing.T) {
 	cfg := config.Default()
 	root, files := openConversionProject(t, &cfg)
+	if err := os.WriteFile(filepath.Join(root, config.Filename), []byte("site:\n  title: Recovery retry\nbuild:\n  contentDir: content\n  outputDir: site\n"), 0644); err != nil {
+		t.Fatal(err)
+	}
 	content := cfg.ContentPath(root)
 	a := writeConversionSource(t, filepath.Join(content, "a.md"), 0600, "# Alpha\n\nOriginal alpha.\n")
 	b := writeConversionSource(t, filepath.Join(content, "b.md"), 0640, "# Beta\n\nOriginal beta.\n")
 	aTarget := filepath.Join(content, "a.mpd")
 	publicationFailure := errors.New("beta target publication failed")
-	keep := []byte("# Keep this author evidence\n\nDo not convert.\n")
+	canary := "ZQXCANARYTOKEN7F3A"
+	keep := []byte("# Keep this author evidence\n\nDo not convert.\n\n" + canary + "\n")
 	injected := false
 	ops := defaultConversionOps
 	ops.writeNew = func(f *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
@@ -242,5 +248,43 @@ func TestConversionRetryAfterFailurePreservesNamedRecoveryTree(t *testing.T) {
 	}
 	if _, err := os.Stat(filepath.Join(captured, "keep.mpd")); !errors.Is(err, os.ErrNotExist) {
 		t.Fatalf("retry converted a retained recovery document: %v", err)
+	}
+
+	// A later reader build must publish the converted pages without reading the
+	// retained originals.
+	beforeBuild := snapshotConversionTree(t, roots[0])
+	buildResult, err := site.Build(root, site.BuildOptions{Strict: true})
+	if err != nil {
+		t.Fatalf("build after retry: %v; diagnostics: %#v", err, buildResult.Diagnostics)
+	}
+	output := filepath.Join(root, "site")
+	err = filepath.WalkDir(output, func(path string, entry os.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		if entry.IsDir() || strings.HasSuffix(path, ".gz") {
+			return nil
+		}
+		data, err := os.ReadFile(path)
+		if err != nil {
+			return err
+		}
+		if strings.Contains(string(data), canary) {
+			t.Errorf("generated artifact %s contains retained recovery content", path)
+		}
+		return nil
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	store, err := knowledge.Load(output)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if results := store.Search(knowledge.SearchOptions{Query: canary}); len(results) != 0 {
+		t.Errorf("knowledge search found retained recovery content: %#v", results)
+	}
+	if after := snapshotConversionTree(t, roots[0]); !reflect.DeepEqual(beforeBuild, after) {
+		t.Fatalf("build changed retained recovery evidence:\nbefore %+v\nafter  %+v", beforeBuild, after)
 	}
 }

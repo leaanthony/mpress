@@ -15,6 +15,7 @@ import (
 	"unicode"
 
 	legacycomponents "github.com/leaanthony/mpress/internal/components"
+	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/highlight"
 	"github.com/leaanthony/mpress/internal/icons"
 	"github.com/leaanthony/mpress/internal/projectfs"
@@ -711,11 +712,19 @@ func discoverWithWalk(contentDir string, languages []string, defaultLanguage str
 	for _, l := range languages {
 		langSet[l] = true
 	}
+	// An explicitly selected content root is authoritative, including one
+	// whose own name carries the recovery prefix.
+	root := filepath.Clean(contentDir)
 	err := walk(contentDir, func(path string, entry os.DirEntry, err error) error {
 		if err != nil {
 			return err
 		}
 		if entry.IsDir() {
+			// A failed conversion retains author originals in a nested owned
+			// recovery tree. Skip it before any document is read or parsed.
+			if filepath.Clean(path) != root && strings.HasPrefix(entry.Name(), config.ConversionRecoveryPrefix) {
+				return fs.SkipDir
+			}
 			return nil
 		}
 		ext := strings.ToLower(filepath.Ext(path))
