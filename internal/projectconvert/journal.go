@@ -58,7 +58,7 @@ var defaultConversionOps = conversionOps{
 		return files.MkdirTemp(parent, prefix)
 	},
 	removeAll:  func(files *projectfs.FS, name string) error { return files.RemoveAll(name) },
-	saveConfig: config.SaveRoot,
+	saveConfig: config.CreateRoot,
 }
 
 type recoveryKind int

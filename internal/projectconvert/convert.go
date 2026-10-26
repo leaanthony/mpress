@@ -344,6 +344,9 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 			journal.recordCreated(projectFiles, config.Filename, nil, 0)
 		}
 		if err := ops.saveConfig(projectFiles, updated); err != nil {
+			if errors.Is(err, fs.ErrExist) {
+				return fail(fmt.Errorf("%w: %w", configChangedDuringConversion(), err))
+			}
 			return fail(fmt.Errorf("update converted configuration paths: %w", err))
 		}
 		*cfg = updated

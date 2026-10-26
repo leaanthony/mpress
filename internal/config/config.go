@@ -409,6 +409,23 @@ func SaveRoot(files *projectfs.FS, cfg Config) error {
 	return files.WriteAtomic(Filename, data)
 }
 
+// CreateRoot persists configuration through the caller's pinned project root
+// only while no destination leaf exists. It is for a caller that already
+// captured the previous configuration and must not replace settings saved in
+// the meantime. A conflict wraps fs.ErrExist. Ordinary editor saves continue
+// to use SaveRoot and its replacing semantics.
+func CreateRoot(files *projectfs.FS, cfg Config) error {
+	if files == nil {
+		return errors.New("configuration project root is required")
+	}
+	data, err := marshalConfiguration(cfg)
+	if err != nil {
+		return err
+	}
+	_, err = files.WriteNewAtomicMode(Filename, data, 0o644)
+	return err
+}
+
 func marshalConfiguration(cfg Config) ([]byte, error) {
 	if err := cfg.Validate(); err != nil {
 		return nil, err

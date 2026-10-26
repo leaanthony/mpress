@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep site settings saved at the very end of a format conversion: the final configuration publication never replaces a newer author save. The conflict is reported and the newer settings, original configuration and documents are retained. Beads `mp-b52.1.6`.
+
 - Detect conflicting site-settings saves when converting style-guide or glossary paths, preserving newer settings and restoring the original documents. Beads `mp-b52.1.6`.
 
 - Preserve translation approval and model changes saved during failed conversion recovery, with diagnostics that identify retained recovery copies. Beads `mp-b52.1.6`.
