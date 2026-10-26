@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Keep the last published site in place when a build fails. Builds now generate into a validated staging directory and replace the published output only after generation and strict diagnostics succeed, restoring the previous output if promotion or post-promotion indexing fails. Version and knowledge indexing still uses final output paths, and the output directory permissions are preserved. Beads `mp-b52.1.5`.
+
 ## v1.0.24 — 2026-10-26
 
 ### Fixed
