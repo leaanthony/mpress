@@ -224,7 +224,7 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 			if err := ops.write(projectFiles, item.target, item.data, item.mode); err != nil {
 				return fail(err)
 			}
-			journal.recordWritten(index, item.data)
+			journal.recordWritten(index, item.data, item.mode)
 			continue
 		}
 		published, err := ops.writeNew(contentFiles, item.target, item.data, item.mode)

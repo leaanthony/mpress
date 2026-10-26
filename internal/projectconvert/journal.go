@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"runtime"
 	"strings"
 
 	"github.com/leaanthony/mpress/internal/config"
@@ -16,6 +17,9 @@ import (
 const (
 	recoveryPrefix = config.ConversionRecoveryPrefix
 	recoverySuffix = ".recovery"
+	// currentPrefix names the exclusively allocated subdirectories that hold a
+	// leaf captured while rolling back an in-place write.
+	currentPrefix = "current-"
 )
 
 // conversionOps is the bounded set of filesystem steps a conversion needs.
@@ -158,8 +162,9 @@ func (j *recoveryJournal) recordCreated(files *projectfs.FS, name string, expect
 	j.entries = append(j.entries, recoveryEntry{kind: recoveryCreated, files: files, path: name, expected: expected, mode: mode})
 }
 
-func (j *recoveryJournal) recordWritten(index int, expected []byte) {
+func (j *recoveryJournal) recordWritten(index int, expected []byte, mode os.FileMode) {
 	j.entries[index].expected = expected
+	j.entries[index].mode = mode
 }
 
 func sourceChanged(path, reason string) error {
@@ -223,15 +228,95 @@ func (j *recoveryJournal) observe(files *projectfs.FS, name string, expected []b
 
 func (j *recoveryJournal) restoreMoved(entry recoveryEntry) error {
 	if entry.expected != nil {
-		return j.ops.renameLexical(entry.files, entry.backup, entry.path)
+		return j.restoreWritten(entry)
 	}
-	// The author may recreate a consumed source after the absence check.
-	// Keep the backup until cleanup, and never replace that new leaf.
+	return j.restoreBackup(entry)
+}
+
+// Windows Chmod applies only the owner-writable bit. Comparing the full Unix
+// mask would mistake a normal migrated state file for a permission change.
+func sameWrittenPermissions(actual, planned os.FileMode, goos string) bool {
+	mask := os.ModePerm
+	if goos == "windows" {
+		mask = 0o200
+	}
+	return actual&mask == planned&mask
+}
+
+// restoreBackup relinks an original backup at the entry's name without
+// replacing a leaf that appeared meanwhile. The backup stays in recovery until
+// cleanup, so a collision keeps the original bytes available.
+func (j *recoveryJournal) restoreBackup(entry recoveryEntry) error {
 	if err := j.ops.linkLexical(entry.files, entry.backup, entry.path); err != nil {
 		if errors.Is(err, os.ErrExist) {
 			return fmt.Errorf("destination appeared during rollback, recovery copy retained: %w", err)
 		}
 		return fmt.Errorf("restore source: %w", err)
+	}
+	return nil
+}
+
+// captureWrittenLeaf moves the current leaf at an in-place write's path into
+// exclusively owned storage under the existing recovery root. An empty result
+// means the leaf was already absent. The original backup is never touched.
+func (j *recoveryJournal) captureWrittenLeaf(entry recoveryEntry) (string, error) {
+	root, err := j.backupRoot(entry.files)
+	if err != nil {
+		return "", err
+	}
+	directory, err := j.ops.mkdirTemp(entry.files, root, currentPrefix)
+	if err != nil {
+		return "", fmt.Errorf("allocate recovery storage for %s: %w", entry.path, err)
+	}
+	captured := filepath.Join(directory, filepath.Base(entry.path)+recoverySuffix)
+	switch err := j.ops.renameLexical(entry.files, entry.path, captured); {
+	case errors.Is(err, os.ErrNotExist):
+		return "", nil
+	case err != nil:
+		return "", fmt.Errorf("capture current leaf of %s for recovery: %w", entry.path, err)
+	}
+	return captured, nil
+}
+
+// restoreWritten recovers an in-place write with known generated content. The
+// current leaf is captured before any decision, so a save made after the
+// rollback observation is inspected rather than replaced by the original
+// backup. Only a verified unchanged generated copy is discarded; any author
+// bytes, permissions or alias stay at the original name or a named recovery
+// path beside the original backup.
+func (j *recoveryJournal) restoreWritten(entry recoveryEntry) error {
+	captured, err := j.captureWrittenLeaf(entry)
+	if err != nil {
+		return err
+	}
+	if captured == "" {
+		return j.restoreBackup(entry)
+	}
+	info, err := j.ops.lstat(entry.files, captured)
+	if err != nil {
+		return fmt.Errorf("inspect captured leaf at %s: %w", captured, err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return j.preserveCaptured(entry, captured, "was replaced by a symbolic link", true)
+	}
+	if !info.Mode().IsRegular() {
+		return j.preserveCaptured(entry, captured, "was replaced by a non-regular file", false)
+	}
+	if !sameWrittenPermissions(info.Mode(), entry.mode, runtime.GOOS) {
+		return j.preserveCaptured(entry, captured, "permissions changed after conversion", true)
+	}
+	data, err := j.ops.readFile(entry.files, captured)
+	if err != nil {
+		return fmt.Errorf("read captured leaf at %s: %w", captured, err)
+	}
+	if !bytes.Equal(data, entry.expected) {
+		return j.preserveCaptured(entry, captured, "changed after conversion", true)
+	}
+	if err := j.restoreBackup(entry); err != nil {
+		return err
+	}
+	if err := j.ops.remove(entry.files, captured); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("restored original but the unchanged recovery copy could not be discarded at %s: %w", captured, err)
 	}
 	return nil
 }
@@ -267,20 +352,20 @@ func (j *recoveryJournal) settleCreated(entry recoveryEntry, captured string) er
 		return fmt.Errorf("inspect captured output at %s: %w", captured, err)
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
-		return j.preserveCreated(entry, captured, "was replaced by a symbolic link", true)
+		return j.preserveCaptured(entry, captured, "was replaced by a symbolic link", true)
 	}
 	if !info.Mode().IsRegular() {
-		return j.preserveCreated(entry, captured, "was replaced by a non-regular file", false)
+		return j.preserveCaptured(entry, captured, "was replaced by a non-regular file", false)
 	}
 	if info.Mode().Perm() != entry.mode.Perm() {
-		return j.preserveCreated(entry, captured, "permissions changed after conversion", true)
+		return j.preserveCaptured(entry, captured, "permissions changed after conversion", true)
 	}
 	data, err := j.ops.readFile(entry.files, captured)
 	if err != nil {
 		return fmt.Errorf("read captured output at %s: %w", captured, err)
 	}
 	if !bytes.Equal(data, entry.expected) {
-		return j.preserveCreated(entry, captured, "changed after conversion", true)
+		return j.preserveCaptured(entry, captured, "changed after conversion", true)
 	}
 	if err := j.ops.remove(entry.files, captured); err != nil && !errors.Is(err, os.ErrNotExist) {
 		return fmt.Errorf("discard unchanged output copy at %s: %w", captured, err)
@@ -288,10 +373,10 @@ func (j *recoveryJournal) settleCreated(entry recoveryEntry, captured string) er
 	return nil
 }
 
-// preserveCreated restores a captured author leaf without replacing anything.
-// A leaf that cannot be relinked (a directory) or whose original name was
-// recreated stays at the explicit recovery path named in the error.
-func (j *recoveryJournal) preserveCreated(entry recoveryEntry, captured, reason string, linkable bool) error {
+// preserveCaptured restores a captured leaf without replacing anything. A leaf
+// that cannot be relinked (a directory) or whose original name was recreated
+// stays at the explicit recovery path named in the error.
+func (j *recoveryJournal) preserveCaptured(entry recoveryEntry, captured, reason string, linkable bool) error {
 	if !linkable {
 		return fmt.Errorf("%s; preserved at %s", reason, captured)
 	}

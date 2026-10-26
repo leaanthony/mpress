@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve translation approval and model changes saved during failed conversion recovery, with diagnostics that identify retained recovery copies. Beads `mp-b52.1.6`.
+
 - Keep retained conversion recovery documents out of generated pages and reader indexes, including live preview. Beads `mp-b52.1.10`.
 
 - Leave a failed conversion's named recovery directory untouched when the author retries: retained originals and any documents inside them keep their names, bytes, modes and aliases instead of being converted again. Ordinary hidden author directories and an explicitly selected conversion directory still convert. Beads `mp-b52.1.6`.
