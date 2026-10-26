@@ -30,9 +30,19 @@ func capture(project, label string, force bool) error {
 	if _, err := cfg.SafeOutputPath(project, source); err != nil {
 		return err
 	}
-	info, err := files.Stat(filepath.Join(source, "index.html"))
-	if err != nil || !info.Mode().IsRegular() {
-		return fmt.Errorf("build output missing or not regular; run mpress build first")
+	output, err := files.Sub(source)
+	if err != nil {
+		return fmt.Errorf("%w: %w", errMissingOutput, err)
+	}
+	defer func() { _ = output.Close() }()
+	// The required index is checked through the pinned root, like every other
+	// captured byte, so an alias cannot satisfy it from outside the output.
+	info, err := output.Stat("index.html")
+	if err != nil {
+		return fmt.Errorf("%w: %w", errMissingOutput, err)
+	}
+	if !info.Mode().IsRegular() {
+		return errMissingOutput
 	}
 	base := cfg.ArtifactsPath(project)
 	if err := cfg.SafeVersionPath(project, filepath.Join(base, label)); err != nil {
@@ -56,6 +66,14 @@ func capture(project, label string, force bool) error {
 	} else if err != nil && !os.IsNotExist(err) {
 		return err
 	}
+	return capturePinned(output, store, label, force)
+}
+
+var errMissingOutput = errors.New("build output missing or not regular; run mpress build first")
+
+// capturePinned stages and promotes from the selected output root.
+// The caller holds the store lock.
+func capturePinned(output, store *projectfs.FS, label string, force bool) error {
 	temporary, err := store.MkdirTemp(".", ".capture-")
 	if err != nil {
 		return err
@@ -66,7 +84,7 @@ func capture(project, label string, force bool) error {
 		return err
 	}
 	defer staged.Close()
-	checksums, err := copySnapshot(files, source, staged)
+	checksums, err := copySnapshot(output, staged)
 	if err != nil {
 		return err
 	}
@@ -88,17 +106,19 @@ func capture(project, label string, force bool) error {
 	return promoteSnapshot(store, temporary, label, force, store.Rename)
 }
 
-func copySnapshot(files *projectfs.FS, source string, staged *projectfs.FS) (map[string]string, error) {
+// copySnapshot reads exclusively through the pinned output root. Logical names
+// outside that root are rejected by the root itself, including asset links that
+// point elsewhere inside the project.
+func copySnapshot(output, staged *projectfs.FS) (map[string]string, error) {
 	checksums := map[string]string{}
-	err := files.WalkDir(source, func(path string, entry fs.DirEntry, walkErr error) error {
+	err := output.WalkDir(".", func(path string, entry fs.DirEntry, walkErr error) error {
 		if walkErr != nil {
 			return walkErr
 		}
-		rel, err := filepath.Rel(source, path)
-		if err != nil || rel == "." {
-			return err
+		rel := filepath.ToSlash(path)
+		if rel == "." {
+			return nil
 		}
-		rel = filepath.ToSlash(rel)
 		if strings.HasPrefix(rel, "versions/") {
 			if entry.IsDir() {
 				return filepath.SkipDir
@@ -114,7 +134,7 @@ func copySnapshot(files *projectfs.FS, source string, staged *projectfs.FS) (map
 		if rel == "mpress-version.json" {
 			return nil
 		}
-		sum, err := copySnapshotFile(files, path, staged, rel)
+		sum, err := copySnapshotFile(output, staged, rel)
 		if err != nil {
 			return fmt.Errorf("capture %s: %w", rel, err)
 		}
@@ -124,8 +144,8 @@ func copySnapshot(files *projectfs.FS, source string, staged *projectfs.FS) (map
 	return checksums, err
 }
 
-func copySnapshotFile(files *projectfs.FS, source string, staged *projectfs.FS, name string) (string, error) {
-	file, err := files.Open(source)
+func copySnapshotFile(output *projectfs.FS, staged *projectfs.FS, name string) (string, error) {
+	file, err := output.Open(name)
 	if err != nil {
 		return "", err
 	}
