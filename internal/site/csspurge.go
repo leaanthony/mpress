@@ -28,6 +28,14 @@ func purgeUnusedCSS(source string, generatedHTML []string, runtimeScript string)
 // optimize phase no longer re-reads the whole site. The set is copied before the
 // runtime script tokens are added so the caller's accumulator is not mutated.
 func purgeUnusedCSSWithTokens(source string, htmlTokens map[string]struct{}, runtimeScript string) string {
+	return purgeCSSBlock(source, usedCSSTokensFor(htmlTokens, runtimeScript))
+}
+
+// usedCSSTokensFor expands collected HTML tokens with the tokens that the
+// generated runtime can add after first paint. The set is copied so the
+// caller's accumulator is not mutated; callers that purge more than one
+// built-in segment reuse it.
+func usedCSSTokensFor(htmlTokens map[string]struct{}, runtimeScript string) map[string]struct{} {
 	used := make(map[string]struct{}, len(htmlTokens))
 	for token := range htmlTokens {
 		used[token] = struct{}{}
@@ -37,7 +45,7 @@ func purgeUnusedCSSWithTokens(source string, htmlTokens map[string]struct{}, run
 	// present in runtimeScript and must be retained explicitly during purging.
 	addToken(used, "js")
 	addRuntimeTokens(used, runtimeScript)
-	return purgeCSSBlock(source, used)
+	return used
 }
 
 func addHTMLTokens(used map[string]struct{}, source string) {

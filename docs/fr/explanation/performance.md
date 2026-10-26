@@ -44,11 +44,13 @@ visible au lieu de masquer le total derrière une seule durée.
 
 Les builds de production utilisent le minificateur CSS et JavaScript natif Go de M-Press. Ils
 analysent le HTML généré et les scripts d'exécution pour supprimer les règles de classe et d'ID qui sont
-manifestement inutiles. Les règles responsives sont filtrées récursivement. Les règles que des composants personnalisés
-HTML ou des composants d'exécution peuvent devoir rester intactes.
+manifestement inutiles dans les styles intégrés de M-Press. Les règles responsives
+sont filtrées récursivement. Le CSS personnalisé configuré reste intact, car les scripts
+peuvent construire à l'exécution des noms de classe qu'une analyse statique ne peut pas
+détecter de façon fiable.
 
 Cette optimisation n'a pas besoin de paquet Node.js, de lockfile, ni de commande externe.
-Passez `--no-purge-css` lorsqu'un projet doit conserver chaque sélecteur.
+Passez `--no-purge-css` lorsqu'un projet doit aussi conserver chaque sélecteur intégré.
 
 ## Les pages générées restent statiques
 

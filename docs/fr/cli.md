@@ -86,12 +86,13 @@ les inclut automatiquement.
 Les builds de production minifient le CSS et le JavaScript générés avec le minificateur Go intégré de M-Press.
 Il supprime les commentaires et les espaces blancs redondants et raccourcit
 les liaisons JavaScript locales sûres non répétées. Il n'a pas besoin de Node ni d'un outil
-de minification externe. Les builds de production suppriment aussi les règles de classe et d'ID clairement inutilisées
+de minification externe. Les builds de production suppriment aussi les règles intégrées de classe et d'ID clairement inutilisées
 après avoir analysé chaque page générée et le script d'exécution. Les at-rules responsive
 sont filtrées de façon récursive, tandis que les at-rules d'animation, de police et inconnues
 sont conservées. Les sélecteurs sans jetons de classe ou d'ID sont conservés car des composants
 HTML et les composants d'exécution peuvent les activer plus tard. Passez `--no-purge-css` lorsque
-une génération doit conserver chaque sélecteur.
+une génération doit conserver chaque sélecteur intégré. Les règles de `build.customCSS`
+sont toujours conservées, y compris celles utilisées par les scripts à l'exécution.
 
 ## Exportations ZIP
 

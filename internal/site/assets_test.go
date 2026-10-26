@@ -175,6 +175,50 @@ document.body.classList.add(` + "`ready`" + `);
 	}
 }
 
+// TestBuildPreservesCustomCSSDuringProductionPurge reproduces a site whose
+// configured stylesheet serves classes created at runtime by a separate
+// static script. Production purging scans generated HTML and inline scripts,
+// not static JavaScript, so it must not prune the author's stylesheet.
+func TestBuildPreservesCustomCSSDuringProductionPurge(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, root, "mpress.yaml", `site:
+  title: Custom CSS
+build:
+  contentDir: content
+  staticDir: static
+  outputDir: site
+  customCSS: custom.css
+`)
+	writeFixture(t, root, "content/index.md", "---\ntitle: Home\n---\n\n# Home\n\n<div class=\"author-static\">Ready</div>\n<script src=\"/custom.js\" defer></script>\n")
+	writeFixture(t, root, "custom.css", `.author-static { color: green; }
+.runtime-created-class { color: blue; }
+.md\:flex { display: flex; }
+@layer author { .author-static { font-weight: 600; } }
+@property --author-tone { syntax: "<color>"; inherits: false; initial-value: green; }
+`)
+	writeFixture(t, root, "static/custom.js", `document.documentElement.classList.add("runtime-created-class");`)
+	if _, err := Build(root, BuildOptions{Strict: true, MinifyAssets: true, PurgeUnusedCSS: true}); err != nil {
+		t.Fatal(err)
+	}
+	css, err := os.ReadFile(filepath.Join(root, "site", "assets", "mpress.css"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	for _, want := range []string{"author-static", "runtime-created-class", `md\:flex`, "@layer", "@property"} {
+		if !strings.Contains(string(css), want) {
+			t.Errorf("production CSS dropped configured custom rule %q: %s", want, css)
+		}
+	}
+	// Built-in theme pruning must remain active; this header button variant is
+	// absent from both the fixture configuration and its rendered markup.
+	if strings.Contains(string(css), "header-link-button-custom") {
+		t.Fatalf("production purge no longer removes unused built-in theme rules: %s", css)
+	}
+	if strings.Contains(string(css), "\n") {
+		t.Fatal("production CSS was not minified")
+	}
+}
+
 func TestBuildOptimizesProductionAssets(t *testing.T) {
 	root := t.TempDir()
 	writeFixture(t, root, "mpress.yaml", `site:
@@ -197,8 +241,17 @@ build:
 	if err != nil {
 		t.Fatal(err)
 	}
-	if strings.Contains(string(css), "remove-production") || !strings.Contains(string(css), "keep-production") {
-		t.Fatalf("production CSS purge result is incorrect: %s", css)
+	if !strings.Contains(string(css), "keep-production") {
+		t.Fatalf("production CSS purge removed a used author rule: %s", css)
+	}
+	// Configured custom CSS is preserved verbatim: the purge scan cannot prove
+	// that author rules are unused when separate scripts can create markup at
+	// runtime. Built-in theme pruning still removes unused selectors.
+	if !strings.Contains(string(css), "remove-production") {
+		t.Fatalf("production purge dropped configured custom CSS: %s", css)
+	}
+	if strings.Contains(string(css), "header-link-button-custom") {
+		t.Fatalf("production purge no longer removes unused built-in theme rules: %s", css)
 	}
 	if !strings.Contains(string(css), "dynamic-production") {
 		t.Fatalf("production purge removed an inline-script class: %s", css)

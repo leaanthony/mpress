@@ -6,6 +6,7 @@
 
 - Rename the header menu, search, theme and accessibility control IDs to `mpress-menu-toggle`, `mpress-search-toggle`, `mpress-theme-toggle` and `mpress-accessibility-toggle` so they cannot collide with Markdown heading anchors, updating the matching CSS and runtime selectors. Beads `mp-b52.2.6`.
 - Keep the last published site in place when a build fails. Builds now generate into a validated staging directory and replace the published output only after generation and strict diagnostics succeed, restoring the previous output if promotion or post-promotion indexing fails. Version and knowledge indexing still uses final output paths, and the output directory permissions are preserved. Beads `mp-b52.1.5`.
+- Preserve configured custom CSS during production purging, including runtime-created classes, escaped selectors and modern at-rules. Keep cascade order and minification while removing unused built-in styles. Beads `mp-b52.3.5`.
 
 ## v1.0.24 — 2026-10-26
 
