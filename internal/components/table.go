@@ -14,9 +14,14 @@ import (
 // Table renders an optionally searchable, filterable, and sortable data table.
 // Each feature is opt-in so ordinary documentation tables remain static.
 type Table struct {
-	Meta    map[string]string
-	Content string
-	Rows    [][]string
+	Meta      map[string]string
+	Content   string
+	Rows      [][]string
+	instances *InstanceIDs
+}
+
+func (t *Table) setInstanceIDs(ids *InstanceIDs) {
+	t.instances = ids
 }
 
 func (t *Table) Parse(content string) error {
@@ -62,7 +67,17 @@ func (t *Table) Render() (string, error) {
 	}
 	dataRows := t.Rows[headerRows:]
 	id := tableID(t.Content, t.Meta)
+	if t.instances != nil {
+		id = t.instances.claimGenerated(id)
+	}
 	alignments := tableAlignments(t.Meta["align"], len(t.Rows[0]))
+	var filterIDs []string
+	if filterable && t.instances != nil {
+		filterIDs = make([]string, len(t.Rows[0]))
+		for column := range t.Rows[0] {
+			filterIDs[column] = t.instances.claimGenerated(fmt.Sprintf("%s-filter-%d", id, column))
+		}
+	}
 
 	var out strings.Builder
 	classes := "mpress-data-table"
@@ -96,6 +111,9 @@ func (t *Table) Render() (string, error) {
 			}
 			if filterable {
 				menuID := fmt.Sprintf("%s-filter-%d", id, column)
+				if len(filterIDs) > column {
+					menuID = filterIDs[column]
+				}
 				fmt.Fprintf(&out, `<button class="mpress-table-filter-trigger utility-menu-trigger" type="button" popovertarget="%s" aria-label="Filter %s" aria-haspopup="menu" aria-expanded="false">%s</button>`, menuID, html.EscapeString(label), lucide("list-filter", 14))
 				fmt.Fprintf(&out, `<menu id="%s" class="utility-menu-panel mpress-table-filter-menu" popover data-utility-menu data-table-filter-column="%d" data-table-filter-label="%s" data-table-filter-value=""><li><button type="button" role="menuitem" data-table-filter-value="" aria-current="true">All</button></li>`, menuID, column, html.EscapeString(label))
 				for _, value := range distinctColumnValues(dataRows, column) {

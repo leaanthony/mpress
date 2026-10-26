@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"html"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
@@ -17,6 +18,12 @@ import (
 type Component interface {
 	Parse(content string) error
 	Render() (string, error)
+}
+
+// instanceAware is implemented by components that generate document IDs. The
+// component pipeline attaches the page-scoped InstanceIDs before Render.
+type instanceAware interface {
+	setInstanceIDs(ids *InstanceIDs)
 }
 
 // Registry holds registered component factories.
@@ -319,7 +326,21 @@ func Process(content string) (string, []string) {
 
 // ProcessWithLanguage finds all custom component blocks in Markdown content and
 // renders labels for the provided language without reading ActiveLanguage.
+//
+// Each call owns a fresh document identity scope. Callers that render one page
+// through several passes should use ProcessWithLanguageInstances so repeated
+// component instances are disambiguated across the whole page.
 func ProcessWithLanguage(content string, language string) (string, []string) {
+	return ProcessWithLanguageInstances(content, language, NewInstanceIDs())
+}
+
+// ProcessWithLanguageInstances is ProcessWithLanguage with a caller-owned
+// document identity scope. The scope must belong to exactly one page render;
+// it is never shared between concurrent renders.
+func ProcessWithLanguageInstances(content string, language string, instances *InstanceIDs) (string, []string) {
+	if instances == nil {
+		instances = NewInstanceIDs()
+	}
 	var warnings []string
 
 	// Step 1: Extract fenced code blocks and replace with placeholders. The
@@ -339,7 +360,7 @@ func ProcessWithLanguage(content string, language string) (string, []string) {
 			src = replaceStepsBlocks(src, language, &warnings)
 		}
 		if strings.Contains(src, ":::tabs") {
-			src = replaceTabsBlocks(src, language, codeBlocks, &warnings)
+			src = replaceTabsBlocks(src, language, codeBlocks, instances, &warnings)
 		}
 		if !strings.Contains(src, ":::") {
 			return src
@@ -371,6 +392,9 @@ func ProcessWithLanguage(content string, language string) (string, []string) {
 			}
 
 			comp := factory(block.Metadata)
+			if aware, ok := comp.(instanceAware); ok {
+				aware.setInstanceIDs(instances)
+			}
 			if err := comp.Parse(blockContent); err != nil {
 				warnings = append(warnings, fmt.Sprintf("error parsing %s component: %v", block.Type, err))
 				return match
@@ -404,6 +428,7 @@ func ProcessWithLanguage(content string, language string) (string, []string) {
 
 	// Step 3: Re-insert protected code blocks
 	result = restoreCodeBlocks(result, "CODEBLOCK_", codeBlocks)
+	warnings = append(warnings, instances.takeWarnings()...)
 
 	return result, warnings
 }
@@ -508,7 +533,7 @@ func rendersMarkdownContent(componentType string) bool {
 	}
 }
 
-func replaceTabsBlocks(src, language string, codeBlocks []protectedCodeBlock, warnings *[]string) string {
+func replaceTabsBlocks(src, language string, codeBlocks []protectedCodeBlock, instances *InstanceIDs, warnings *[]string) string {
 	var out strings.Builder
 	lines := strings.SplitAfter(src, "\n")
 	for i := 0; i < len(lines); {
@@ -559,7 +584,7 @@ func replaceTabsBlocks(src, language string, codeBlocks []protectedCodeBlock, wa
 		if language != "" {
 			open["__mpress_lang"] = language
 		}
-		tabs := &Tabs{Meta: open}
+		tabs := &Tabs{Meta: open, instances: instances}
 		if err := tabs.Parse(content); err != nil {
 			*warnings = append(*warnings, fmt.Sprintf("error parsing tabs component: %v", err))
 			for ; start < i; start++ {
@@ -708,8 +733,13 @@ func splitLineEnding(line string) (string, string) {
 // --- Tabs Component ---
 
 type Tabs struct {
-	Meta     map[string]string
-	Sections []TabSection
+	Meta      map[string]string
+	Sections  []TabSection
+	instances *InstanceIDs
+}
+
+func (t *Tabs) setInstanceIDs(ids *InstanceIDs) {
+	t.instances = ids
 }
 
 type TabSection struct {
@@ -847,7 +877,8 @@ func (t *Tabs) Render() (string, error) {
 }
 
 func (t *Tabs) renderWithPanelContent(render func(string) string) string {
-	id := strings.TrimSpace(t.Meta["id"])
+	authoredID := strings.TrimSpace(t.Meta["id"])
+	id := authoredID
 	if id == "" {
 		var identity strings.Builder
 		for _, section := range t.Sections {
@@ -859,13 +890,43 @@ func (t *Tabs) renderWithPanelContent(render func(string) string) string {
 		sum := sha256.Sum256([]byte(identity.String()))
 		id = "mpress-tabs-" + hex.EncodeToString(sum[:4])
 	}
+	// stem owns the tab and panel references. For generated IDs it is the
+	// instance-unique root. For authored IDs the root stays exactly as written
+	// while repeated or colliding instances receive distinct local references
+	// and a warning.
+	stem := id
+	if t.instances != nil {
+		if authoredID != "" {
+			stem = t.instances.claimAuthored(authoredID)
+		} else {
+			id = t.instances.claimGenerated(id)
+			stem = id
+		}
+	}
+	// Claim every local reference once so the button and panel loops always use
+	// the same IDs and generated children cannot collide with another instance.
+	tabIDs := make([]string, len(t.Sections))
+	panelIDs := make([]string, len(t.Sections))
+	for i := range t.Sections {
+		tabIDs[i] = fmt.Sprintf("%s-tab-%d", stem, i+1)
+		panelIDs[i] = fmt.Sprintf("%s-panel-%d", stem, i+1)
+		if t.instances != nil {
+			tabIDs[i] = t.instances.claimGenerated(tabIDs[i])
+			panelIDs[i] = t.instances.claimGenerated(panelIDs[i])
+		}
+	}
 	var b strings.Builder
 	b.WriteString(fmt.Sprintf(`<ot-tabs class="mpress-tabs" id="%s"`, html.EscapeString(id)))
-	for key, value := range t.Meta {
+	metaKeys := make([]string, 0, len(t.Meta))
+	for key := range t.Meta {
 		if key == "id" || strings.HasPrefix(key, "__") {
 			continue
 		}
-		b.WriteString(fmt.Sprintf(` data-%s="%s"`, html.EscapeString(key), html.EscapeString(value)))
+		metaKeys = append(metaKeys, key)
+	}
+	sort.Strings(metaKeys)
+	for _, key := range metaKeys {
+		fmt.Fprintf(&b, ` data-%s="%s"`, html.EscapeString(key), html.EscapeString(t.Meta[key]))
 	}
 	b.WriteString(`>`)
 	b.WriteString("\n")
@@ -881,8 +942,8 @@ func (t *Tabs) renderWithPanelContent(render func(string) string) string {
 			tabIndex = ""
 		}
 		classAttr := tabLabelClassAttr(s.Label)
-		tabID := fmt.Sprintf("%s-tab-%d", id, i+1)
-		panelID := fmt.Sprintf("%s-panel-%d", id, i+1)
+		tabID := tabIDs[i]
+		panelID := panelIDs[i]
 		b.WriteString(fmt.Sprintf(`<button id="%s" role="tab" type="button"%s aria-selected="%s" aria-controls="%s"%s>%s</button>`, html.EscapeString(tabID), classAttr, selected, html.EscapeString(panelID), tabIndex, tabLabelContent(s.Label)))
 		b.WriteString("\n")
 	}
@@ -895,8 +956,8 @@ func (t *Tabs) renderWithPanelContent(render func(string) string) string {
 		if i != 0 {
 			hidden = " hidden"
 		}
-		tabID := fmt.Sprintf("%s-tab-%d", id, i+1)
-		panelID := fmt.Sprintf("%s-panel-%d", id, i+1)
+		tabID := tabIDs[i]
+		panelID := panelIDs[i]
 		b.WriteString(fmt.Sprintf("<div id=\"%s\" role=\"tabpanel\" aria-labelledby=\"%s\"%s>\n\n", html.EscapeString(panelID), html.EscapeString(tabID), hidden))
 		b.WriteString(render(s.Content))
 		b.WriteString("\n\n</div>\n")
@@ -1247,8 +1308,13 @@ func (a *API) Render() (string, error) {
 // APIPlayground renders an interactive API endpoint with editable request body,
 // headers, Send button, and formatted response. All client-side via fetch().
 type APIPlayground struct {
-	Meta    map[string]string
-	Content string
+	Meta      map[string]string
+	Content   string
+	instances *InstanceIDs
+}
+
+func (a *APIPlayground) setInstanceIDs(ids *InstanceIDs) {
+	a.instances = ids
 }
 
 func (a *APIPlayground) Parse(content string) error {
@@ -1277,6 +1343,9 @@ func (a *APIPlayground) Render() (string, error) {
 
 	// Generate a stable ID for this playground
 	id := fmt.Sprintf("api-pg-%x", hashString(method + path + baseURL)[:8])
+	if a.instances != nil {
+		id = a.instances.claimGenerated(id)
+	}
 
 	var b strings.Builder
 

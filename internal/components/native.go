@@ -331,9 +331,14 @@ func mergeNativeMeta(raw string, additions map[string]string) string {
 			meta[key] = value
 		}
 	}
+	keys := make([]string, 0, len(meta))
+	for key := range meta {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
 	var parts []string
-	for key, value := range meta {
-		parts = append(parts, fmt.Sprintf(`%s="%s"`, key, strings.ReplaceAll(value, `"`, `\"`)))
+	for _, key := range keys {
+		parts = append(parts, fmt.Sprintf(`%s="%s"`, key, strings.ReplaceAll(meta[key], `"`, `\"`)))
 	}
 	return strings.Join(parts, "|")
 }

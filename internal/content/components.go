@@ -39,6 +39,13 @@ var (
 )
 
 func (r *Renderer) processComponents(file, language, source string) (string, []Diagnostic) {
+	return r.processComponentsWithInstances(file, language, source, legacycomponents.NewInstanceIDs())
+}
+
+// processComponentsWithInstances expands components using a page-scoped
+// identity scope. Nested passes (forms) share the same scope so generated IDs
+// stay unique across the complete document.
+func (r *Renderer) processComponentsWithInstances(file, language, source string, instances *legacycomponents.InstanceIDs) (string, []Diagnostic) {
 	// Most documentation pages contain ordinary Markdown only. Avoid the
 	// component protection and regex pipeline when there is no syntax it can
 	// transform. This also avoids allocating a second copy of the source.
@@ -50,15 +57,19 @@ func (r *Renderer) processComponents(file, language, source string) (string, []D
 	// form while field-shaped lines acquire controls.
 	formDiagnostics := []Diagnostic(nil)
 	if hasFormBlockSyntax(source) {
-		source, formDiagnostics = r.processFormBlocks(file, language, source)
+		source, formDiagnostics = r.processFormBlocks(file, language, source, instances)
 	}
 	// The legacy pass protects fences itself, because components such as
 	// explained own the fence they wrap and have to read it.
-	legacySource, warnings := legacycomponents.ProcessWithLanguage(source, language)
+	legacySource, warnings := legacycomponents.ProcessWithLanguageInstances(source, language, instances)
 	diagnostics := make([]Diagnostic, 0, len(warnings)+len(formDiagnostics))
 	diagnostics = append(diagnostics, formDiagnostics...)
 	for _, warning := range warnings {
-		diagnostics = append(diagnostics, Diagnostic{Severity: "error", Code: "invalid-component", File: file, Message: warning})
+		code := "invalid-component"
+		if strings.HasPrefix(warning, "duplicate component id ") {
+			code = "duplicate-id"
+		}
+		diagnostics = append(diagnostics, Diagnostic{Severity: "error", Code: code, File: file, Message: warning})
 	}
 	source = legacySource
 	protected, blocks := protectFences(source)

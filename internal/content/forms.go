@@ -34,7 +34,7 @@ var (
 // processFormBlocks lowers text-first @form blocks to accessible HTML. It is
 // called before the regular component pipeline so controls can contain normal
 // Markdown and other M-Press components without changing their meaning.
-func (r *Renderer) processFormBlocks(file, language, source string) (string, []Diagnostic) {
+func (r *Renderer) processFormBlocks(file, language, source string, instances *legacycomponents.InstanceIDs) (string, []Diagnostic) {
 	// Keep examples literal while looking for live form delimiters. The regular
 	// component pipeline applies the same protection later, but forms must be
 	// discovered first so their complete Markdown region can be rendered.
@@ -79,7 +79,7 @@ func (r *Renderer) processFormBlocks(file, language, source string) (string, []D
 		// body's fences before rendering so Goldmark can keep code examples as
 		// code instead of seeing an internal placeholder as prose.
 		body := restoreFences(strings.Join(lines[i+1:end], ""), blocks)
-		rendered, bodyDiagnostics := r.renderFormBody(file, language, body)
+		rendered, bodyDiagnostics := r.renderFormBody(file, language, body, instances)
 		diagnostics = append(diagnostics, bodyDiagnostics...)
 		attrs := parseFormMeta(open[2])
 		if open[1] != "" {
@@ -116,11 +116,11 @@ func isFormAdmonition(name string) bool {
 	}
 }
 
-func (r *Renderer) renderFormBody(file, language, body string) (string, []Diagnostic) {
+func (r *Renderer) renderFormBody(file, language, body string, instances *legacycomponents.InstanceIDs) (string, []Diagnostic) {
 	// Process nested M-Press blocks first. This also protects code fences while
 	// components are expanded. Field syntax is applied afterwards, with a
 	// second fence protection pass so examples remain literal.
-	processed, diagnostics := r.processComponents(file, language, body)
+	processed, diagnostics := r.processComponentsWithInstances(file, language, body, instances)
 	protected, blocks := protectFences(processed)
 	transformed := transformFormFields(protected)
 	transformed = restoreFences(transformed, blocks)

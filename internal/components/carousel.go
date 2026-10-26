@@ -13,8 +13,13 @@ import (
 // Slides are separated by a Markdown thematic break. Each slide can contain
 // normal Markdown and M-Press components.
 type Carousel struct {
-	Meta    map[string]string
-	Content string
+	Meta      map[string]string
+	Content   string
+	instances *InstanceIDs
+}
+
+func (c *Carousel) setInstanceIDs(ids *InstanceIDs) {
+	c.instances = ids
 }
 
 var carouselSeparatorRE = regexp.MustCompile(`(?m)^\s*---\s*$`)
@@ -41,6 +46,9 @@ func (c *Carousel) Render() (string, error) {
 	}
 	digest := sha256.Sum256([]byte(label + "\x00" + c.Content))
 	id := "mpress-carousel-" + hex.EncodeToString(digest[:5])
+	if c.instances != nil {
+		id = c.instances.claimGenerated(id)
+	}
 
 	var out strings.Builder
 	fmt.Fprintf(&out, `<section id="%s" class="mpress-carousel" aria-roledescription="carousel" aria-label="%s" data-carousel>`, id, html.EscapeString(label))

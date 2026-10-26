@@ -175,7 +175,10 @@ func (r *Renderer) Parse(rel, lang, source string) (*Page, []Diagnostic, error) 
 		return nil, nil, fmt.Errorf("%s: %w", rel, err)
 	}
 	diagnostics := validateSourceText(rel, body)
-	processed, componentDiagnostics := r.processComponents(rel, lang, body)
+	// One identity scope per page render keeps repeated component instances
+	// distinct without package-global counters or shared renderer state.
+	instances := legacycomponents.NewInstanceIDs()
+	processed, componentDiagnostics := r.processComponentsWithInstances(rel, lang, body, instances)
 	diagnostics = append(diagnostics, componentDiagnostics...)
 	if r.legacyFencePrePass {
 		processed = renderCodeFences(processed)

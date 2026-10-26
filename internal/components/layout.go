@@ -30,16 +30,18 @@ type Headline struct {
 }
 
 type PreviewTabs struct {
-	Meta    map[string]string
-	Content string
+	Meta      map[string]string
+	Content   string
+	instances *InstanceIDs
 }
 
 // FileTabs presents related source files and their rendered output in one
 // compact, keyboard-accessible group. It shares the canonical tab behaviour
 // but has a distinct visual treatment for filenames and previews.
 type FileTabs struct {
-	Meta    map[string]string
-	Content string
+	Meta      map[string]string
+	Content   string
+	instances *InstanceIDs
 }
 
 type CompactCallout struct {
@@ -316,8 +318,12 @@ func (p *PreviewTabs) Parse(content string) error {
 	return nil
 }
 
+func (p *PreviewTabs) setInstanceIDs(ids *InstanceIDs) {
+	p.instances = ids
+}
+
 func (p *PreviewTabs) Render() (string, error) {
-	tabs := &Tabs{Meta: p.Meta}
+	tabs := &Tabs{Meta: p.Meta, instances: p.instances}
 	if err := tabs.Parse(p.Content); err != nil {
 		return "", fmt.Errorf("preview tabs: %w", err)
 	}
@@ -335,8 +341,12 @@ func (f *FileTabs) Parse(content string) error {
 	return nil
 }
 
+func (f *FileTabs) setInstanceIDs(ids *InstanceIDs) {
+	f.instances = ids
+}
+
 func (f *FileTabs) Render() (string, error) {
-	tabs := &Tabs{Meta: f.Meta}
+	tabs := &Tabs{Meta: f.Meta, instances: f.instances}
 	if err := tabs.Parse(f.Content); err != nil {
 		return "", fmt.Errorf("file tabs: %w", err)
 	}
