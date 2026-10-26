@@ -1,6 +1,7 @@
 package projectconvert
 
 import (
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"os"
@@ -25,10 +26,13 @@ type Result struct {
 }
 
 type conversion struct {
-	source string
-	target string
-	mode   os.FileMode
-	data   []byte
+	source       string
+	target       string
+	mode         os.FileMode
+	data         []byte
+	sourceDigest [sha256.Size]byte
+	sourceAlias  string
+	sourceIsLink bool
 }
 
 // Run converts every document of the source format and removes the originals
@@ -139,7 +143,20 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 		if infoErr != nil {
 			return infoErr
 		}
-		conversions = append(conversions, conversion{source: path, target: target, mode: info.Mode().Perm(), data: converted})
+		linkInfo, linkErr := contentFiles.Lstat(path)
+		if linkErr != nil {
+			return linkErr
+		}
+		sourceIsLink := linkInfo.Mode()&os.ModeSymlink != 0
+		var sourceAlias string
+		if sourceIsLink {
+			sourceAlias, linkErr = contentFiles.ReadLink(path)
+			if linkErr != nil {
+				return linkErr
+			}
+		}
+		digest := sha256.Sum256(source)
+		conversions = append(conversions, conversion{source: path, target: target, mode: info.Mode().Perm(), data: converted, sourceDigest: digest, sourceAlias: sourceAlias, sourceIsLink: sourceIsLink})
 		relative, err := filepath.Rel(cfg.ContentPath(root), path)
 		if err != nil {
 			return err
@@ -210,11 +227,37 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 			return fail(err)
 		}
 	}
+	// Alias target content cannot be read after the link moves, so verify it
+	// before consuming any source. Regular files are verified from the moved
+	// bytes below, closing their edit/replacement window.
+	for _, item := range conversions {
+		if item.source == item.target || !item.sourceIsLink {
+			continue
+		}
+		current, err := ops.readFile(contentFiles, item.source)
+		if err != nil {
+			return fail(fmt.Errorf("read source alias %s before removal: %w", item.source, err))
+		}
+		if sha256.Sum256(current) != item.sourceDigest {
+			return fail(sourceChanged(item.source, "content changed"))
+		}
+		info, err := ops.stat(contentFiles, item.source)
+		if err != nil {
+			return fail(fmt.Errorf("inspect source alias %s before removal: %w", item.source, err))
+		}
+		if info.Mode().Perm() != item.mode {
+			return fail(sourceChanged(item.source, "permissions changed"))
+		}
+	}
 	for _, item := range conversions {
 		if item.source == item.target {
 			continue
 		}
-		if _, err := journal.moveAside(contentFiles, item.source); err != nil {
+		index, err := journal.moveAside(contentFiles, item.source)
+		if err != nil {
+			return fail(err)
+		}
+		if err := journal.confirmMovedSource(index, item); err != nil {
 			return fail(err)
 		}
 	}

@@ -109,6 +109,25 @@ func (f *FS) Stat(name string) (fs.FileInfo, error) {
 	return f.root.Stat(rel)
 }
 
+// Lstat inspects a final leaf without following a symbolic link. Parent
+// directories remain confined by the pinned root.
+func (f *FS) Lstat(name string) (fs.FileInfo, error) {
+	parent, leaf, err := f.lexicalDestination(name)
+	if err != nil {
+		return nil, err
+	}
+	return f.root.Lstat(filepath.Join(parent, leaf))
+}
+
+// ReadLink returns the text of a final symbolic link without following it.
+func (f *FS) ReadLink(name string) (string, error) {
+	parent, leaf, err := f.lexicalDestination(name)
+	if err != nil {
+		return "", err
+	}
+	return f.root.Readlink(filepath.Join(parent, leaf))
+}
+
 func (f *FS) ReadDir(name string) ([]os.DirEntry, error) {
 	rel, err := f.Relative(name)
 	if err != nil {

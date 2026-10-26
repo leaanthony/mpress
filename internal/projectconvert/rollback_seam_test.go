@@ -82,11 +82,11 @@ func TestConversionRestoresSourcesWhenSourceRemovalFails(t *testing.T) {
 	b := writeConversionSource(t, filepath.Join(root, "content", "b.md"), 0640, "# Beta\n\nOriginal beta.\n")
 	removeFailure := errors.New("source removal failed")
 	ops := defaultConversionOps
-	ops.rename = func(f *projectfs.FS, old, new string) error {
+	ops.renameLexical = func(f *projectfs.FS, old, new string) error {
 		if filepath.Clean(old) == filepath.Join(root, "content", "b.md") {
 			return removeFailure
 		}
-		return f.Rename(old, new)
+		return f.RenameLexical(old, new)
 	}
 
 	if _, err := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops); !errors.Is(err, removeFailure) {
@@ -181,14 +181,14 @@ func TestConversionRollbackPreservesSourceRecreatedAtFailure(t *testing.T) {
 	external := []byte("# Recreated\n\nExternal writer content.\n")
 	removeFailure := errors.New("source removal failed")
 	ops := defaultConversionOps
-	ops.rename = func(f *projectfs.FS, old, new string) error {
+	ops.renameLexical = func(f *projectfs.FS, old, new string) error {
 		if filepath.Clean(old) == filepath.Join(root, "content", "c.md") {
 			if err := os.WriteFile(filepath.Join(root, "content", "a.md"), external, 0644); err != nil {
 				return err
 			}
 			return removeFailure
 		}
-		return f.Rename(old, new)
+		return f.RenameLexical(old, new)
 	}
 
 	_, err := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops)
@@ -309,11 +309,11 @@ func TestConversionRestoresDistinctAliasesSharingOneSource(t *testing.T) {
 	}
 	removeFailure := errors.New("source removal failed")
 	ops := defaultConversionOps
-	ops.rename = func(f *projectfs.FS, old, new string) error {
+	ops.renameLexical = func(f *projectfs.FS, old, new string) error {
 		if filepath.Clean(old) == filepath.Join(root, "content", "real.md") {
 			return removeFailure
 		}
-		return f.Rename(old, new)
+		return f.RenameLexical(old, new)
 	}
 
 	_, runErr := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops)
@@ -341,14 +341,11 @@ func TestConversionKeepsNamedRecoveryCopiesWhenRollbackFails(t *testing.T) {
 	removeFailure := errors.New("source removal failed")
 	restoreFailure := errors.New("source restore failed")
 	ops := defaultConversionOps
-	ops.rename = func(f *projectfs.FS, old, new string) error {
-		if filepath.Clean(old) == filepath.Join(root, "content", "b.md") {
-			return removeFailure
-		}
-		return f.Rename(old, new)
-	}
 	ops.renameLexical = func(f *projectfs.FS, old, new string) error {
-		if strings.Contains(old, recoveryPrefix) {
+		switch {
+		case filepath.Clean(old) == filepath.Join(root, "content", "b.md"):
+			return removeFailure
+		case strings.Contains(old, recoveryPrefix):
 			return restoreFailure
 		}
 		return f.RenameLexical(old, new)

@@ -2,6 +2,7 @@ package projectconvert
 
 import (
 	"bytes"
+	"crypto/sha256"
 	"errors"
 	"fmt"
 	"os"
@@ -23,10 +24,11 @@ const (
 type conversionOps struct {
 	write         func(*projectfs.FS, string, []byte, os.FileMode) error
 	writeNew      func(*projectfs.FS, string, []byte, os.FileMode) (bool, error)
-	rename        func(*projectfs.FS, string, string) error
 	renameLexical func(*projectfs.FS, string, string) error
 	remove        func(*projectfs.FS, string) error
 	readFile      func(*projectfs.FS, string) ([]byte, error)
+	lstat         func(*projectfs.FS, string) (os.FileInfo, error)
+	readLink      func(*projectfs.FS, string) (string, error)
 	stat          func(*projectfs.FS, string) (os.FileInfo, error)
 	mkdirTemp     func(*projectfs.FS, string, string) (string, error)
 	removeAll     func(*projectfs.FS, string) error
@@ -40,10 +42,11 @@ var defaultConversionOps = conversionOps{
 	writeNew: func(files *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
 		return files.WriteNewAtomicMode(name, data, mode)
 	},
-	rename:        func(files *projectfs.FS, old, new string) error { return files.Rename(old, new) },
 	renameLexical: func(files *projectfs.FS, old, new string) error { return files.RenameLexical(old, new) },
 	remove:        func(files *projectfs.FS, name string) error { return files.Remove(name) },
 	readFile:      func(files *projectfs.FS, name string) ([]byte, error) { return files.ReadFile(name) },
+	lstat:         func(files *projectfs.FS, name string) (os.FileInfo, error) { return files.Lstat(name) },
+	readLink:      func(files *projectfs.FS, name string) (string, error) { return files.ReadLink(name) },
 	stat:          func(files *projectfs.FS, name string) (os.FileInfo, error) { return files.Stat(name) },
 	mkdirTemp: func(files *projectfs.FS, parent, prefix string) (string, error) {
 		return files.MkdirTemp(parent, prefix)
@@ -141,7 +144,7 @@ func (j *recoveryJournal) moveAside(files *projectfs.FS, name string) (int, erro
 	if err != nil {
 		return 0, err
 	}
-	if err := j.ops.rename(files, name, backup); err != nil {
+	if err := j.ops.renameLexical(files, name, backup); err != nil {
 		return 0, err
 	}
 	j.entries = append(j.entries, recoveryEntry{kind: recoveryMoved, files: files, path: name, backup: backup})
@@ -154,6 +157,49 @@ func (j *recoveryJournal) recordCreated(files *projectfs.FS, name string, expect
 
 func (j *recoveryJournal) recordWritten(index int, expected []byte) {
 	j.entries[index].expected = expected
+}
+
+func sourceChanged(path, reason string) error {
+	return fmt.Errorf("source %s %s after planning; refusing to remove it", path, reason)
+}
+
+// confirmMovedSource checks the leaf captured by moveAside against the
+// planning snapshot. Regular files are checked after the move to detect
+// changes captured by it. Relative aliases can become dangling when moved;
+// their link text is checked here and their content before source consumption.
+func (j *recoveryJournal) confirmMovedSource(index int, item conversion) error {
+	entry := j.entries[index]
+	info, err := j.ops.lstat(entry.files, entry.backup)
+	if err != nil {
+		return fmt.Errorf("inspect moved source %s: %w", entry.path, err)
+	}
+	if item.sourceIsLink {
+		if info.Mode()&os.ModeSymlink == 0 {
+			return sourceChanged(entry.path, "is no longer a symbolic link")
+		}
+		target, err := j.ops.readLink(entry.files, entry.backup)
+		if err != nil {
+			return fmt.Errorf("inspect moved source alias %s: %w", entry.path, err)
+		}
+		if target != item.sourceAlias {
+			return sourceChanged(entry.path, "symbolic link target changed")
+		}
+		return nil
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return sourceChanged(entry.path, "was replaced by a symbolic link")
+	}
+	if info.Mode().Perm() != item.mode {
+		return sourceChanged(entry.path, "permissions changed")
+	}
+	data, err := j.ops.readFile(entry.files, entry.backup)
+	if err != nil {
+		return fmt.Errorf("read moved source %s: %w", entry.path, err)
+	}
+	if sha256.Sum256(data) != item.sourceDigest {
+		return sourceChanged(entry.path, "content changed")
+	}
+	return nil
 }
 
 // observe compares a current path with the content this operation wrote.
