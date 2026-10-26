@@ -32,6 +32,22 @@ func requireConfigurationMode(t *testing.T, root string, want os.FileMode) {
 	}
 }
 
+// matchingConfigurationBytes renders a configuration exactly as config.Save
+// would, so an internal alias fixture describes the same settings as its
+// caller instead of introducing an unrelated stale configuration.
+func matchingConfigurationBytes(t *testing.T, cfg config.Config) string {
+	t.Helper()
+	directory := t.TempDir()
+	if err := config.Save(directory, cfg); err != nil {
+		t.Fatal(err)
+	}
+	data, err := os.ReadFile(filepath.Join(directory, config.Filename))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return string(data)
+}
+
 func saveConfigAfterPublication(t *testing.T, save func() error) conversionOps {
 	t.Helper()
 	injected := false
@@ -319,7 +335,7 @@ func TestConversionUpdatesInternalConfigurationAlias(t *testing.T) {
 	cfg.Translation.StyleGuide = "content/guide.md"
 	root, _ := openConversionProject(t, &cfg)
 	writeConversionSource(t, filepath.Join(root, "content", "guide.md"), 0644, "# Guide\n\nOriginal guide.\n")
-	base := writeConversionSource(t, filepath.Join(root, "config", "base.yaml"), 0640, "site:\n  title: Base\n")
+	base := writeConversionSource(t, filepath.Join(root, "config", "base.yaml"), 0640, matchingConfigurationBytes(t, cfg))
 	if err := os.Symlink(filepath.Join("config", "base.yaml"), filepath.Join(root, config.Filename)); err != nil {
 		t.Fatal(err)
 	}

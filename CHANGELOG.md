@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve settings saved before document conversion by rejecting stale style-guide or glossary reference rewrites before any files change. Reloading the saved configuration permits a normal retry. Beads `mp-b52.1.6`.
+
 - Refuse development-server operations when the selected project directory has moved, been replaced or its alias has changed targets. Report how to restart instead of rebuilding another project at the old path; restoring the original directory permits retry. Beads `mp-b52.1.3`.
 
 - Return optional configuration maps and lists as empty objects and arrays instead of JSON `null` from the authoring MCP server and REST settings endpoint, so reading, editing the title and saving the complete configuration works without client-side normalisation. Beads `mp-b52.3.10`.

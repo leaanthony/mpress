@@ -272,7 +272,7 @@ func TestConversionRestoresConfigurationAliasWhenSaveFails(t *testing.T) {
 	cfg.Translation.StyleGuide = "content/guide.md"
 	root, files := openConversionProject(t, &cfg)
 	guide := writeConversionSource(t, filepath.Join(root, "content", "guide.md"), 0644, "# Guide\n\nOriginal guide.\n")
-	base := writeConversionSource(t, filepath.Join(root, "config", "base.yaml"), 0644, "site:\n  title: Base\n")
+	base := writeConversionSource(t, filepath.Join(root, "config", "base.yaml"), 0644, matchingConfigurationBytes(t, cfg))
 	if err := os.Symlink(filepath.Join("config", "base.yaml"), filepath.Join(root, config.Filename)); err != nil {
 		t.Fatal(err)
 	}

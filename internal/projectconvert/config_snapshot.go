@@ -5,6 +5,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"reflect"
 
 	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/projectfs"
@@ -55,6 +56,29 @@ func captureConfigSnapshot(ops conversionOps, files *projectfs.FS) (configSnapsh
 
 func configChangedDuringConversion() error {
 	return fmt.Errorf("configuration %s changed during conversion; refusing to replace newer settings", config.Filename)
+}
+
+// requireCallerConfiguration checks that the reference rewrite was planned
+// from the captured settings. Missing and non-regular destinations retain
+// their existing final-publication checks.
+func (s configSnapshot) requireCallerConfiguration(cfg config.Config) error {
+	if !s.present || !s.regular {
+		return nil
+	}
+	persisted, err := config.Parse(s.data)
+	if err != nil {
+		return fmt.Errorf("%w: %v", configChangedDuringConversion(), err)
+	}
+	caller := cfg.Clone()
+	caller.EnsureCollections()
+	if err := caller.Validate(); err != nil {
+		return fmt.Errorf("validate caller configuration for conversion: %w", err)
+	}
+	persisted.EnsureCollections()
+	if !reflect.DeepEqual(caller, persisted) {
+		return configChangedDuringConversion()
+	}
+	return nil
 }
 
 // unchanged reports whether the configuration at its original name still

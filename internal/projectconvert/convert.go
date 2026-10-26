@@ -250,6 +250,9 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 		if err != nil {
 			return Result{}, err
 		}
+		if err := configState.requireCallerConfiguration(*cfg); err != nil {
+			return Result{}, err
+		}
 	}
 
 	journal := newRecoveryJournal(ops, contentFiles, directory)
