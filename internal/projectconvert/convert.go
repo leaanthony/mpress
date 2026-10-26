@@ -74,6 +74,10 @@ func conversionDirectory(root string, cfg *config.Config, directory string) stri
 }
 
 func runConversion(root string, cfg *config.Config, directory, format string, projectFiles, contentFiles *projectfs.FS) (Result, error) {
+	return runConversionWithOps(root, cfg, directory, format, projectFiles, contentFiles, defaultConversionOps)
+}
+
+func runConversionWithOps(root string, cfg *config.Config, directory, format string, projectFiles, contentFiles *projectfs.FS, ops conversionOps) (Result, error) {
 	format = strings.ToLower(strings.TrimSpace(format))
 	if format != "mpd" && format != "markdown" {
 		return Result{}, errors.New("target format must be mpd or markdown")
@@ -169,27 +173,52 @@ func runConversion(root string, cfg *config.Config, directory, format string, pr
 		conversions = append(conversions, conversion{source: state.Path, target: state.Path, mode: 0644, data: state.Data})
 		review += state.RequiresReview
 	}
+	plannedTargets := make(map[string]string, len(conversions))
+	for _, item := range conversions {
+		target := filepath.Clean(item.target)
+		if previous, exists := plannedTargets[target]; exists {
+			return Result{}, fmt.Errorf("refusing to convert %s and %s to the same target %s", previous, item.source, item.target)
+		}
+		plannedTargets[target] = item.source
+	}
+
+	journal := newRecoveryJournal(ops, contentFiles, directory)
+	fail := func(err error) (Result, error) {
+		if rollbackErr := journal.rollback(); rollbackErr != nil {
+			return Result{}, fmt.Errorf("%w; %w", err, rollbackErr)
+		}
+		return Result{}, err
+	}
 
 	for _, item := range conversions {
-		files := contentFiles
 		if item.source == item.target {
-			files = projectFiles
+			index, err := journal.moveAside(projectFiles, item.target)
+			if err != nil {
+				return fail(err)
+			}
+			if err := ops.write(projectFiles, item.target, item.data, item.mode); err != nil {
+				return fail(err)
+			}
+			journal.recordWritten(index, item.data)
+			continue
 		}
-		if err := files.WriteAtomicMode(item.target, item.data, item.mode); err != nil {
-			return Result{}, err
+		if err := ops.write(contentFiles, item.target, item.data, item.mode); err != nil {
+			return fail(err)
 		}
+		journal.recordCreated(contentFiles, item.target, item.data)
 	}
 	for _, item := range conversions {
 		if item.source == item.target {
 			continue
 		}
-		if err := contentFiles.Remove(item.source); err != nil {
-			return Result{}, err
+		if _, err := journal.moveAside(contentFiles, item.source); err != nil {
+			return fail(err)
 		}
 	}
 
+	updated := *cfg
 	configChanged := false
-	for _, reference := range []*string{&cfg.Translation.StyleGuide, &cfg.Translation.Glossary} {
+	for _, reference := range []*string{&updated.Translation.StyleGuide, &updated.Translation.Glossary} {
 		if strings.TrimSpace(*reference) == "" {
 			continue
 		}
@@ -203,7 +232,7 @@ func runConversion(root string, cfg *config.Config, directory, format string, pr
 			}
 			relative, relErr := filepath.Rel(root, item.target)
 			if relErr != nil {
-				return Result{}, relErr
+				return fail(relErr)
 			}
 			*reference = filepath.ToSlash(relative)
 			configChanged = true
@@ -211,14 +240,33 @@ func runConversion(root string, cfg *config.Config, directory, format string, pr
 		}
 	}
 	if configChanged {
-		if err := config.SaveRoot(projectFiles, *cfg); err != nil {
-			return Result{}, fmt.Errorf("update converted configuration paths: %w", err)
+		info, statErr := ops.stat(projectFiles, config.Filename)
+		switch {
+		case statErr == nil && info.Mode().IsRegular():
+			if _, err := journal.moveAside(projectFiles, config.Filename); err != nil {
+				return fail(err)
+			}
+		case statErr == nil:
+			// Keep a non-regular destination in place so the save reports it
+			// instead of silently replacing an unrelated directory.
+		case errors.Is(statErr, os.ErrNotExist):
+			journal.recordCreated(projectFiles, config.Filename, nil)
+		default:
+			return fail(statErr)
 		}
+		if err := ops.saveConfig(projectFiles, updated); err != nil {
+			return fail(fmt.Errorf("update converted configuration paths: %w", err))
+		}
+		*cfg = updated
 	}
 
 	sourceLabel, targetLabel := "Markdown", "MPD"
 	if format == "markdown" {
 		sourceLabel, targetLabel = "MPD", "Markdown"
 	}
-	return Result{Count: count, Directory: directory, SourceFormat: sourceLabel, TargetFormat: targetLabel, MigratedStates: len(states), MigrationReview: review}, nil
+	result := Result{Count: count, Directory: directory, SourceFormat: sourceLabel, TargetFormat: targetLabel, MigratedStates: len(states), MigrationReview: review}
+	if err := journal.commit(); err != nil {
+		return result, fmt.Errorf("conversion succeeded but %w", err)
+	}
+	return result, nil
 }

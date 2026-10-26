@@ -76,6 +76,12 @@ func TestRenameRejectsExternalPathsAndRetainsAliasLeaf(t *testing.T) {
 	if err := files.Rename("incoming", "external/sentinel"); err == nil {
 		t.Error("external rename target accepted")
 	}
+	if err := files.RenameLexical("external/sentinel", "stolen"); !errors.Is(err, ErrOutside) {
+		t.Errorf("lexical rename accepted an external source parent: %v", err)
+	}
+	if err := files.RenameLexical("incoming", "external/sentinel"); !errors.Is(err, ErrOutside) {
+		t.Errorf("lexical rename accepted an external destination parent: %v", err)
+	}
 	if err := files.WriteAtomic("original", []byte("must survive")); err != nil {
 		t.Fatal(err)
 	}

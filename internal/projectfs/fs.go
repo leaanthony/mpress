@@ -33,6 +33,9 @@ func Open(project string) (*FS, error) {
 
 func (f *FS) Close() error { return f.root.Close() }
 
+// Project returns the canonical directory this boundary was opened for.
+func (f *FS) Project() string { return f.project }
+
 // Sub pins a directory inside this boundary and confines subsequent operations
 // to it. A snapshot manifest cannot use an internal link to read another part
 // of the project through this narrower root.
@@ -211,6 +214,34 @@ func (f *FS) Rename(old, new string) error {
 		return err
 	}
 	return f.root.Rename(filepath.Join(oldParent, oldLeaf), filepath.Join(newParent, newLeaf))
+}
+
+// RenameLexical moves a leaf without resolving a final symlink. Recovery copies
+// may be dangling once moved, so the named leaf must move verbatim. Parent
+// directories are still confined to the project root.
+func (f *FS) RenameLexical(old, new string) error {
+	oldParent, oldLeaf, err := f.lexicalDestination(old)
+	if err != nil {
+		return err
+	}
+	newParent, newLeaf, err := f.lexicalDestination(new)
+	if err != nil {
+		return err
+	}
+	return f.root.Rename(filepath.Join(oldParent, oldLeaf), filepath.Join(newParent, newLeaf))
+}
+
+func (f *FS) lexicalDestination(name string) (parent, leaf string, err error) {
+	if !filepath.IsAbs(name) {
+		name = filepath.Join(f.project, name)
+	}
+	name = filepath.Clean(name)
+	leaf = filepath.Base(name)
+	if leaf == "." || leaf == ".." || strings.ContainsAny(leaf, `/\`) {
+		return "", "", fmt.Errorf("invalid file name: %s", name)
+	}
+	parent, err = f.Relative(filepath.Dir(name))
+	return parent, leaf, err
 }
 
 // WriteAtomic uses a pinned parent and an exclusively created temporary file.
