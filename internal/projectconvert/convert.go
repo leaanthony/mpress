@@ -4,6 +4,7 @@ import (
 	"crypto/sha256"
 	"errors"
 	"fmt"
+	"io/fs"
 	"os"
 	"path/filepath"
 	"strings"
@@ -87,6 +88,7 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 		return Result{}, errors.New("target format must be mpd or markdown")
 	}
 	directory = conversionDirectory(root, cfg, directory)
+	conversionRoot := filepath.Clean(directory)
 
 	var conversions []conversion
 	var documents []translate.ConvertedDocument
@@ -95,6 +97,12 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 			return walkErr
 		}
 		if entry.IsDir() {
+			// A recovery tree holds the originals a failed conversion changed;
+			// retrying must not convert its nested documents. An explicitly
+			// chosen conversion root stays authoritative even with this prefix.
+			if strings.HasPrefix(entry.Name(), recoveryPrefix) && filepath.Clean(path) != conversionRoot {
+				return fs.SkipDir
+			}
 			return nil
 		}
 		extension := strings.ToLower(filepath.Ext(path))

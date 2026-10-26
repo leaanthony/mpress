@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Leave a failed conversion's named recovery directory untouched when the author retries: retained originals and any documents inside them keep their names, bytes, modes and aliases instead of being converted again. Ordinary hidden author directories and an explicitly selected conversion directory still convert. Beads `mp-b52.1.6`.
+
 - Preserve edits, replaced aliases and permission changes made to generated documents during failed conversion cleanup. Report any retained recovery copy instead of deleting newly saved work. Beads `mp-b52.1.6`.
 
 - Preserve source files and aliases recreated while a failed conversion rolls back. If restoring a consumed source encounters newly saved work, leave that work intact and report the retained recovery copy. Beads `mp-b52.1.6`.
