@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Rename the header menu, search, theme and accessibility control IDs to `mpress-menu-toggle`, `mpress-search-toggle`, `mpress-theme-toggle` and `mpress-accessibility-toggle` so they cannot collide with Markdown heading anchors, updating the matching CSS and runtime selectors. Beads `mp-b52.2.6`.
+
 ## v1.0.24 — 2026-10-26
 
 ### Fixed

@@ -68,7 +68,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
   }).join(' ');
   const shortcutEditableTarget = target => Boolean(target?.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])'));
   window.mpressKeyboard = Object.freeze({matches: shortcutMatches, aria: shortcutARIA, label: shortcutLabel, editableTarget: shortcutEditableTarget});
-  const theme = document.querySelector('#theme');
+  const theme = document.querySelector('#mpress-theme-toggle');
   const themeModes = ['system', 'dark', 'light'];
   const themeLabels = {system: mpressUI("System"), dark: mpressUI("Dark"), light: mpressUI("Light")};
   const stored = storage.get('mpress-theme');
@@ -91,7 +91,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
     syncThemeButton();
   });
 
-  const menu = document.querySelector('#menu');
+  const menu = document.querySelector('#mpress-menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   const mobileNavigation = window.matchMedia('(max-width: 760px)');
   const syncNavigation = () => {
@@ -123,7 +123,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
     if (event.key === 'Escape' && document.body.classList.contains('nav-open')) closeNavigation(true);
   });
   document.addEventListener('click', event => {
-    if (document.body.classList.contains('nav-open') && !event.target.closest('.sidebar') && !event.target.closest('#menu')) closeNavigation(true);
+    if (document.body.classList.contains('nav-open') && !event.target.closest('.sidebar') && !event.target.closest('#mpress-menu-toggle')) closeNavigation(true);
   });
   mobileNavigation.addEventListener?.('change', () => {
     if (!mobileNavigation.matches) closeNavigation(false);
@@ -1484,7 +1484,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
   window.addEventListener('resize', repositionDDLBs, {passive: true});
   document.addEventListener('scroll', repositionDDLBs, {passive: true, capture: true});
 
-  const query = document.querySelector('#search');
+  const query = document.querySelector('#mpress-search-toggle');
   if (query) {
     const shortcut = document.querySelector('.search-shortcut');
     const searchShortcut = document.body.dataset.shortcutSearch || 'Mod+K';

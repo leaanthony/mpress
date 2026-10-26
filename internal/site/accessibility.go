@@ -184,7 +184,7 @@ const accessibilityJS = `
     get(key) { try { return localStorage.getItem(key); } catch (_) { return null; } },
     set(key, value) { try { localStorage.setItem(key, value); } catch (_) {} }
   };
-  const accessibilityButton = document.querySelector('#accessibility');
+  const accessibilityButton = document.querySelector('#mpress-accessibility-toggle');
   const accessibilityPanel = document.querySelector('#mpress-accessibility-panel');
   if (accessibilityButton && accessibilityPanel) {
 	const accessibilityLaunchers = [...document.querySelectorAll('[data-open-accessibility]')];

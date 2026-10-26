@@ -207,7 +207,7 @@ func viewerMarkdown(corpus *Corpus) string {
   }));
   root.querySelectorAll('[data-preview-theme]').forEach(button => button.addEventListener('click', () => {
     const wanted = button.dataset.previewTheme;
-    const theme = document.querySelector('#theme');
+    const theme = document.querySelector('#mpress-theme-toggle');
     for (let attempt = 0; theme && document.documentElement.dataset.theme !== wanted && attempt < 3; attempt++) theme.click();
     root.querySelectorAll('[data-preview-theme]').forEach(item => item.classList.toggle('active', item.dataset.previewTheme === document.documentElement.dataset.theme));
   }));

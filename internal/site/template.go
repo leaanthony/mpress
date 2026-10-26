@@ -314,7 +314,7 @@ func (r *pageRenderer) socialImageURL() string {
 
 func (r *pageRenderer) renderHeader() {
 	d := r.data
-	r.raw("<header><button id=\"menu\" type=\"button\" aria-label=\"")
+	r.raw("<header><button id=\"mpress-menu-toggle\" type=\"button\" aria-label=\"")
 	r.uiText("Toggle navigation")
 	r.raw("\" aria-expanded=\"false\" aria-controls=\"mpress-sidebar\">")
 	r.icon("menu", 20)
@@ -390,7 +390,7 @@ func (r *pageRenderer) renderHeader() {
 		r.uiText("Search")
 		r.raw("</span>")
 		r.icon("search", 18)
-		r.raw("<button id=\"search\" type=\"button\" role=\"combobox\" aria-label=\"")
+		r.raw("<button id=\"mpress-search-toggle\" type=\"button\" role=\"combobox\" aria-label=\"")
 		r.uiText("Search")
 		r.raw("\" aria-autocomplete=\"list\" aria-haspopup=\"dialog\" aria-expanded=\"false\" aria-controls=\"mpress-search-dialog\">")
 		r.uiText(d.Config.Search.Placeholder)
@@ -413,7 +413,7 @@ func (r *pageRenderer) renderHeader() {
 	r.renderAccessibilityButton()
 	r.renderLanguageMenu()
 	r.renderVersionMenu()
-	r.raw("<button id=\"theme\" class=\"header-group theme-toggle\" type=\"button\" data-theme-mode=\"system\" aria-label=\"")
+	r.raw("<button id=\"mpress-theme-toggle\" class=\"header-group theme-toggle\" type=\"button\" data-theme-mode=\"system\" aria-label=\"")
 	r.uiText("Theme: System. Switch to Dark")
 	r.raw("\" title=\"")
 	r.uiText("Theme: System")
@@ -640,7 +640,7 @@ func (r *pageRenderer) renderAccessibilityButton() {
 	if !r.data.Config.Accessibility.Enabled {
 		return
 	}
-	r.raw("<div class=\"header-group utility-select accessibility-select\"><button id=\"accessibility\" class=\"utility-menu-trigger\" type=\"button\" popovertarget=\"mpress-accessibility-panel\" aria-label=\"")
+	r.raw("<div class=\"header-group utility-select accessibility-select\"><button id=\"mpress-accessibility-toggle\" class=\"utility-menu-trigger\" type=\"button\" popovertarget=\"mpress-accessibility-panel\" aria-label=\"")
 	r.uiText("Accessibility settings")
 	r.raw("\" aria-haspopup=\"dialog\" aria-expanded=\"false\" title=\"")
 	r.uiText("Accessibility settings")

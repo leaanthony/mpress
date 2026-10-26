@@ -728,7 +728,7 @@
     const logoImages = Array.from(document.querySelectorAll('.brand img'));
     const brandTitle = document.querySelector('.brand > span:not(.brand-mark):not(.theme-logo)');
     const searchContainer = document.querySelector('.search');
-    const searchButton = searchContainer?.querySelector('#search');
+    const searchButton = searchContainer?.querySelector('#mpress-search-toggle');
     state.configPreview = {
       committed: false,
       siteTitle,

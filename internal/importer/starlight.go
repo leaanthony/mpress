@@ -1506,7 +1506,7 @@ html[data-theme="light"] .docs-page .mpress-admonition-danger { --notice: hsl(33
 
 @media (max-width: 720px) {
   body > header { height: 58px; padding-inline: .9rem; }
-  .docs-page #menu { order: 4; margin-left: .55rem; }
+  .docs-page #mpress-menu-toggle { order: 4; margin-left: .55rem; }
   :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .brand { order: 1; width: 139px; height: 32px; }
   :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .theme-logo { width: 139px; height: 32px; flex-basis: 139px; }
   :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .search { order: 2; flex: 0 0 42px; width: 42px; margin-left: auto; }
@@ -1546,7 +1546,7 @@ html[data-theme="light"] .docs-page .mpress-admonition-danger { --notice: hsl(33
 @media (max-width: 420px) {
   body > header { gap: .2rem; padding-inline: .3rem; }
   .docs-page .header-links { gap: .2rem; }
-  .docs-page #menu { width: 40px; height: 40px; margin-left: .1rem; }
+  .docs-page #mpress-menu-toggle { width: 40px; height: 40px; margin-left: .1rem; }
   :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .brand { width: 96px; }
   :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .theme-logo { width: 96px; flex-basis: 96px; }
   :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .search { width: 40px; flex-basis: 40px; }

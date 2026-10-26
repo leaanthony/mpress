@@ -308,7 +308,7 @@ body.mpress-search-open { overflow: hidden; }
 .social-links { gap: .1rem; }
 .social-link { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 6px; color: var(--muted); }
 .social-link:hover { background: var(--surface); color: var(--text); text-decoration: none; }
-.header-links select, .header-links button, #menu {
+.header-links select, .header-links button, #mpress-menu-toggle {
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -452,8 +452,8 @@ body.mpress-search-open { overflow: hidden; }
 .theme-toggle[data-theme-mode="dark"] .lucide-moon,
 .theme-toggle[data-theme-mode="light"] .lucide-sun { display: inline-flex; }
 .social-link:hover { color: var(--hover); }
-#menu { display: none; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 11px; }
-#menu .lucide { margin: auto; }
+#mpress-menu-toggle { display: none; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 11px; }
+#mpress-menu-toggle .lucide { margin: auto; }
 
 .layout { display: grid; grid-template-columns: var(--layout-sidebar-width) minmax(0, 1fr); width: 100%; margin: 0; padding: 0; }
 .mpress-not-found { display: grid; min-height: calc(100dvh - 58px); padding: clamp(3rem, 10vw, 8rem) 1.25rem; place-items: center; text-align: center; }
@@ -1538,7 +1538,7 @@ html[data-theme="dark"] .hero-logo-dark { display: block; }
   .mp-home-resources a { grid-template-columns: 1fr; gap: .35rem; min-height: 0; padding: 1.1rem; }
   .mp-home-actions, .mp-home-final .mp-home-actions { width: 100%; }
   .mp-home-button, .landing-page .mpress-button { flex: 1 1 auto; }
-  :is(.blog-index-page, .blog-article-page) #menu { display: none; }
+  :is(.blog-index-page, .blog-article-page) #mpress-menu-toggle { display: none; }
   .blog-layout { display: block; }
   .blog-sidebar { position: static; height: auto; padding: 1rem; overflow-x: auto; border-right: 0; border-bottom: 1px solid var(--border); }
   .blog-sidebar-inner { width: max-content; max-width: none; align-items: center; flex-direction: row; gap: .35rem; }
@@ -1676,8 +1676,8 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
 
 @media (max-width: 760px) {
   body > header { height: 58px; padding: 0 .9rem; }
-  #menu { display: block; }
-  .landing-page #menu { display: none; }
+  #mpress-menu-toggle { display: block; }
+  .landing-page #mpress-menu-toggle { display: none; }
   .brand-mark { width: 32px; height: 32px; }
   .theme-logo { flex-basis: min(var(--mpress-logo-width, 138px), 34vw); width: min(var(--mpress-logo-width, 138px), 34vw); height: 26px; }
   .search { display: block; flex: 0 0 44px; width: 44px; margin-left: auto; }
@@ -1822,7 +1822,7 @@ const defaultThemeJS = `
   }).join(' ');
   const shortcutEditableTarget = target => Boolean(target?.closest?.('input, textarea, select, [contenteditable]:not([contenteditable="false"])'));
   window.mpressKeyboard = Object.freeze({matches: shortcutMatches, aria: shortcutARIA, label: shortcutLabel, editableTarget: shortcutEditableTarget});
-  const theme = document.querySelector('#theme');
+  const theme = document.querySelector('#mpress-theme-toggle');
   const themeModes = ['system', 'dark', 'light'];
   const themeLabels = {system: mpressUI("System"), dark: mpressUI("Dark"), light: mpressUI("Light")};
   const stored = storage.get('mpress-theme');
@@ -1845,7 +1845,7 @@ const defaultThemeJS = `
     syncThemeButton();
   });
 
-  const menu = document.querySelector('#menu');
+  const menu = document.querySelector('#mpress-menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   const mobileNavigation = window.matchMedia('(max-width: 760px)');
   const syncNavigation = () => {
@@ -1877,7 +1877,7 @@ const defaultThemeJS = `
     if (event.key === 'Escape' && document.body.classList.contains('nav-open')) closeNavigation(true);
   });
   document.addEventListener('click', event => {
-    if (document.body.classList.contains('nav-open') && !event.target.closest('.sidebar') && !event.target.closest('#menu')) closeNavigation(true);
+    if (document.body.classList.contains('nav-open') && !event.target.closest('.sidebar') && !event.target.closest('#mpress-menu-toggle')) closeNavigation(true);
   });
   mobileNavigation.addEventListener?.('change', () => {
     if (!mobileNavigation.matches) closeNavigation(false);
@@ -3238,7 +3238,7 @@ const defaultThemeJS = `
   window.addEventListener('resize', repositionDDLBs, {passive: true});
   document.addEventListener('scroll', repositionDDLBs, {passive: true, capture: true});
 
-  const query = document.querySelector('#search');
+  const query = document.querySelector('#mpress-search-toggle');
   if (query) {
     const shortcut = document.querySelector('.search-shortcut');
     const searchShortcut = document.body.dataset.shortcutSearch || 'Mod+K';
