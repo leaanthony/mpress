@@ -342,13 +342,16 @@ func TestConversionKeepsNamedRecoveryCopiesWhenRollbackFails(t *testing.T) {
 	restoreFailure := errors.New("source restore failed")
 	ops := defaultConversionOps
 	ops.renameLexical = func(f *projectfs.FS, old, new string) error {
-		switch {
-		case filepath.Clean(old) == filepath.Join(root, "content", "b.md"):
+		if filepath.Clean(old) == filepath.Join(root, "content", "b.md") {
 			return removeFailure
-		case strings.Contains(old, recoveryPrefix):
-			return restoreFailure
 		}
 		return f.RenameLexical(old, new)
+	}
+	ops.linkLexical = func(f *projectfs.FS, old, new string) error {
+		if strings.Contains(old, recoveryPrefix) {
+			return restoreFailure
+		}
+		return f.LinkLexical(old, new)
 	}
 
 	_, err := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops)

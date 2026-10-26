@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve source files and aliases recreated while a failed conversion rolls back. If restoring a consumed source encounters newly saved work, leave that work intact and report the retained recovery copy. Beads `mp-b52.1.6`.
+
 - Refresh authoring settings and the served preview after successful configuration changes, including moving the document root when `outputDir` changes. Invalid or failed builds preserve the last usable preview, while guarded configuration snapshots and revision checks protect concurrent settings operations. Beads `mp-b52.3.2`.
 
 - Refresh live preview after creating, deleting, renaming or editing files even when timestamps do not advance, including changes within large assets and configured navigation outside the content directory. Save bursts are coalesced, scanning errors are reported, and generated output and unrelated files do not trigger rebuilds. Beads `mp-b52.3.1`.

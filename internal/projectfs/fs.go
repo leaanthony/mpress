@@ -281,6 +281,22 @@ func (f *FS) RenameLexical(old, new string) error {
 	return f.root.Rename(filepath.Join(oldParent, oldLeaf), filepath.Join(newParent, newLeaf))
 }
 
+// LinkLexical creates new as a hard link to old without replacing an existing
+// destination leaf. Neither final symlink is resolved, so a moved recovery
+// alias keeps its verbatim link text, even when it is dangling. Parent
+// directories remain confined to the project root.
+func (f *FS) LinkLexical(old, new string) error {
+	oldParent, oldLeaf, err := f.lexicalDestination(old)
+	if err != nil {
+		return err
+	}
+	newParent, newLeaf, err := f.lexicalDestination(new)
+	if err != nil {
+		return err
+	}
+	return f.root.Link(filepath.Join(oldParent, oldLeaf), filepath.Join(newParent, newLeaf))
+}
+
 func (f *FS) lexicalDestination(name string) (parent, leaf string, err error) {
 	if !filepath.IsAbs(name) {
 		name = filepath.Join(f.project, name)

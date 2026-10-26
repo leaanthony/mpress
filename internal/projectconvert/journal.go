@@ -25,6 +25,7 @@ type conversionOps struct {
 	write         func(*projectfs.FS, string, []byte, os.FileMode) error
 	writeNew      func(*projectfs.FS, string, []byte, os.FileMode) (bool, error)
 	renameLexical func(*projectfs.FS, string, string) error
+	linkLexical   func(*projectfs.FS, string, string) error
 	remove        func(*projectfs.FS, string) error
 	readFile      func(*projectfs.FS, string) ([]byte, error)
 	lstat         func(*projectfs.FS, string) (os.FileInfo, error)
@@ -43,6 +44,7 @@ var defaultConversionOps = conversionOps{
 		return files.WriteNewAtomicMode(name, data, mode)
 	},
 	renameLexical: func(files *projectfs.FS, old, new string) error { return files.RenameLexical(old, new) },
+	linkLexical:   func(files *projectfs.FS, old, new string) error { return files.LinkLexical(old, new) },
 	remove:        func(files *projectfs.FS, name string) error { return files.Remove(name) },
 	readFile:      func(files *projectfs.FS, name string) ([]byte, error) { return files.ReadFile(name) },
 	lstat:         func(files *projectfs.FS, name string) (os.FileInfo, error) { return files.Lstat(name) },
@@ -218,6 +220,21 @@ func (j *recoveryJournal) observe(files *projectfs.FS, name string, expected []b
 	return fileChanged, nil
 }
 
+func (j *recoveryJournal) restoreMoved(entry recoveryEntry) error {
+	if entry.expected != nil {
+		return j.ops.renameLexical(entry.files, entry.backup, entry.path)
+	}
+	// The author may recreate a consumed source after the absence check.
+	// Keep the backup until cleanup, and never replace that new leaf.
+	if err := j.ops.linkLexical(entry.files, entry.backup, entry.path); err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return fmt.Errorf("destination appeared during rollback, recovery copy retained: %w", err)
+		}
+		return fmt.Errorf("restore source: %w", err)
+	}
+	return nil
+}
+
 // rollback undoes recorded changes in reverse order. Every entry is attempted.
 // A path changed by another writer is left untouched and its recovery copy is
 // retained. Reaching an error retains all recovery directories and names them.
@@ -236,7 +253,7 @@ func (j *recoveryJournal) rollback() error {
 				problems = append(problems, fmt.Errorf("%s: changed after conversion, recovery copy retained", entry.detail()))
 				continue
 			}
-			if err := j.ops.renameLexical(entry.files, entry.backup, entry.path); err != nil {
+			if err := j.restoreMoved(entry); err != nil {
 				problems = append(problems, fmt.Errorf("%s: %w", entry.detail(), err))
 			}
 		case recoveryCreated:
