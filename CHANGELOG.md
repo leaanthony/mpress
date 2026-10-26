@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve edits, replaced aliases and permission changes made to generated documents during failed conversion cleanup. Report any retained recovery copy instead of deleting newly saved work. Beads `mp-b52.1.6`.
+
 - Preserve source files and aliases recreated while a failed conversion rolls back. If restoring a consumed source encounters newly saved work, leave that work intact and report the retained recovery copy. Beads `mp-b52.1.6`.
 
 - Refresh authoring settings and the served preview after successful configuration changes, including moving the document root when `outputDir` changes. Invalid or failed builds preserve the last usable preview, while guarded configuration snapshots and revision checks protect concurrent settings operations. Beads `mp-b52.3.2`.

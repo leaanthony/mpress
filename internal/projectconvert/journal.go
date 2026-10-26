@@ -78,6 +78,7 @@ type recoveryEntry struct {
 	path     string
 	backup   string
 	expected []byte
+	mode     os.FileMode
 }
 
 func (e recoveryEntry) detail() string {
@@ -153,8 +154,8 @@ func (j *recoveryJournal) moveAside(files *projectfs.FS, name string) (int, erro
 	return len(j.entries) - 1, nil
 }
 
-func (j *recoveryJournal) recordCreated(files *projectfs.FS, name string, expected []byte) {
-	j.entries = append(j.entries, recoveryEntry{kind: recoveryCreated, files: files, path: name, expected: expected})
+func (j *recoveryJournal) recordCreated(files *projectfs.FS, name string, expected []byte, mode os.FileMode) {
+	j.entries = append(j.entries, recoveryEntry{kind: recoveryCreated, files: files, path: name, expected: expected, mode: mode})
 }
 
 func (j *recoveryJournal) recordWritten(index int, expected []byte) {
@@ -235,6 +236,77 @@ func (j *recoveryJournal) restoreMoved(entry recoveryEntry) error {
 	return nil
 }
 
+// rollbackCreated captures the current leaf before deciding to remove it.
+// Inspecting the captured leaf avoids unlinking a new file at the original name.
+func (j *recoveryJournal) rollbackCreated(entry recoveryEntry) error {
+	captured, err := j.backupPath(entry.files, entry.path)
+	if err != nil {
+		return err
+	}
+	if _, err := j.ops.lstat(entry.files, captured); err == nil {
+		return fmt.Errorf("recovery path %s already exists", captured)
+	} else if !errors.Is(err, os.ErrNotExist) {
+		return err
+	}
+	if err := j.ops.renameLexical(entry.files, entry.path, captured); err != nil {
+		if errors.Is(err, os.ErrNotExist) {
+			return nil
+		}
+		return fmt.Errorf("capture current output for recovery: %w", err)
+	}
+	return j.settleCreated(entry, captured)
+}
+
+// settleCreated inspects the leaf captured from a path this run created and
+// discards it only when it is still the verified regular generated output.
+// Author bytes, changed permissions, aliases or directories are preserved
+// under the original name without replacing a leaf that appeared meanwhile.
+func (j *recoveryJournal) settleCreated(entry recoveryEntry, captured string) error {
+	info, err := j.ops.lstat(entry.files, captured)
+	if err != nil {
+		return fmt.Errorf("inspect captured output at %s: %w", captured, err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		return j.preserveCreated(entry, captured, "was replaced by a symbolic link", true)
+	}
+	if !info.Mode().IsRegular() {
+		return j.preserveCreated(entry, captured, "was replaced by a non-regular file", false)
+	}
+	if info.Mode().Perm() != entry.mode.Perm() {
+		return j.preserveCreated(entry, captured, "permissions changed after conversion", true)
+	}
+	data, err := j.ops.readFile(entry.files, captured)
+	if err != nil {
+		return fmt.Errorf("read captured output at %s: %w", captured, err)
+	}
+	if !bytes.Equal(data, entry.expected) {
+		return j.preserveCreated(entry, captured, "changed after conversion", true)
+	}
+	if err := j.ops.remove(entry.files, captured); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("discard unchanged output copy at %s: %w", captured, err)
+	}
+	return nil
+}
+
+// preserveCreated restores a captured author leaf without replacing anything.
+// A leaf that cannot be relinked (a directory) or whose original name was
+// recreated stays at the explicit recovery path named in the error.
+func (j *recoveryJournal) preserveCreated(entry recoveryEntry, captured, reason string, linkable bool) error {
+	if !linkable {
+		return fmt.Errorf("%s; preserved at %s", reason, captured)
+	}
+	if err := j.ops.linkLexical(entry.files, captured, entry.path); err != nil {
+		if errors.Is(err, os.ErrExist) {
+			return fmt.Errorf("%s; original name recreated during rollback, preserved at %s: %w", reason, captured, err)
+		}
+		return fmt.Errorf("%s; preserved at %s: %w", reason, captured, err)
+	}
+	if err := j.ops.remove(entry.files, captured); err != nil && !errors.Is(err, os.ErrNotExist) {
+		return fmt.Errorf("%s; restored to the original name but recovery copy retained at %s: %w", reason, captured, err)
+	}
+	return fmt.Errorf("%s; restored to the original name", reason)
+}
+
 // rollback undoes recorded changes in reverse order. Every entry is attempted.
 // A path changed by another writer is left untouched and its recovery copy is
 // retained. Reaching an error retains all recovery directories and names them.
@@ -264,8 +336,8 @@ func (j *recoveryJournal) rollback() error {
 				problems = append(problems, fmt.Errorf("%s: changed after conversion, left in place", entry.path))
 				continue
 			}
-			if err := j.ops.remove(entry.files, entry.path); err != nil && !errors.Is(err, os.ErrNotExist) {
-				problems = append(problems, fmt.Errorf("%s: %w", entry.path, err))
+			if err := j.rollbackCreated(entry); err != nil {
+				problems = append(problems, fmt.Errorf("%s: %w", entry.detail(), err))
 			}
 		}
 	}

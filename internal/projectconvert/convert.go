@@ -221,7 +221,7 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 		}
 		published, err := ops.writeNew(contentFiles, item.target, item.data, item.mode)
 		if published {
-			journal.recordCreated(contentFiles, item.target, item.data)
+			journal.recordCreated(contentFiles, item.target, item.data, item.mode)
 		}
 		if err != nil {
 			return fail(err)
@@ -296,7 +296,7 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 			// Keep a non-regular destination in place so the save reports it
 			// instead of silently replacing an unrelated directory.
 		case errors.Is(statErr, os.ErrNotExist):
-			journal.recordCreated(projectFiles, config.Filename, nil)
+			journal.recordCreated(projectFiles, config.Filename, nil, 0)
 		default:
 			return fail(statErr)
 		}
