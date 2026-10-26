@@ -211,23 +211,26 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 	if opts.PurgeUnusedCSS {
 		usedCSSTokens = make(map[string]struct{})
 	}
-	themeCSS := strings.Replace(defaultThemeCSS, "#5375f6", cfg.Theme.AccentColor, 1)
-	themeCSS = strings.Replace(themeCSS, "#7593ff", cfg.Theme.HoverColorLight, 1)
-	themeCSS = strings.Replace(themeCSS, "#95aaff", cfg.Theme.HoverColorDark, 1)
-	themeCSS += documentationLayoutCSS(cfg.Theme.Layout)
+	// Only built-in styles are purgeable; scripts can construct author classes
+	// that static scanning cannot detect.
+	builtinCSS := strings.Replace(defaultThemeCSS, "#5375f6", cfg.Theme.AccentColor, 1)
+	builtinCSS = strings.Replace(builtinCSS, "#7593ff", cfg.Theme.HoverColorLight, 1)
+	builtinCSS = strings.Replace(builtinCSS, "#95aaff", cfg.Theme.HoverColorDark, 1)
+	builtinCSS += documentationLayoutCSS(cfg.Theme.Layout)
+	customCSS := ""
 	if cfg.Build.CustomCSS != "" {
-		customCSS, err := files.ReadFile(filepath.Join(projectDir, cfg.Build.CustomCSS))
+		projectCSS, err := files.ReadFile(filepath.Join(projectDir, cfg.Build.CustomCSS))
 		if err != nil {
 			result.Diagnostics = append(result.Diagnostics, content.Diagnostic{Severity: "error", Code: "custom-css", Message: err.Error()})
 		} else {
-			// Keep the theme and project overrides in one critical stylesheet. This
-			// preserves cascade order while removing a second render-blocking request.
-			themeCSS += "\n/* Project custom CSS */\n" + string(customCSS)
+			customCSS = "\n/* Project custom CSS */\n" + string(projectCSS)
 		}
 	}
+	accessibilityBlock := ""
 	if cfg.Accessibility.Enabled {
-		themeCSS += accessibilityCSS
+		accessibilityBlock = accessibilityCSS
 	}
+	themeCSS := builtinCSS + customCSS + accessibilityBlock
 	cssAsset := themeCSS
 	jsAsset := readerLocaleJS + defaultThemeJS
 	if cfg.Accessibility.Enabled {
@@ -429,7 +432,9 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 			jsAsset += accessibilityJS
 		}
 		if opts.PurgeUnusedCSS {
-			cssAsset = purgeUnusedCSSWithTokens(themeCSS, usedCSSTokens, jsAsset)
+			// Preserve cascade order: theme, author overrides, accessibility.
+			used := usedCSSTokensFor(usedCSSTokens, jsAsset)
+			cssAsset = purgeCSSBlock(builtinCSS, used) + customCSS + purgeCSSBlock(accessibilityBlock, used)
 		}
 		if opts.MinifyAssets {
 			cssAsset, err = minifyStylesheet(cssAsset)

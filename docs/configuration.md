@@ -211,8 +211,11 @@ the theme control; their choice is stored locally in the browser.
 in each theme. M-Press derives a contrast-safe foreground from each configured
 colour. The older `hoverColor` field remains a fallback for existing
 projects. For deeper customisation, set `build.customCSS` to a stylesheet
-relative to the project root. It is copied after the default stylesheet so your
+relative to the project root. It is included after the built-in theme styles so your
 rules can override the theme.
+
+Production builds preserve every rule in `build.customCSS`, including rules used
+by scripts at runtime. Unused-rule removal applies only to M-Press's built-in styles.
 
 The `starlight` layout preset is the default. It fixes the navigation to the
 left and centres the article and table of contents as one unit. The `wide`

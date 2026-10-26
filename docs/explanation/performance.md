@@ -44,11 +44,12 @@ visible instead of hiding the total behind one duration.
 
 Production builds use M-Press's Go-native CSS and JavaScript minifier. They also
 scan the generated HTML and runtime script to remove class and ID rules that are
-clearly unused. Responsive rules are filtered recursively. Rules that custom
-HTML or runtime components may need remain intact.
+clearly unused in M-Press's built-in styles. Responsive rules are filtered
+recursively. Configured custom CSS remains intact because scripts can construct
+class names at runtime that static scanning cannot reliably detect.
 
 This optimisation needs no Node.js package, lockfile, or external command.
-Pass `--no-purge-css` when a project must retain every selector.
+Pass `--no-purge-css` when a project must also retain every built-in selector.
 
 ## Generated pages stay static
 

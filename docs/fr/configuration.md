@@ -149,8 +149,12 @@ le contrôle du thème ; leur choix est stocké localement dans le navigateur.
 `hoverColorDark` définissent la couleur utilisée lorsque le pointeur survole les icônes de navigation
 dans chaque thème. L'ancien `hoverColor` champ reste un repli pour les projets existants
 projets. Pour une personnalisation plus poussée, définissez `build.customCSS` sur une feuille de style
-relative à la racine du projet. Elle est copiée après la feuille de style par défaut afin que vos
-règles peuvent remplacer le thème.
+relative à la racine du projet. Elle est incluse après les styles du thème intégré afin que vos
+règles puissent remplacer ceux du thème.
+
+Les builds de production conservent toutes les règles de `build.customCSS`, y compris
+celles utilisées par les scripts à l'exécution. La suppression des règles inutilisées
+s'applique uniquement aux styles intégrés de M-Press.
 
 Le `starlight` préréglage de mise en page est le défaut. Il fixe la navigation à la
 gauche et centre l'article et la table des matières comme une seule unité. Le `wide`

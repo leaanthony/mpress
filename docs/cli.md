@@ -91,12 +91,13 @@ includes them automatically.
 Production builds minify generated CSS and JavaScript with M-Press's built-in
 Go minifier. It removes comments and redundant whitespace and shortens safe,
 non-repeated local JavaScript bindings. It does not need Node or an external
-minification tool. Production builds also remove clearly unused class and ID
+minification tool. Production builds also remove clearly unused built-in class and ID
 rules after scanning every generated page and the runtime script. Responsive
 at-rules are filtered recursively, while animation, font, and unknown at-rules
 are retained. Selectors without class or ID tokens are retained because custom
 HTML and runtime components can activate them later. Pass `--no-purge-css` when
-a build must retain every selector.
+a build must retain every built-in selector. Configured `build.customCSS` rules
+are always preserved, including those used by scripts at runtime.
 
 ## Publication checks
 

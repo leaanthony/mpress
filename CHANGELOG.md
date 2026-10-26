@@ -1,5 +1,11 @@
 # Changelog
 
+## Unreleased
+
+### Fixed
+
+- Preserve configured custom CSS during production purging, including runtime-created classes, escaped selectors and modern at-rules. Keep cascade order and minification while removing unused built-in styles. Beads `mp-b52.3.5`.
+
 ## v1.0.24 — 2026-10-26
 
 ### Fixed
