@@ -96,6 +96,9 @@ func generatedOutputFiles(cfg config.Config) []string {
 // cached output paths nor a filename produced by filepath.Join's cleaning.
 func preflightPageOutputs(project string, cfg config.Config, pages map[string][]*content.Page, versionLabels []string) error {
 	registry := outputRegistry{}
+	if err := registerRSSOutput(registry, cfg); err != nil {
+		return err
+	}
 	for _, filename := range generatedOutputFiles(cfg) {
 		if err := registry.add(outputEntry{name: filename, owner: "generated file"}); err != nil {
 			return err

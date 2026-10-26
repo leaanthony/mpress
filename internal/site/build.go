@@ -320,6 +320,9 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 	for _, lang := range cfg.Site.Languages {
 		pages := pagesByLang[lang]
 		blogs, blogArticles := blogArchives(pages, cfg.Blog)
+		if err := writeLanguageRSSFeed(outputDir, cfg, lang, blogs, opts.LinkCollector); err != nil {
+			return result, err
+		}
 		sort.SliceStable(pages, func(i, j int) bool {
 			if pages[i].Order != pages[j].Order {
 				return pages[i].Order < pages[j].Order

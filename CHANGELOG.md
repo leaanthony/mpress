@@ -2,7 +2,11 @@
 
 ## Unreleased
 
+## v1.0.25 — 2026-10-26
+
 ### Fixed
+
+- Generate the configured local RSS feed from published blog posts instead of preserving an empty imported placeholder. Include escaped titles and descriptions, canonical item links and GUIDs, dates and tags; exclude drafts, future posts and translated duplicates. Beads `mp-b52.13`.
 
 - Restore original documents, permissions, internal aliases, translation state and configuration when a format conversion encounters an ordinary filesystem error. Reject duplicate planned targets before changing files, publish new document targets with exclusive no-replace staging so a destination created while conversion runs is never overwritten, and reject a source whose content changed after planning so an author edit made during conversion is preserved instead of discarded. If rollback detects changed content or cannot restore an original, report the retained recovery copies. Filesystems without hard-link support fail safely during new-target publication. This recovery does not provide concurrent-writer isolation or crash recovery. Beads `mp-b52.1.6`.
 - Rename the header menu, search, theme and accessibility control IDs to `mpress-menu-toggle`, `mpress-search-toggle`, `mpress-theme-toggle` and `mpress-accessibility-toggle` so they cannot collide with Markdown heading anchors, updating the matching CSS and runtime selectors. Beads `mp-b52.2.6`.
