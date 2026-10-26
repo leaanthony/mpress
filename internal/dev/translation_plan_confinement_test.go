@@ -56,7 +56,7 @@ func TestTranslationRunRejectsParentsRearrangedDuringProvider(t *testing.T) {
 		t.Run(boundary, func(t *testing.T) {
 			server := translationReviewFixture(t)
 			provider, sentinel := translationParentSwap(t, server, boundary)
-			_, err := translate.NewEngine(server.project, server.cfg, provider).RunRoot(context.Background(), server.files, translate.Options{Language: "fr", File: "index.md", Scope: "all", Force: true})
+			_, err := translate.NewEngine(server.project, server.activeConfig(), provider).RunRoot(context.Background(), server.files, translate.Options{Language: "fr", File: "index.md", Scope: "all", Force: true})
 			if err == nil || provider.calls != 1 {
 				t.Errorf("provider rearrangement escaped boundary: calls=%d error=%v", provider.calls, err)
 			}
@@ -81,7 +81,7 @@ func testTranslationInputBoundaries(t *testing.T, boundaries []string, operation
 			sentinel, original := installTranslationInputBoundary(t, server, boundary)
 			provider := &countedBoundaryProvider{}
 			reviewer := &boundaryAuditReviewer{}
-			engine := translate.NewEngine(server.project, server.cfg, provider)
+			engine := translate.NewEngine(server.project, server.activeConfig(), provider)
 			var err error
 			var calls int
 			switch operation {
@@ -119,7 +119,7 @@ func TestTranslationRunRetainsInternalAliases(t *testing.T) {
 			}
 			devSymlink(t, filepath.Base(saved), path)
 			provider := &countedBoundaryProvider{}
-			report, err := translate.NewEngine(server.project, server.cfg, provider).RunRoot(context.Background(), server.files, translate.Options{Language: "fr", File: "index.md", Scope: "all", Force: true})
+			report, err := translate.NewEngine(server.project, server.activeConfig(), provider).RunRoot(context.Background(), server.files, translate.Options{Language: "fr", File: "index.md", Scope: "all", Force: true})
 			if err != nil || report.Written != 1 || provider.calls == 0 {
 				t.Fatalf("safe run alias failed: %v %+v calls=%d", err, report, provider.calls)
 			}

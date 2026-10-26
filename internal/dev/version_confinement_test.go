@@ -32,10 +32,10 @@ func TestAuthoringVersionsRejectExternalStore(t *testing.T) {
 			}
 			writeDevFixture(t, outside, "v1/index.html", body)
 			writeDevFixture(t, outside, "v1/mpress-version.json", string(data))
-			if err := os.MkdirAll(filepath.Dir(server.cfg.ArtifactsPath(root)), 0755); err != nil {
+			if err := os.MkdirAll(filepath.Dir(server.activeConfig().ArtifactsPath(root)), 0755); err != nil {
 				t.Fatal(err)
 			}
-			devSymlink(t, outside, server.cfg.ArtifactsPath(root))
+			devSymlink(t, outside, server.activeConfig().ArtifactsPath(root))
 			host := httptest.NewServer(server.Handler())
 			defer host.Close()
 			method := http.MethodPost

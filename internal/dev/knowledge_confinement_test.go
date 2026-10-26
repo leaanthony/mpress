@@ -21,8 +21,8 @@ func TestAuthoringKnowledgeRejectsOversizedManifest(t *testing.T) {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = server.Close() })
-	server.cfg.Knowledge.Enabled = true
-	output := server.cfg.OutputPath(root)
+	setTestConfig(server, func(cfg *config.Config) { cfg.Knowledge.Enabled = true })
+	output := server.activeConfig().OutputPath(root)
 	fixtureKnowledge(t, output, "Current site")
 	file, err := os.OpenFile(filepath.Join(output, knowledge.Directory, knowledge.ManifestFile), os.O_WRONLY, 0600)
 	if err != nil {
@@ -61,8 +61,8 @@ func TestAuthoringKnowledgeRejectsExternalBundles(t *testing.T) {
 				t.Fatal(err)
 			}
 			t.Cleanup(func() { _ = server.Close() })
-			server.cfg.Knowledge.Enabled = true
-			output := server.cfg.OutputPath(root)
+			setTestConfig(server, func(cfg *config.Config) { cfg.Knowledge.Enabled = true })
+			output := server.activeConfig().OutputPath(root)
 			fixtureKnowledge(t, output, "Current site")
 			fixtureKnowledge(t, outside, "external-secret-title")
 			redirectKnowledge(t, boundary, output, outside)

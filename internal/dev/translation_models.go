@@ -66,7 +66,8 @@ var recommendedTranslationModels = map[string]string{
 }
 
 func (s *Server) handleTranslationModels(w http.ResponseWriter, r *http.Request) {
-	if s.cfg.Translation.Provider != "openrouter" {
+	cfg := s.activeConfig()
+	if cfg.Translation.Provider != "openrouter" {
 		writeAPIError(w, http.StatusBadRequest, errors.New("model discovery and comparison currently require translation.provider: openrouter"))
 		return
 	}
@@ -77,7 +78,7 @@ func (s *Server) handleTranslationModels(w http.ResponseWriter, r *http.Request)
 			writeAPIError(w, http.StatusBadGateway, err)
 			return
 		}
-		engine, err := translate.NewEngine(s.project, s.cfg, nil).BorrowRoot(s.files)
+		engine, err := translate.NewEngine(s.project, cfg, nil).BorrowRoot(s.files)
 		if err != nil {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
@@ -88,14 +89,14 @@ func (s *Server) handleTranslationModels(w http.ResponseWriter, r *http.Request)
 			return
 		}
 		priced := priceTranslationModels(models, estimate)
-		recommendations := translationRecommendations(s.cfg.Site.Languages, s.cfg.Site.DefaultLanguage, priced)
+		recommendations := translationRecommendations(cfg.Site.Languages, cfg.Site.DefaultLanguage, priced)
 		writeJSON(w, http.StatusOK, map[string]any{
-			"models": priced, "estimate": estimate, "configuredModel": s.cfg.Translation.Model,
-			"configuredReasoningEffort": s.cfg.Translation.ReasoningEffort,
-			"configuredLanguageModels":  s.cfg.Translation.LanguageModels,
+			"models": priced, "estimate": estimate, "configuredModel": cfg.Translation.Model,
+			"configuredReasoningEffort": cfg.Translation.ReasoningEffort,
+			"configuredLanguageModels":  cfg.Translation.LanguageModels,
 			"recommendations":           recommendations,
-			"hasAPIKey":                 translate.ResolveAPIKey(s.cfg) != "",
-			"apiKeyEnv":                 s.cfg.Translation.APIKeyEnv,
+			"hasAPIKey":                 translate.ResolveAPIKey(cfg) != "",
+			"apiKeyEnv":                 cfg.Translation.APIKeyEnv,
 			"source":                    "OpenRouter live model catalog",
 		})
 	case http.MethodPost:
@@ -131,12 +132,13 @@ func (s *Server) handleTranslationModels(w http.ResponseWriter, r *http.Request)
 }
 
 func (s *Server) translationModels(ctx context.Context, refresh bool) ([]translationModel, error) {
+	cfg := s.activeConfig()
 	s.modelCatalogMu.Lock()
 	defer s.modelCatalogMu.Unlock()
 	if !refresh && len(s.modelCatalog) > 0 && time.Since(s.modelCatalogAt) < 15*time.Minute {
 		return append([]translationModel(nil), s.modelCatalog...), nil
 	}
-	base, err := url.Parse(strings.TrimRight(s.cfg.Translation.BaseURL, "/") + "/models")
+	base, err := url.Parse(strings.TrimRight(cfg.Translation.BaseURL, "/") + "/models")
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +279,7 @@ func (s *Server) compareTranslationModels(w http.ResponseWriter, r *http.Request
 		}
 		candidates[index] = translate.ComparisonCandidate{Model: id, ReasoningEffort: comparisonReasoningEffort(model)}
 	}
-	engine, err := translate.NewEngine(s.project, s.cfg, nil).BorrowRoot(s.files)
+	engine, err := translate.NewEngine(s.project, s.activeConfig(), nil).BorrowRoot(s.files)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, err)
 		return
@@ -359,8 +361,31 @@ func (s *Server) setTranslationModel(w http.ResponseWriter, r *http.Request, id,
 		writeAPIError(w, http.StatusBadRequest, fmt.Errorf("model %q is not available with structured outputs", id))
 		return
 	}
-	updated := s.cfg
-	reasoningEffort := comparisonReasoningEffort(*selected)
+	updated, status, err := s.saveTranslationModelSelection(*selected, targetLanguage)
+	if err != nil {
+		writeAPIError(w, status, err)
+		return
+	}
+	writeJSON(w, http.StatusOK, map[string]any{"model": selected.ID, "reasoningEffort": updated.Translation.ReasoningEffort, "language": targetLanguage, "languageModels": updated.Translation.LanguageModels, "state": s.currentState()})
+}
+
+// saveTranslationModelSelection composes the model choice from the configuration
+// currently on disk under the shared configuration write lock, so it cannot
+// discard a concurrent settings change.
+func (s *Server) saveTranslationModelSelection(selected translationModel, targetLanguage string) (config.Config, int, error) {
+	s.configWriteMu.Lock()
+	defer s.configWriteMu.Unlock()
+
+	reasoningEffort := comparisonReasoningEffort(selected)
+	path := filepath.Join(s.project, config.Filename)
+	current, err := s.files.ReadFile(path)
+	if err != nil {
+		return config.Config{}, http.StatusInternalServerError, err
+	}
+	updated := s.activeConfig()
+	if parsed, parseErr := config.Parse(current); parseErr == nil {
+		updated = parsed
+	}
 	if targetLanguage == "" {
 		updated.Translation.Model = selected.ID
 		updated.Translation.ReasoningEffort = reasoningEffort
@@ -373,8 +398,7 @@ func (s *Server) setTranslationModel(w http.ResponseWriter, r *http.Request, id,
 			}
 		}
 		if !validTarget {
-			writeAPIError(w, http.StatusBadRequest, fmt.Errorf("language %q is not a configured translation target", targetLanguage))
-			return
+			return config.Config{}, http.StatusBadRequest, fmt.Errorf("language %q is not a configured translation target", targetLanguage)
 		}
 		if updated.Translation.LanguageModels == nil {
 			updated.Translation.LanguageModels = map[string]config.TranslationLanguageModel{}
@@ -382,14 +406,7 @@ func (s *Server) setTranslationModel(w http.ResponseWriter, r *http.Request, id,
 		updated.Translation.LanguageModels[targetLanguage] = config.TranslationLanguageModel{Model: selected.ID, ReasoningEffort: reasoningEffort}
 	}
 	if err := updated.Validate(); err != nil {
-		writeAPIError(w, http.StatusBadRequest, err)
-		return
-	}
-	path := filepath.Join(s.project, config.Filename)
-	current, err := s.files.ReadFile(path)
-	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, err)
-		return
+		return config.Config{}, http.StatusBadRequest, err
 	}
 	data := current
 	if targetLanguage == "" {
@@ -401,15 +418,13 @@ func (s *Server) setTranslationModel(w http.ResponseWriter, r *http.Request, id,
 		data, err = setYAMLValue(data, []string{"translation", "languageModels"}, updated.Translation.LanguageModels)
 	}
 	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, err)
-		return
+		return config.Config{}, http.StatusInternalServerError, err
 	}
 	if err := s.writeSource(path, data, revision(current)); err != nil {
-		writeAPIError(w, http.StatusConflict, err)
-		return
+		return config.Config{}, configWriteStatus(err), err
 	}
-	s.cfg = updated
-	writeJSON(w, http.StatusOK, map[string]any{"model": selected.ID, "reasoningEffort": reasoningEffort, "language": targetLanguage, "languageModels": updated.Translation.LanguageModels, "state": s.currentState()})
+	s.setActiveConfig(updated, revision(data))
+	return updated, http.StatusOK, nil
 }
 
 func translationRecommendations(languages []string, defaultLanguage string, models []translationModel) map[string]translationRecommendation {

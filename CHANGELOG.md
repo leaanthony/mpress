@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Refresh authoring settings and the served preview after successful configuration changes, including moving the document root when `outputDir` changes. Invalid or failed builds preserve the last usable preview, while guarded configuration snapshots and revision checks protect concurrent settings operations. Beads `mp-b52.3.2`.
+
 - Refresh live preview after creating, deleting, renaming or editing files even when timestamps do not advance, including changes within large assets and configured navigation outside the content directory. Save bursts are coalesced, scanning errors are reported, and generated output and unrelated files do not trigger rebuilds. Beads `mp-b52.3.1`.
 
 - Keep the localized phone search launcher correctly sized and clickable: normalize its mobile button box so the 44px target stays in the header, and keep theme, accessibility and language controls visible and usable after search closes while focus returns to the launcher. Beads `mp-b52.2.13`.

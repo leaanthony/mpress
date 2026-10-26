@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/translate"
 )
 
@@ -31,8 +32,8 @@ func TestPageTranslationPlanAfterOneLineEdit(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server.cfg.Site.Languages = []string{"en", "fr", "de"}
-	engine := translate.NewEngine(root, server.cfg, pageUpdateProvider{})
+	setTestConfig(server, func(cfg *config.Config) { cfg.Site.Languages = []string{"en", "fr", "de"} })
+	engine := translate.NewEngine(root, server.activeConfig(), pageUpdateProvider{})
 	if _, err := engine.Run(context.Background(), translate.Options{File: "index.md"}); err != nil {
 		t.Fatal(err)
 	}
@@ -89,7 +90,7 @@ func TestTranslationStatusKeepsUntrackedTargetsAccessible(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	server.cfg.Site.Languages = []string{"en", "fr"}
+	setTestConfig(server, func(cfg *config.Config) { cfg.Site.Languages = []string{"en", "fr"} })
 	request := httptest.NewRequest(http.MethodGet, "/__mpress/api/translations?lang=fr&file=index.md", nil)
 	response := httptest.NewRecorder()
 	server.handleTranslations(response, request)

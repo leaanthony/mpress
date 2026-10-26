@@ -51,6 +51,12 @@ type BuildResult struct {
 	Duration    time.Duration        `json:"duration"`
 	Timings     []BuildTiming        `json:"timings,omitempty"`
 	Diagnostics []content.Diagnostic `json:"diagnostics"`
+
+	// Config is the validated configuration this build actually used. ConfigRevision
+	// identifies the exact mpress.yaml source bytes that produced it, so callers can
+	// publish both without a second read that might observe another revision.
+	Config         config.Config `json:"-"`
+	ConfigRevision string        `json:"-"`
 }
 
 type BuildTiming struct {
@@ -103,10 +109,12 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 	}
 	defer files.Close()
 	opts.files = files
-	cfg, err := config.LoadWithReadFile(projectDir, files.ReadFile)
+	cfg, configSource, err := config.LoadSource(projectDir, files.ReadFile)
 	if err != nil {
 		return result, err
 	}
+	result.Config = cfg.Clone()
+	result.ConfigRevision = config.SourceRevision(configSource)
 	outputDir := cfg.OutputPath(projectDir)
 	if strings.TrimSpace(opts.OutputDir) != "" {
 		outputDir = opts.OutputDir

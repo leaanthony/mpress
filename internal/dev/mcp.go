@@ -138,13 +138,14 @@ func (s *Server) newMCPHandler() http.Handler {
 
 	mcp.AddTool(server, &mcp.Tool{Name: "project_info", Title: "Get M-Press project information", Description: "Return the current project identity and build state.", Annotations: readOnly},
 		func(_ context.Context, _ *mcp.CallToolRequest, _ mcpEmptyInput) (*mcp.CallToolResult, mcpProjectOutput, error) {
-			return nil, mcpProjectOutput{Name: filepath.Base(s.project), Title: s.cfg.Site.Title, Root: s.project, Authoring: s.options.Authoring, Build: mcpBuild(s.currentState())}, nil
+			return nil, mcpProjectOutput{Name: filepath.Base(s.project), Title: s.activeConfig().Site.Title, Root: s.project, Authoring: s.options.Authoring, Build: mcpBuild(s.currentState())}, nil
 		})
 
 	mcp.AddTool(server, &mcp.Tool{Name: "list_files", Title: "List M-Press source files", Description: "List editable project files and directories.", Annotations: readOnly},
 		func(_ context.Context, _ *mcp.CallToolRequest, _ mcpEmptyInput) (*mcp.CallToolResult, mcpListFilesOutput, error) {
+			cfg := s.activeConfig()
 			var files []mcpFileEntry
-			for _, name := range []string{s.cfg.Build.ContentDir, s.cfg.Build.StaticDir, config.Filename} {
+			for _, name := range []string{cfg.Build.ContentDir, cfg.Build.StaticDir, config.Filename} {
 				path := filepath.Join(s.project, filepath.FromSlash(name))
 				if _, err := s.files.Stat(path); err != nil {
 					continue
@@ -189,8 +190,11 @@ func (s *Server) newMCPHandler() http.Handler {
 
 	mcp.AddTool(server, &mcp.Tool{Name: "get_config", Title: "Get the complete M-Press configuration", Description: "Return every supported M-Press configuration field with a safe-write revision.", Annotations: readOnly},
 		func(_ context.Context, _ *mcp.CallToolRequest, _ mcpEmptyInput) (*mcp.CallToolResult, mcpGetConfigOutput, error) {
-			data, err := s.files.ReadFile(filepath.Join(s.project, config.Filename))
-			return nil, mcpGetConfigOutput{Config: s.cfg, Revision: revision(data)}, err
+			if err := s.checkConfigPath(); err != nil {
+				return nil, mcpGetConfigOutput{}, err
+			}
+			cfg, sourceRevision := s.activeConfigState()
+			return nil, mcpGetConfigOutput{Config: cfg, Revision: sourceRevision}, nil
 		})
 
 	mcp.AddTool(server, &mcp.Tool{Name: "update_config", Title: "Update the complete M-Press configuration", Description: "Validate and replace the complete M-Press configuration, then rebuild the site.", Annotations: localWrite},
@@ -201,7 +205,7 @@ func (s *Server) newMCPHandler() http.Handler {
 			if strings.TrimSpace(input.Revision) == "" {
 				return nil, mcpUpdateConfigOutput{}, errors.New("revision is required when updating the configuration")
 			}
-			updated := input.Config
+			updated := input.Config.Clone()
 			if err := updated.Validate(); err != nil {
 				return nil, mcpUpdateConfigOutput{}, err
 			}
@@ -209,11 +213,14 @@ func (s *Server) newMCPHandler() http.Handler {
 			if err != nil {
 				return nil, mcpUpdateConfigOutput{}, err
 			}
+			s.configWriteMu.Lock()
 			path := filepath.Join(s.project, config.Filename)
 			if err := s.writeSource(path, data, input.Revision); err != nil {
+				s.configWriteMu.Unlock()
 				return nil, mcpUpdateConfigOutput{}, err
 			}
-			s.cfg = updated
+			s.setActiveConfig(updated, revision(data))
+			s.configWriteMu.Unlock()
 			s.rebuild(true)
 			return nil, mcpUpdateConfigOutput{Revision: revision(data), Build: mcpBuild(s.currentState())}, nil
 		})

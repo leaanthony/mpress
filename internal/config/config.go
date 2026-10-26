@@ -1,12 +1,16 @@
 package config
 
 import (
+	"crypto/sha256"
+	"encoding/hex"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
 	"os"
 	"path/filepath"
 	"regexp"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -306,14 +310,43 @@ func Load(projectDir string) (Config, error) {
 
 // LoadWithReadFile lets project callers retain a confined filesystem boundary.
 func LoadWithReadFile(projectDir string, readFile func(string) ([]byte, error)) (Config, error) {
+	cfg, _, err := LoadSource(projectDir, readFile)
+	return cfg, err
+}
+
+// LoadSource reads the configuration once and returns both the validated
+// configuration and the exact source bytes it was parsed from. Callers that
+// publish a configuration can pair it with SourceRevision without a second
+// read that might observe a different revision.
+func LoadSource(projectDir string, readFile func(string) ([]byte, error)) (Config, []byte, error) {
 	data, err := readFile(filepath.Join(projectDir, Filename))
 	if err != nil {
 		if errors.Is(err, os.ErrNotExist) {
-			return Default(), fmt.Errorf("%s not found", Filename)
+			return Default(), nil, fmt.Errorf("%s not found", Filename)
 		}
-		return Default(), err
+		return Default(), nil, err
 	}
-	return Parse(data)
+	cfg, err := Parse(data)
+	return cfg, data, err
+}
+
+// SourceRevision identifies configuration source bytes for safe-write checks.
+// It detects changes between an editor read and a subsequent write.
+func SourceRevision(data []byte) string {
+	sum := sha256.Sum256(data)
+	return hex.EncodeToString(sum[:12])
+}
+
+// Clone returns an independent copy. Configuration snapshots share no mutable
+// maps or slices, so a reader can hold one while writers publish a new one.
+func (c Config) Clone() Config {
+	clone := c
+	clone.Site.Languages = slices.Clone(c.Site.Languages)
+	clone.Site.LanguageLabels = maps.Clone(c.Site.LanguageLabels)
+	clone.Site.HeaderLinks = slices.Clone(c.Site.HeaderLinks)
+	clone.Translation.LanguageModels = maps.Clone(c.Translation.LanguageModels)
+	clone.Deploy.Targets = maps.Clone(c.Deploy.Targets)
+	return clone
 }
 
 // Parse loads and validates configuration data while applying the same defaults

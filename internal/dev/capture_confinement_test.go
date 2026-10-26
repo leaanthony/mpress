@@ -20,10 +20,10 @@ func TestAuthoringMCPCapturePreservesExternalStore(t *testing.T) {
 	t.Cleanup(func() { _ = server.Close() })
 	writeDevFixture(t, outside, "v1/index.html", "must survive")
 	writeDevFixture(t, outside, "v1/mpress-version.json", "foreign manifest")
-	if err := os.MkdirAll(filepath.Dir(server.cfg.ArtifactsPath(root)), 0755); err != nil {
+	if err := os.MkdirAll(filepath.Dir(server.activeConfig().ArtifactsPath(root)), 0755); err != nil {
 		t.Fatal(err)
 	}
-	devSymlink(t, outside, server.cfg.ArtifactsPath(root))
+	devSymlink(t, outside, server.activeConfig().ArtifactsPath(root))
 	host := httptest.NewServer(server.Handler())
 	defer host.Close()
 	client := mcp.NewClient(&mcp.Implementation{Name: "capture-boundary", Version: "test"}, nil)

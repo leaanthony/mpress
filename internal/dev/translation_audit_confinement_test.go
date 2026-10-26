@@ -21,7 +21,7 @@ func TestAuthoringTranslationAuditRejectsExternalFiles(t *testing.T) {
 	for _, boundary := range []string{"source", "target", "glossary"} {
 		t.Run(boundary, func(t *testing.T) {
 			server := translationReviewFixture(t)
-			if translate.DetectModelCapabilities(server.cfg) != (translate.ModelCapabilities{}) {
+			if translate.DetectModelCapabilities(server.activeConfig()) != (translate.ModelCapabilities{}) {
 				t.Fatal("fixture could not isolate provider detection")
 			}
 			sentinel, original := installTranslationInputBoundary(t, server, boundary)
@@ -49,7 +49,7 @@ func TestTranslationRefinementRejectsParentsRearrangedDuringProvider(t *testing.
 			server := translationReviewFixture(t)
 			findings := refinementBoundaryFinding(t, server)
 			provider, sentinel := translationParentSwap(t, server, boundary)
-			engine, err := translate.NewEngine(server.project, server.cfg, nil).BorrowRoot(server.files)
+			engine, err := translate.NewEngine(server.project, server.activeConfig(), nil).BorrowRoot(server.files)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -75,7 +75,7 @@ func TestTranslationAuditRefinementRetainInternalAliases(t *testing.T) {
 				t.Fatal(err)
 			}
 			devSymlink(t, filepath.Base(path)+".saved", path)
-			engine, err := translate.NewEngine(server.project, server.cfg, nil).BorrowRoot(server.files)
+			engine, err := translate.NewEngine(server.project, server.activeConfig(), nil).BorrowRoot(server.files)
 			if err != nil {
 				t.Fatal(err)
 			}

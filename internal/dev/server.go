@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/rand"
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"errors"
@@ -89,9 +88,24 @@ type BuildState struct {
 }
 
 type Server struct {
-	project                string
-	files                  *projectfs.FS
-	cfg                    config.Config
+	project string
+	files   *projectfs.FS
+
+	// cfgMu guards the configuration snapshots. cfg is the latest configuration
+	// accepted into the project (the active authoring settings); published is the
+	// configuration of the last successful build whose output the HTTP preview
+	// and route tools use. Both are replaced wholesale and cloned on read, so no
+	// request observes a partially updated map or slice.
+	cfgMu         sync.RWMutex
+	cfg           config.Config
+	cfgRevision   string
+	cfgGeneration uint64
+	published     config.Config
+
+	// configWriteMu serialises configuration read-modify-write cycles. It is
+	// always released before a rebuild so buildMu -> configWriteMu is the only
+	// lock order.
+	configWriteMu          sync.Mutex
 	options                Options
 	token                  string
 	requireWriteToken      bool
@@ -101,7 +115,6 @@ type Server struct {
 	buildMu                sync.Mutex
 	previewMu              sync.Mutex
 	previewDir             string
-	fileServer             http.Handler
 	previewFileServer      http.Handler
 	mcpHandler             http.Handler
 	translationMu          sync.Mutex
@@ -193,10 +206,11 @@ func NewServer(project string, options Options) (*Server, error) {
 			_ = files.Close()
 		}
 	}()
-	cfg, err := config.LoadWithReadFile(abs, files.ReadFile)
+	cfg, configSource, err := config.LoadSource(abs, files.ReadFile)
 	if err != nil {
 		return nil, err
 	}
+	configRevision := config.SourceRevision(configSource)
 	if options.Host == "" {
 		options.Host = "127.0.0.1"
 	}
@@ -219,13 +233,14 @@ func NewServer(project string, options Options) (*Server, error) {
 		project:                abs,
 		files:                  files,
 		cfg:                    cfg,
+		cfgRevision:            configRevision,
+		published:              cfg.Clone(),
 		options:                options,
 		token:                  token,
 		requireWriteToken:      requireWriteToken,
 		events:                 newHub(),
 		state:                  BuildState{Status: "starting"},
 		previewDir:             previewDir,
-		fileServer:             http.FileServer(projectHTTPFS{files: files, base: cfg.OutputPath(abs)}),
 		previewFileServer:      http.FileServer(projectHTTPFS{files: files, base: previewDir}),
 		translationComparisons: map[string]translationComparisonState{},
 	}
@@ -236,6 +251,72 @@ func NewServer(project string, options Options) (*Server, error) {
 
 // Close releases the project's rooted filesystem handle when serving ends.
 func (s *Server) Close() error { return s.files.Close() }
+
+// activeConfig returns an independent snapshot of the latest accepted
+// configuration. Callers may mutate the result without affecting the server or
+// another request.
+func (s *Server) activeConfig() config.Config {
+	cfg, _ := s.activeConfigState()
+	return cfg
+}
+
+// checkConfigPath verifies that mpress.yaml is reachable through the rooted
+// project boundary. GET requests do not need its bytes, but must still reject a
+// configuration file that escapes the project through a symbolic link.
+func (s *Server) checkConfigPath() error {
+	_, err := s.files.ReadFile(filepath.Join(s.project, config.Filename))
+	return err
+}
+
+// activeConfigState returns the active configuration and the revision of the
+// mpress.yaml source it came from as one consistent pair.
+func (s *Server) activeConfigState() (config.Config, string) {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.cfg.Clone(), s.cfgRevision
+}
+
+// publishedConfig returns the configuration used by the last successful build.
+// Serving and route mapping use this snapshot so generated HTML, the manifest
+// and paths all describe the same publication.
+func (s *Server) publishedConfig() config.Config {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.published.Clone()
+}
+
+// setActiveConfig records a configuration that has been written to disk but not
+// necessarily built yet. It must be called with configWriteMu held when the
+// value was derived from a read-modify-write cycle.
+func (s *Server) setActiveConfig(cfg config.Config, revision string) {
+	s.cfgMu.Lock()
+	s.cfg = cfg.Clone()
+	s.cfgRevision = revision
+	s.cfgGeneration++
+	s.cfgMu.Unlock()
+}
+
+// configGenerationAt returns the current configuration mutation generation.
+// A build captures it before reading configuration; publishing may then update
+// the active snapshot only if no newer configuration was accepted meanwhile.
+func (s *Server) configGenerationAt() uint64 {
+	s.cfgMu.RLock()
+	defer s.cfgMu.RUnlock()
+	return s.cfgGeneration
+}
+
+// publishConfig records the configuration a successful build used. Served HTML,
+// route mapping and GET /config converge on this snapshot. A newer configuration
+// accepted while the build was running stays active and is not rolled back.
+func (s *Server) publishConfig(cfg config.Config, revision string, buildGeneration uint64) {
+	s.cfgMu.Lock()
+	s.published = cfg.Clone()
+	if s.cfgGeneration == buildGeneration {
+		s.cfg = cfg.Clone()
+		s.cfgRevision = revision
+	}
+	s.cfgMu.Unlock()
+}
 
 func (s *Server) Handler() http.Handler {
 	mux := http.NewServeMux()
@@ -286,7 +367,7 @@ func (s *Server) handleKnowledge(w http.ResponseWriter, r *http.Request) {
 		methodNotAllowed(w)
 		return
 	}
-	if !s.cfg.Knowledge.Enabled {
+	if !s.activeConfig().Knowledge.Enabled {
 		writeJSON(w, http.StatusOK, map[string]any{"enabled": false, "ready": false})
 		return
 	}
@@ -312,7 +393,7 @@ func (s *Server) handleKnowledge(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) loadKnowledge() (*knowledge.Store, error) {
-	site, err := s.files.Sub(s.cfg.OutputPath(s.project))
+	site, err := s.files.Sub(s.activeConfig().OutputPath(s.project))
 	if err != nil {
 		return nil, err
 	}
@@ -320,16 +401,61 @@ func (s *Server) loadKnowledge() (*knowledge.Store, error) {
 	return knowledge.LoadAllRoot(site)
 }
 
+// addConfiguredLanguage adds a target language to the configuration currently
+// on disk under the shared write lock.
+func (s *Server) addConfiguredLanguage(language, label string) (config.Config, int, error) {
+	s.configWriteMu.Lock()
+	defer s.configWriteMu.Unlock()
+
+	path := filepath.Join(s.project, config.Filename)
+	current, err := s.files.ReadFile(path)
+	if err != nil {
+		return config.Config{}, http.StatusInternalServerError, err
+	}
+	updated := s.activeConfig()
+	if parsed, parseErr := config.Parse(current); parseErr == nil {
+		updated = parsed
+	}
+	for _, existing := range updated.Site.Languages {
+		if strings.EqualFold(existing, language) {
+			return config.Config{}, http.StatusConflict, fmt.Errorf("language %q already exists", language)
+		}
+	}
+	updated.Site.Languages = append(append([]string{}, updated.Site.Languages...), language)
+	labels := make(map[string]string, len(updated.Site.LanguageLabels)+1)
+	for code, display := range updated.Site.LanguageLabels {
+		labels[code] = display
+	}
+	updated.Site.LanguageLabels = labels
+	updated.Site.LanguageLabels[language] = label
+	if err := updated.Validate(); err != nil {
+		return config.Config{}, http.StatusBadRequest, err
+	}
+	data, err := setYAMLValue(current, []string{"site", "languages"}, updated.Site.Languages)
+	if err == nil {
+		data, err = setYAMLValue(data, []string{"site", "languageLabels"}, updated.Site.LanguageLabels)
+	}
+	if err != nil {
+		return config.Config{}, http.StatusInternalServerError, err
+	}
+	if err := s.writeSource(path, data, revision(current)); err != nil {
+		return config.Config{}, configWriteStatus(err), err
+	}
+	s.setActiveConfig(updated, revision(data))
+	return updated, http.StatusOK, nil
+}
+
 func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
+	cfg := s.activeConfig()
 	switch r.Method {
 	case http.MethodGet:
 		language := strings.TrimSpace(r.URL.Query().Get("lang"))
 		file := strings.TrimSpace(r.URL.Query().Get("file"))
-		capabilities := translate.DetectModelCapabilities(s.cfg)
+		capabilities := translate.DetectModelCapabilities(cfg)
 		selectionLanguage := language
 		if selectionLanguage == "" {
-			for _, candidate := range s.cfg.Site.Languages {
-				if candidate != s.cfg.Site.DefaultLanguage {
+			for _, candidate := range cfg.Site.Languages {
+				if candidate != cfg.Site.DefaultLanguage {
 					selectionLanguage = candidate
 					break
 				}
@@ -345,16 +471,16 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			Task: translate.TaskAudit, TargetLanguage: selectionLanguage, PreviousProvider: refinement.Provider, Capabilities: capabilities,
 		})
 		response := map[string]any{
-			"defaultLanguage": s.cfg.Site.DefaultLanguage,
-			"languages":       s.cfg.Site.Languages,
-			"languageLabels":  s.cfg.Site.LanguageLabels,
+			"defaultLanguage": cfg.Site.DefaultLanguage,
+			"languages":       cfg.Site.Languages,
+			"languageLabels":  cfg.Site.LanguageLabels,
 			"languageCatalog": standardTranslationLanguages(),
-			"provider":        s.cfg.Translation.Provider,
-			"model":           s.cfg.Translation.Model,
-			"reasoningEffort": s.cfg.Translation.ReasoningEffort,
-			"languageModels":  s.cfg.Translation.LanguageModels,
-			"apiKeyEnv":       s.cfg.Translation.APIKeyEnv,
-			"hasAPIKey":       translate.ResolveAPIKey(s.cfg) != "",
+			"provider":        cfg.Translation.Provider,
+			"model":           cfg.Translation.Model,
+			"reasoningEffort": cfg.Translation.ReasoningEffort,
+			"languageModels":  cfg.Translation.LanguageModels,
+			"apiKeyEnv":       cfg.Translation.APIKeyEnv,
+			"hasAPIKey":       translate.ResolveAPIKey(cfg) != "",
 			"capabilities":    capabilities,
 			"automatic": map[string]any{
 				"ready":      draftReady,
@@ -363,7 +489,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 				"audit":      map[string]any{"ready": auditReady, "selection": audit},
 			},
 		}
-		contentDir := s.cfg.ContentPath(s.project)
+		contentDir := cfg.ContentPath(s.project)
 		var markdownDocuments, mpdDocuments int
 		_ = filepath.WalkDir(contentDir, func(path string, entry os.DirEntry, walkErr error) error {
 			if walkErr != nil || entry.IsDir() {
@@ -383,8 +509,8 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			"nativeMPD": markdownDocuments == 0 && mpdDocuments > 0,
 		}
 		targets := 0
-		for _, candidate := range s.cfg.Site.Languages {
-			if candidate != s.cfg.Site.DefaultLanguage {
+		for _, candidate := range cfg.Site.Languages {
+			if candidate != cfg.Site.DefaultLanguage {
 				targets++
 			}
 		}
@@ -393,7 +519,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, response)
 			return
 		}
-		report, err := translate.NewEngine(s.project, s.cfg, nil).RunRoot(r.Context(), s.files, translate.Options{
+		report, err := translate.NewEngine(s.project, cfg, nil).RunRoot(r.Context(), s.files, translate.Options{
 			Language: language, File: file, DryRun: true,
 			Scope: r.URL.Query().Get("scope"), Force: r.URL.Query().Get("force") == "true",
 		})
@@ -423,7 +549,8 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if input.Action == "convert-mpd" {
-			result, convertErr := projectconvert.RunRoot(s.project, s.files, &s.cfg, "", "mpd")
+			configured := cfg
+			result, convertErr := projectconvert.RunRoot(s.project, s.files, &configured, "", "mpd")
 			if convertErr != nil {
 				writeAPIError(w, http.StatusBadRequest, convertErr)
 				return
@@ -442,19 +569,6 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 				writeAPIError(w, http.StatusBadRequest, errors.New("language codes use letters, numbers and hyphens"))
 				return
 			}
-			for _, existing := range s.cfg.Site.Languages {
-				if strings.EqualFold(existing, language) {
-					writeAPIError(w, http.StatusConflict, fmt.Errorf("language %q already exists", language))
-					return
-				}
-			}
-			updated := s.cfg
-			updated.Site.Languages = append(append([]string{}, updated.Site.Languages...), language)
-			labels := make(map[string]string, len(s.cfg.Site.LanguageLabels)+1)
-			for code, display := range s.cfg.Site.LanguageLabels {
-				labels[code] = display
-			}
-			updated.Site.LanguageLabels = labels
 			label := strings.TrimSpace(input.Label)
 			if label == "" {
 				if standard.NativeName != "" {
@@ -465,36 +579,17 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 					label = language
 				}
 			}
-			updated.Site.LanguageLabels[language] = label
-			if err := updated.Validate(); err != nil {
-				writeAPIError(w, http.StatusBadRequest, err)
-				return
-			}
-			path := filepath.Join(s.project, config.Filename)
-			current, err := s.files.ReadFile(path)
+			updated, status, err := s.addConfiguredLanguage(language, label)
 			if err != nil {
-				writeAPIError(w, http.StatusInternalServerError, err)
+				writeAPIError(w, status, err)
 				return
 			}
-			data, err := setYAMLValue(current, []string{"site", "languages"}, updated.Site.Languages)
-			if err == nil {
-				data, err = setYAMLValue(data, []string{"site", "languageLabels"}, updated.Site.LanguageLabels)
-			}
-			if err != nil {
-				writeAPIError(w, http.StatusInternalServerError, err)
-				return
-			}
-			if err := s.writeSource(path, data, revision(current)); err != nil {
-				writeAPIError(w, http.StatusConflict, err)
-				return
-			}
-			s.cfg = updated
 			s.rebuild(true)
 			writeJSON(w, http.StatusOK, map[string]any{"language": language, "languages": updated.Site.Languages, "languageLabels": updated.Site.LanguageLabels, "state": s.currentState()})
 			return
 		}
 		if input.Action == "mark" {
-			report, markErr := translate.NewEngine(s.project, s.cfg, nil).MarkRoot(s.files, input.Language, input.File, input.Status)
+			report, markErr := translate.NewEngine(s.project, cfg, nil).MarkRoot(s.files, input.Language, input.File, input.Status)
 			if markErr != nil {
 				writeAPIError(w, http.StatusBadRequest, markErr)
 				return
@@ -503,10 +598,10 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		if input.Action == "audit" {
-			capabilities := translate.DetectModelCapabilities(s.cfg)
+			capabilities := translate.DetectModelCapabilities(cfg)
 			draft, _ := translate.SelectBestTranslationModel(translate.ModelSelectionRequest{Task: translate.TaskDraft, TargetLanguage: input.Language, Capabilities: capabilities})
 			auditSelection, hasAudit := translate.SelectBestTranslationModel(translate.ModelSelectionRequest{Task: translate.TaskAudit, TargetLanguage: input.Language, PreviousProvider: draft.Provider, Capabilities: capabilities})
-			engine, rootErr := translate.NewEngine(s.project, s.cfg, nil).BorrowRoot(s.files)
+			engine, rootErr := translate.NewEngine(s.project, cfg, nil).BorrowRoot(s.files)
 			if rootErr != nil {
 				writeAPIError(w, http.StatusBadRequest, rootErr)
 				return
@@ -514,7 +609,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			var report translate.AuditReport
 			var auditErr error
 			if hasAudit {
-				auditConfig := s.cfg
+				auditConfig := cfg
 				translate.ApplyModelSelection(&auditConfig, auditSelection)
 				reviewer, reviewerErr := translate.NewConfiguredAuditReviewer(auditConfig)
 				if reviewerErr != nil {
@@ -536,7 +631,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 				var hasRefinement bool
 				refinementSelection, hasRefinement = translate.SelectBestTranslationModel(translate.ModelSelectionRequest{Task: translate.TaskRefinement, TargetLanguage: input.Language, Capabilities: capabilities})
 				if hasRefinement {
-					refinementConfig := s.cfg
+					refinementConfig := cfg
 					translate.ApplyModelSelection(&refinementConfig, refinementSelection)
 					refinementEngine, providerErr := translate.NewConfiguredEngine(s.project, refinementConfig)
 					if providerErr != nil {
@@ -551,7 +646,7 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 					if refinement.Segments > 0 {
 						finalAuditSelection, finalReady := translate.SelectBestTranslationModel(translate.ModelSelectionRequest{Task: translate.TaskAudit, TargetLanguage: input.Language, PreviousProvider: refinementSelection.Provider, Capabilities: capabilities})
 						if finalReady {
-							finalConfig := s.cfg
+							finalConfig := cfg
 							translate.ApplyModelSelection(&finalConfig, finalAuditSelection)
 							finalReviewer, reviewerErr := translate.NewConfiguredAuditReviewer(finalConfig)
 							if reviewerErr != nil {
@@ -576,9 +671,9 @@ func (s *Server) handleTranslations(w http.ResponseWriter, r *http.Request) {
 			writeJSON(w, http.StatusOK, map[string]any{"initialAudit": initialReport, "refinement": refinement, "refinementSelection": refinementSelection, "audit": report, "auditSelection": auditSelection, "state": s.currentState()})
 			return
 		}
-		selectedConfig := s.cfg
+		selectedConfig := cfg
 		selection, selected := translate.SelectBestTranslationModel(translate.ModelSelectionRequest{
-			Task: translate.TaskDraft, TargetLanguage: input.Language, Capabilities: translate.DetectModelCapabilities(s.cfg),
+			Task: translate.TaskDraft, TargetLanguage: input.Language, Capabilities: translate.DetectModelCapabilities(cfg),
 		})
 		if selected {
 			translate.ApplyModelSelection(&selectedConfig, selection)
@@ -663,23 +758,24 @@ func (s *Server) handleWorkspace(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) handleProject(w http.ResponseWriter, r *http.Request) {
+	cfg := s.activeConfig()
 	if r.Method != http.MethodGet {
 		methodNotAllowed(w)
 		return
 	}
 	payload := map[string]any{
 		"name":          filepath.Base(s.project),
-		"title":         s.cfg.Site.Title,
+		"title":         cfg.Site.Title,
 		"authoring":     s.options.Authoring,
 		"requiresToken": s.requireWriteToken,
 		"state":         s.currentState(),
 		"onboarding":    s.onboarding(),
 		"repository":    inspectRepository(s.project),
 		"features": map[string]bool{
-			"blog":         directoryContainsDocuments(filepath.Join(s.cfg.ContentPath(s.project), "blog")),
-			"translations": len(s.cfg.Site.Languages) > 1,
-			"versions":     s.cfg.Version.Enabled,
-			"deployment":   len(s.cfg.Deploy.Targets) > 0,
+			"blog":         directoryContainsDocuments(filepath.Join(cfg.ContentPath(s.project), "blog")),
+			"translations": len(cfg.Site.Languages) > 1,
+			"versions":     cfg.Version.Enabled,
+			"deployment":   len(cfg.Deploy.Targets) > 0,
 		},
 	}
 	if s.options.Contribution != nil {
@@ -716,7 +812,7 @@ type contributorGuide struct {
 }
 
 func (s *Server) contributorGuide() *contributorGuide {
-	candidates := []string{strings.TrimSpace(s.cfg.Contribution.Guide), "CONTRIBUTING.md", "CONTRIBUTORS.md", ".github/CONTRIBUTING.md"}
+	candidates := []string{strings.TrimSpace(s.activeConfig().Contribution.Guide), "CONTRIBUTING.md", "CONTRIBUTORS.md", ".github/CONTRIBUTING.md"}
 	seen := map[string]bool{}
 	for _, candidate := range candidates {
 		candidate = filepath.ToSlash(strings.TrimSpace(candidate))
@@ -1172,12 +1268,13 @@ type treeNode struct {
 }
 
 func (s *Server) handleTree(w http.ResponseWriter, r *http.Request) {
+	cfg := s.activeConfig()
 	if r.Method != http.MethodGet {
 		methodNotAllowed(w)
 		return
 	}
 	var nodes []treeNode
-	for _, name := range []string{s.cfg.Build.ContentDir, s.cfg.Build.StaticDir, config.Filename} {
+	for _, name := range []string{cfg.Build.ContentDir, cfg.Build.StaticDir, config.Filename} {
 		path := filepath.Join(s.project, filepath.FromSlash(name))
 		if _, err := s.files.Stat(path); err != nil {
 			continue
@@ -1221,7 +1318,7 @@ func (s *Server) readTreeBranch(path string, active map[string]bool) (treeNode, 
 		return node, err
 	}
 	for _, entry := range entries {
-		if entry.Name() == ".git" || entry.Name() == ".mpress" || entry.Name() == s.cfg.Build.OutputDir {
+		if entry.Name() == ".git" || entry.Name() == ".mpress" || entry.Name() == s.activeConfig().Build.OutputDir {
 			continue
 		}
 		child, err := s.readTreeBranch(filepath.Join(path, entry.Name()), active)
@@ -1313,6 +1410,7 @@ type previewPayload struct {
 }
 
 func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
+	cfg := s.activeConfig()
 	if r.Method != http.MethodPost {
 		methodNotAllowed(w)
 		return
@@ -1348,7 +1446,7 @@ func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusConflict, errRevisionConflict)
 		return
 	}
-	contentRel, err := filepath.Rel(s.cfg.ContentPath(s.project), path)
+	contentRel, err := filepath.Rel(cfg.ContentPath(s.project), path)
 	if err != nil || contentRel == ".." || strings.HasPrefix(contentRel, ".."+string(filepath.Separator)) {
 		writeAPIError(w, http.StatusBadRequest, errors.New("live preview source must be inside the content directory"))
 		return
@@ -1366,7 +1464,7 @@ func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
 	default:
 	}
 	buildID := revision([]byte(payload.Path + "\x00" + payload.Content))
-	if _, err := s.cfg.SafePreviewPool(s.project); err != nil {
+	if _, err := cfg.SafePreviewPool(s.project); err != nil {
 		writeAPIError(w, http.StatusBadRequest, err)
 		return
 	}
@@ -1398,10 +1496,11 @@ func (s *Server) handlePreview(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) removePreview(directory string) error {
-	if _, err := s.cfg.SafePreviewPool(s.project); err != nil {
+	cfg := s.activeConfig()
+	if _, err := cfg.SafePreviewPool(s.project); err != nil {
 		return err
 	}
-	validated, err := s.cfg.SafeOutputPath(s.project, directory)
+	validated, err := cfg.SafeOutputPath(s.project, directory)
 	if err != nil {
 		return err
 	}
@@ -1473,7 +1572,7 @@ func (s *Server) handleBlocks(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusNotFound, err)
 		return
 	}
-	rel, _ := filepath.Rel(s.cfg.ContentPath(s.project), path)
+	rel, _ := filepath.Rel(s.activeConfig().ContentPath(s.project), path)
 	blocks := editableBlocks(filepath.ToSlash(rel), string(data))
 	writeJSON(w, http.StatusOK, map[string]any{"revision": revision(data), "blocks": blocks})
 }
@@ -1506,7 +1605,7 @@ func (s *Server) handleImport(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusRequestEntityTooLarge, errors.New("file is too large to import"))
 		return
 	}
-	target := filepath.Join(s.cfg.ContentPath(s.project), name)
+	target := filepath.Join(s.activeConfig().ContentPath(s.project), name)
 	existingRevision := ""
 	if existing, err := s.files.ReadFile(target); err == nil {
 		if r.FormValue("replaceStarter") != "true" || !s.onboarding() {
@@ -1661,6 +1760,7 @@ type configPayload struct {
 // a stable presentation template instead of duplicating the configuration
 // object.
 func (s *Server) handleConfigForm(w http.ResponseWriter, r *http.Request) {
+	cfg := s.activeConfig()
 	if r.Method != http.MethodGet {
 		methodNotAllowed(w)
 		return
@@ -1941,9 +2041,9 @@ Default target: [text](deploy.default){placeholder="production"}
 		@end
 `,
 	}
-	languageOptions := make([]string, 0, len(s.cfg.Site.Languages))
-	for _, code := range s.cfg.Site.Languages {
-		label := strings.TrimSpace(s.cfg.Site.LanguageLabels[code])
+	languageOptions := make([]string, 0, len(cfg.Site.Languages))
+	for _, code := range cfg.Site.Languages {
+		label := strings.TrimSpace(cfg.Site.LanguageLabels[code])
 		if label == "" {
 			label = code
 		}
@@ -1951,7 +2051,7 @@ Default target: [text](deploy.default){placeholder="production"}
 		languageOptions = append(languageOptions, "- "+label+" ("+code+") = "+code)
 	}
 	if len(languageOptions) == 0 {
-		languageOptions = append(languageOptions, "- "+s.cfg.Site.DefaultLanguage+" = "+s.cfg.Site.DefaultLanguage)
+		languageOptions = append(languageOptions, "- "+cfg.Site.DefaultLanguage+" = "+cfg.Site.DefaultLanguage)
 	}
 	sections["languages"] = strings.Replace(sections["languages"], "{{LANGUAGE_OPTIONS}}", strings.Join(languageOptions, "\n"), 1)
 	if section != "" {
@@ -1989,16 +2089,19 @@ Default target: [text](deploy.default){placeholder="production"}
 }
 
 func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
-	path := filepath.Join(s.project, config.Filename)
-	current, err := s.files.ReadFile(path)
-	if err != nil {
-		writeAPIError(w, http.StatusInternalServerError, err)
-		return
-	}
 	switch r.Method {
 	case http.MethodGet:
-		complete := s.cfg
-		writeJSON(w, http.StatusOK, configPayload{Title: s.cfg.Site.Title, Description: s.cfg.Site.Description, BaseURL: s.cfg.Site.BaseURL, ColorScheme: s.cfg.Theme.ColorScheme, AccentColor: s.cfg.Theme.AccentColor, HoverColor: s.cfg.Theme.HoverColor, HoverColorLight: s.cfg.Theme.HoverColorLight, HoverColorDark: s.cfg.Theme.HoverColorDark, Config: &complete, Revision: revision(current)})
+		if err := s.checkConfigPath(); err != nil {
+			writeAPIError(w, http.StatusInternalServerError, err)
+			return
+		}
+		complete, sourceRevision := s.activeConfigState()
+		writeJSON(w, http.StatusOK, configPayload{
+			Title: complete.Site.Title, Description: complete.Site.Description, BaseURL: complete.Site.BaseURL,
+			ColorScheme: complete.Theme.ColorScheme, AccentColor: complete.Theme.AccentColor,
+			HoverColor: complete.Theme.HoverColor, HoverColorLight: complete.Theme.HoverColorLight, HoverColorDark: complete.Theme.HoverColorDark,
+			Config: &complete, Revision: sourceRevision,
+		})
 	case http.MethodPut:
 		if !s.canWrite(w, r) {
 			return
@@ -2008,88 +2111,105 @@ func (s *Server) handleConfig(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
 		}
-		if payload.Complete {
-			if payload.Config == nil {
-				writeAPIError(w, http.StatusBadRequest, errors.New("complete configuration is required"))
-				return
-			}
-			updated := *payload.Config
-			if err := updated.Validate(); err != nil {
-				writeAPIError(w, http.StatusBadRequest, err)
-				return
-			}
-			data, err := yaml.Marshal(updated)
-			if err != nil {
-				writeAPIError(w, http.StatusInternalServerError, err)
-				return
-			}
-			if err := s.writeSource(path, data, payload.Revision); err != nil {
-				status := http.StatusBadRequest
-				if errors.Is(err, errRevisionConflict) {
-					status = http.StatusConflict
-				}
-				writeAPIError(w, status, err)
-				return
-			}
-			s.cfg = updated
-			s.rebuild(true)
-			writeJSON(w, http.StatusOK, map[string]any{"revision": revision(data), "state": s.currentState()})
-			return
-		}
-		updated := s.cfg
-		updated.Site.Title = strings.TrimSpace(payload.Title)
-		updated.Site.Description = strings.TrimSpace(payload.Description)
-		updated.Site.BaseURL = strings.TrimSpace(payload.BaseURL)
-		updated.Theme.ColorScheme = strings.TrimSpace(payload.ColorScheme)
-		updated.Theme.AccentColor = strings.TrimSpace(payload.AccentColor)
-		updated.Theme.HoverColor = strings.TrimSpace(payload.HoverColor)
-		updated.Theme.HoverColorLight = strings.TrimSpace(payload.HoverColorLight)
-		updated.Theme.HoverColorDark = strings.TrimSpace(payload.HoverColorDark)
-		if updated.Theme.ColorScheme != "system" && updated.Theme.ColorScheme != "light" && updated.Theme.ColorScheme != "dark" {
-			writeAPIError(w, http.StatusBadRequest, errors.New("colour scheme must be system, light or dark"))
-			return
-		}
-		if err := updated.Validate(); err != nil {
-			writeAPIError(w, http.StatusBadRequest, err)
-			return
-		}
-		data := append([]byte{}, current...)
-		for _, change := range []struct {
-			path  []string
-			value any
-		}{
-			{[]string{"site", "title"}, updated.Site.Title},
-			{[]string{"site", "description"}, updated.Site.Description},
-			{[]string{"site", "baseURL"}, updated.Site.BaseURL},
-			{[]string{"theme", "colorScheme"}, updated.Theme.ColorScheme},
-			{[]string{"theme", "accentColor"}, updated.Theme.AccentColor},
-			{[]string{"theme", "hoverColor"}, updated.Theme.HoverColor},
-			{[]string{"theme", "hoverColorLight"}, updated.Theme.HoverColorLight},
-			{[]string{"theme", "hoverColorDark"}, updated.Theme.HoverColorDark},
-		} {
-			data, err = setYAMLValue(data, change.path, change.value)
-			if err != nil {
-				break
-			}
-		}
+		sourceRevision, status, err := s.applyConfigPayload(payload)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, err)
-			return
-		}
-		if err := s.writeSource(path, data, payload.Revision); err != nil {
-			status := http.StatusBadRequest
-			if errors.Is(err, errRevisionConflict) {
-				status = http.StatusConflict
-			}
 			writeAPIError(w, status, err)
 			return
 		}
-		s.cfg = updated
 		s.rebuild(true)
-		writeJSON(w, http.StatusOK, map[string]any{"revision": revision(data), "state": s.currentState()})
+		writeJSON(w, http.StatusOK, map[string]any{"revision": sourceRevision, "state": s.currentState()})
 	default:
 		methodNotAllowed(w)
 	}
+}
+
+// applyConfigPayload performs the complete read-modify-write cycle while holding
+// configWriteMu. Concurrent settings requests either land on top of each other
+// or receive a revision conflict; they cannot silently overwrite a newer file.
+func (s *Server) applyConfigPayload(payload configPayload) (sourceRevision string, status int, err error) {
+	s.configWriteMu.Lock()
+	defer s.configWriteMu.Unlock()
+
+	path := filepath.Join(s.project, config.Filename)
+	current, err := s.files.ReadFile(path)
+	if err != nil {
+		return "", http.StatusInternalServerError, err
+	}
+	if payload.Complete {
+		if payload.Config == nil {
+			return "", http.StatusBadRequest, errors.New("complete configuration is required")
+		}
+		updated := payload.Config.Clone()
+		if err := updated.Validate(); err != nil {
+			return "", http.StatusBadRequest, err
+		}
+		data, err := yaml.Marshal(updated)
+		if err != nil {
+			return "", http.StatusInternalServerError, err
+		}
+		if err := s.writeSource(path, data, payload.Revision); err != nil {
+			return "", configWriteStatus(err), err
+		}
+		revision := revision(data)
+		s.setActiveConfig(updated, revision)
+		return revision, http.StatusOK, nil
+	}
+
+	// Compose from the configuration currently on disk so a field written by
+	// another request (or by hand) between GET and PUT is not discarded.
+	updated := s.activeConfig()
+	if parsed, parseErr := config.Parse(current); parseErr == nil {
+		updated = parsed
+	}
+	updated.Site.Title = strings.TrimSpace(payload.Title)
+	updated.Site.Description = strings.TrimSpace(payload.Description)
+	updated.Site.BaseURL = strings.TrimSpace(payload.BaseURL)
+	updated.Theme.ColorScheme = strings.TrimSpace(payload.ColorScheme)
+	updated.Theme.AccentColor = strings.TrimSpace(payload.AccentColor)
+	updated.Theme.HoverColor = strings.TrimSpace(payload.HoverColor)
+	updated.Theme.HoverColorLight = strings.TrimSpace(payload.HoverColorLight)
+	updated.Theme.HoverColorDark = strings.TrimSpace(payload.HoverColorDark)
+	if updated.Theme.ColorScheme != "system" && updated.Theme.ColorScheme != "light" && updated.Theme.ColorScheme != "dark" {
+		return "", http.StatusBadRequest, errors.New("colour scheme must be system, light or dark")
+	}
+	if err := updated.Validate(); err != nil {
+		return "", http.StatusBadRequest, err
+	}
+	data := append([]byte{}, current...)
+	for _, change := range []struct {
+		path  []string
+		value any
+	}{
+		{[]string{"site", "title"}, updated.Site.Title},
+		{[]string{"site", "description"}, updated.Site.Description},
+		{[]string{"site", "baseURL"}, updated.Site.BaseURL},
+		{[]string{"theme", "colorScheme"}, updated.Theme.ColorScheme},
+		{[]string{"theme", "accentColor"}, updated.Theme.AccentColor},
+		{[]string{"theme", "hoverColor"}, updated.Theme.HoverColor},
+		{[]string{"theme", "hoverColorLight"}, updated.Theme.HoverColorLight},
+		{[]string{"theme", "hoverColorDark"}, updated.Theme.HoverColorDark},
+	} {
+		data, err = setYAMLValue(data, change.path, change.value)
+		if err != nil {
+			break
+		}
+	}
+	if err != nil {
+		return "", http.StatusInternalServerError, err
+	}
+	if err := s.writeSource(path, data, payload.Revision); err != nil {
+		return "", configWriteStatus(err), err
+	}
+	revision := revision(data)
+	s.setActiveConfig(updated, revision)
+	return revision, http.StatusOK, nil
+}
+
+func configWriteStatus(err error) int {
+	if errors.Is(err, errRevisionConflict) {
+		return http.StatusConflict
+	}
+	return http.StatusBadRequest
 }
 
 type deploymentPayload struct {
@@ -2102,12 +2222,52 @@ type deploymentPayload struct {
 	Environment      string `json:"environment"`
 }
 
+// saveDeploymentTarget composes the deployment change from the configuration
+// currently on disk under the shared write lock.
+func (s *Server) saveDeploymentTarget(payload deploymentPayload) (config.DeployTarget, int, error) {
+	s.configWriteMu.Lock()
+	defer s.configWriteMu.Unlock()
+
+	path := filepath.Join(s.project, config.Filename)
+	current, err := s.files.ReadFile(path)
+	if err != nil {
+		return config.DeployTarget{}, http.StatusInternalServerError, err
+	}
+	updated := s.activeConfig()
+	if parsed, parseErr := config.Parse(current); parseErr == nil {
+		updated = parsed
+	}
+	if updated.Deploy.Targets == nil {
+		updated.Deploy.Targets = map[string]config.DeployTarget{}
+	}
+	updated.Deploy.Default = payload.Target
+	updated.Deploy.Targets[payload.Target] = config.DeployTarget{Provider: payload.Provider, AccountID: strings.TrimSpace(payload.AccountID), Project: payload.Project, ProductionBranch: strings.TrimSpace(payload.ProductionBranch), Domain: strings.TrimSpace(payload.Domain)}
+	if updated.Deploy.Targets[payload.Target].ProductionBranch == "" {
+		target := updated.Deploy.Targets[payload.Target]
+		target.ProductionBranch = "main"
+		updated.Deploy.Targets[payload.Target] = target
+	}
+	if err := updated.Validate(); err != nil {
+		return config.DeployTarget{}, http.StatusBadRequest, err
+	}
+	data, err := setYAMLValue(current, []string{"deploy"}, updated.Deploy)
+	if err != nil {
+		return config.DeployTarget{}, http.StatusInternalServerError, err
+	}
+	if err := s.writeSource(path, data, revision(current)); err != nil {
+		return config.DeployTarget{}, configWriteStatus(err), err
+	}
+	s.setActiveConfig(updated, revision(data))
+	return updated.Deploy.Targets[payload.Target], http.StatusOK, nil
+}
+
 func (s *Server) handleDeployment(w http.ResponseWriter, r *http.Request) {
-	targetName := s.cfg.Deploy.Default
+	cfg := s.activeConfig()
+	targetName := cfg.Deploy.Default
 	if targetName == "" {
 		targetName = "cloudflare"
 	}
-	target := s.cfg.Deploy.Targets[targetName]
+	target := cfg.Deploy.Targets[targetName]
 	switch r.Method {
 	case http.MethodGet:
 		provider := target.Provider
@@ -2145,37 +2305,12 @@ func (s *Server) handleDeployment(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, http.StatusBadRequest, errors.New("deployment provider must be Cloudflare Pages or Netlify"))
 			return
 		}
-		updated := s.cfg
-		if updated.Deploy.Targets == nil {
-			updated.Deploy.Targets = map[string]config.DeployTarget{}
-		}
-		updated.Deploy.Default = payload.Target
-		updated.Deploy.Targets[payload.Target] = config.DeployTarget{Provider: payload.Provider, AccountID: strings.TrimSpace(payload.AccountID), Project: payload.Project, ProductionBranch: strings.TrimSpace(payload.ProductionBranch), Domain: strings.TrimSpace(payload.Domain)}
-		if updated.Deploy.Targets[payload.Target].ProductionBranch == "" {
-			t := updated.Deploy.Targets[payload.Target]
-			t.ProductionBranch = "main"
-			updated.Deploy.Targets[payload.Target] = t
-		}
-		if err := updated.Validate(); err != nil {
-			writeAPIError(w, http.StatusBadRequest, err)
-			return
-		}
-		current, err := s.files.ReadFile(filepath.Join(s.project, config.Filename))
+		target, status, err := s.saveDeploymentTarget(payload)
 		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, err)
+			writeAPIError(w, status, err)
 			return
 		}
-		data, err := setYAMLValue(current, []string{"deploy"}, updated.Deploy)
-		if err != nil {
-			writeAPIError(w, http.StatusInternalServerError, err)
-			return
-		}
-		if err := s.writeSource(filepath.Join(s.project, config.Filename), data, revision(current)); err != nil {
-			writeAPIError(w, http.StatusConflict, err)
-			return
-		}
-		s.cfg = updated
-		writeJSON(w, http.StatusOK, map[string]any{"name": payload.Target, "provider": payload.Provider, "target": updated.Deploy.Targets[payload.Target], "hasCloudflareToken": strings.TrimSpace(os.Getenv("CLOUDFLARE_API_TOKEN")) != "", "hasNetlifyToken": strings.TrimSpace(os.Getenv("NETLIFY_AUTH_TOKEN")) != ""})
+		writeJSON(w, http.StatusOK, map[string]any{"name": payload.Target, "provider": payload.Provider, "target": target, "hasCloudflareToken": strings.TrimSpace(os.Getenv("CLOUDFLARE_API_TOKEN")) != "", "hasNetlifyToken": strings.TrimSpace(os.Getenv("NETLIFY_AUTH_TOKEN")) != ""})
 	case http.MethodPost:
 		if !s.canWrite(w, r) {
 			return
@@ -2248,27 +2383,29 @@ func (s *Server) handleOnboarding(w http.ResponseWriter, r *http.Request) {
 }
 
 func (s *Server) replaceStarterWithMinimalSite() error {
+	cfg := s.activeConfig()
 	if err := s.removeGeneratedStarter(); err != nil {
 		return err
 	}
-	content := s.cfg.ContentPath(s.project)
+	content := cfg.ContentPath(s.project)
 	index := "---\ntitle: Welcome\ndescription: Start writing your documentation.\n---\n\nReplace this page with your documentation.\n"
 	navigation := "- label: Welcome\n  link: /\n"
 	if err := s.files.WriteAtomic(filepath.Join(content, "index.md"), []byte(index)); err != nil {
 		return err
 	}
-	return s.files.WriteAtomic(filepath.Join(content, s.cfg.Build.NavFile), []byte(navigation))
+	return s.files.WriteAtomic(filepath.Join(content, cfg.Build.NavFile), []byte(navigation))
 }
 
 func (s *Server) removeGeneratedStarter() error {
-	content := s.cfg.ContentPath(s.project)
-	for _, name := range []string{"index.md", "getting-started.md", "components.md", s.cfg.Build.NavFile} {
+	cfg := s.activeConfig()
+	content := cfg.ContentPath(s.project)
+	for _, name := range []string{"index.md", "getting-started.md", "components.md", cfg.Build.NavFile} {
 		if err := s.files.Remove(filepath.Join(content, name)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 	}
 	for _, name := range []string{"component-light.svg", "component-dark.svg"} {
-		if err := s.files.Remove(filepath.Join(s.cfg.StaticPath(s.project), "images", name)); err != nil && !errors.Is(err, os.ErrNotExist) {
+		if err := s.files.Remove(filepath.Join(cfg.StaticPath(s.project), "images", name)); err != nil && !errors.Is(err, os.ErrNotExist) {
 			return err
 		}
 	}
@@ -2362,7 +2499,7 @@ func (s *Server) handleBrandAsset(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 	}
-	target := filepath.Join(s.project, s.cfg.Build.StaticDir, "brand", stem+ext)
+	target := filepath.Join(s.project, s.activeConfig().Build.StaticDir, "brand", stem+ext)
 	if err := s.writeSource(target, data, ""); err != nil {
 		writeAPIError(w, http.StatusInternalServerError, err)
 		return
@@ -2419,7 +2556,7 @@ func (s *Server) handleImageAsset(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, errors.New("the edited file is not a valid image"))
 		return
 	}
-	target := filepath.Join(s.project, s.cfg.Build.StaticDir, folder, name)
+	target := filepath.Join(s.project, s.activeConfig().Build.StaticDir, folder, name)
 	if _, err := s.files.Stat(target); err == nil && r.FormValue("overwrite") != "true" {
 		ext := filepath.Ext(name)
 		stem := strings.TrimSuffix(name, ext)
@@ -2479,7 +2616,7 @@ type blogPostResponse struct {
 var blogPostSlug = regexp.MustCompile(`^[a-z0-9][a-z0-9-]*$`)
 
 func (s *Server) handleBlogPosts(w http.ResponseWriter, r *http.Request) {
-	blogRoot := filepath.Join(s.cfg.ContentPath(s.project), "blog")
+	blogRoot := filepath.Join(s.activeConfig().ContentPath(s.project), "blog")
 	switch r.Method {
 	case http.MethodGet:
 		if requested := strings.TrimSpace(r.URL.Query().Get("path")); requested != "" {
@@ -2617,13 +2754,14 @@ func pathWithin(root, target string) bool {
 }
 
 func (s *Server) blogPostResponse(target string, data []byte, includeBody bool) (blogPostResponse, error) {
+	cfg := s.activeConfig()
 	metadata, body, err := decodeBlogPost(data)
 	if err != nil {
 		return blogPostResponse{}, err
 	}
 	rel, _ := filepath.Rel(s.project, target)
-	contentRel, _ := filepath.Rel(s.cfg.ContentPath(s.project), target)
-	page, _, parseErr := content.NewRenderer().Parse(filepath.ToSlash(contentRel), s.cfg.Site.DefaultLanguage, string(data))
+	contentRel, _ := filepath.Rel(cfg.ContentPath(s.project), target)
+	page, _, parseErr := content.NewRenderer().Parse(filepath.ToSlash(contentRel), cfg.Site.DefaultLanguage, string(data))
 	if parseErr != nil {
 		return blogPostResponse{}, parseErr
 	}
@@ -2752,7 +2890,7 @@ func (s *Server) handleMarkdownPreview(w http.ResponseWriter, r *http.Request) {
 		writeAPIError(w, http.StatusBadRequest, err)
 		return
 	}
-	page, diagnostics, err := content.NewRenderer().Parse(".mpress/blog-preview.md", s.cfg.Site.DefaultLanguage, payload.Markdown)
+	page, diagnostics, err := content.NewRenderer().Parse(".mpress/blog-preview.md", s.activeConfig().Site.DefaultLanguage, payload.Markdown)
 	if err != nil {
 		writeAPIError(w, http.StatusBadRequest, err)
 		return
@@ -2768,6 +2906,7 @@ type versionActionPayload struct {
 
 func (s *Server) handleVersions(w http.ResponseWriter, r *http.Request) {
 	respond := func() {
+		cfg := s.activeConfig()
 		labels, err := docversion.List(s.project)
 		if err != nil {
 			writeAPIError(w, http.StatusInternalServerError, err)
@@ -2779,14 +2918,14 @@ func (s *Server) handleVersions(w http.ResponseWriter, r *http.Request) {
 		}
 		items := make([]item, 0, len(labels))
 		for _, label := range labels {
-			manifestPath := filepath.Join(s.cfg.ArtifactsPath(s.project), label, "mpress-version.json")
+			manifestPath := filepath.Join(cfg.ArtifactsPath(s.project), label, "mpress-version.json")
 			var manifest docversion.Manifest
 			if data, readErr := s.files.ReadFile(manifestPath); readErr == nil {
 				_ = json.Unmarshal(data, &manifest)
 			}
 			items = append(items, item{Label: label, CreatedAt: manifest.CreatedAt})
 		}
-		writeJSON(w, http.StatusOK, map[string]any{"enabled": s.cfg.Version.Enabled, "current": s.cfg.Version.Current, "versions": items})
+		writeJSON(w, http.StatusOK, map[string]any{"enabled": cfg.Version.Enabled, "current": cfg.Version.Current, "versions": items})
 	}
 	if r.Method == http.MethodGet {
 		respond()
@@ -2825,10 +2964,8 @@ func (s *Server) handleVersions(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
 		}
-		if s.cfg.Version.Current == payload.Label {
-			updated := s.cfg
-			updated.Version.Current = ""
-			if err := s.saveConfiguration(updated); err != nil {
+		if s.activeConfig().Version.Current == payload.Label {
+			if err := s.saveConfiguration(func(cfg *config.Config) { cfg.Version.Current = "" }); err != nil {
 				writeAPIError(w, http.StatusBadRequest, err)
 				return
 			}
@@ -2839,10 +2976,10 @@ func (s *Server) handleVersions(w http.ResponseWriter, r *http.Request) {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
 		}
-		updated := s.cfg
-		updated.Version.Enabled = true
-		updated.Version.Current = payload.Label
-		if err := s.saveConfiguration(updated); err != nil {
+		if err := s.saveConfiguration(func(cfg *config.Config) {
+			cfg.Version.Enabled = true
+			cfg.Version.Current = payload.Label
+		}); err != nil {
 			writeAPIError(w, http.StatusBadRequest, err)
 			return
 		}
@@ -2866,24 +3003,28 @@ func (s *Server) captureVersion(payload versionActionPayload) error {
 	if err != nil {
 		return err
 	}
-	previousConfig := s.cfg
-	updated := s.cfg
-	updated.Version.Enabled = true
-	if updated.Version.Current == "" {
-		updated.Version.Current = payload.Label
-	}
-	if err := s.saveConfiguration(updated); err != nil {
+	previousConfig := s.activeConfig()
+	if err := s.saveConfiguration(func(cfg *config.Config) {
+		cfg.Version.Enabled = true
+		if cfg.Version.Current == "" {
+			cfg.Version.Current = payload.Label
+		}
+	}); err != nil {
 		return err
 	}
 	restore := func(cause error) error {
+		s.configWriteMu.Lock()
 		current, readErr := s.files.ReadFile(configurationPath)
 		if readErr != nil {
+			s.configWriteMu.Unlock()
 			return fmt.Errorf("%v; could not restore configuration: %w", cause, readErr)
 		}
 		if restoreErr := s.writeSource(configurationPath, previousSource, revision(current)); restoreErr != nil {
+			s.configWriteMu.Unlock()
 			return fmt.Errorf("%v; could not restore configuration: %w", cause, restoreErr)
 		}
-		s.cfg = previousConfig
+		s.setActiveConfig(previousConfig, revision(previousSource))
+		s.configWriteMu.Unlock()
 		_ = s.rebuildLocked(true)
 		return cause
 	}
@@ -2899,13 +3040,24 @@ func (s *Server) captureVersion(payload versionActionPayload) error {
 	return nil
 }
 
-func (s *Server) saveConfiguration(updated config.Config) error {
-	if err := updated.Validate(); err != nil {
-		return err
-	}
+// saveConfiguration applies change to the configuration currently on disk under
+// configWriteMu. It never rebuilds, so callers may hold buildMu without
+// reversing the buildMu -> configWriteMu lock order.
+func (s *Server) saveConfiguration(change func(*config.Config)) error {
+	s.configWriteMu.Lock()
+	defer s.configWriteMu.Unlock()
+
 	path := filepath.Join(s.project, config.Filename)
 	current, err := s.files.ReadFile(path)
 	if err != nil {
+		return err
+	}
+	updated := s.activeConfig()
+	if parsed, parseErr := config.Parse(current); parseErr == nil {
+		updated = parsed
+	}
+	change(&updated)
+	if err := updated.Validate(); err != nil {
 		return err
 	}
 	data, err := yaml.Marshal(updated)
@@ -2915,7 +3067,7 @@ func (s *Server) saveConfiguration(updated config.Config) error {
 	if err := s.writeSource(path, data, revision(current)); err != nil {
 		return err
 	}
-	s.cfg = updated
+	s.setActiveConfig(updated, revision(data))
 	return nil
 }
 
@@ -3075,7 +3227,8 @@ func validBlogImageBackground(value string) bool {
 }
 
 func (s *Server) sourceForRoute(rawURL string) (string, error) {
-	data, err := s.files.ReadFile(filepath.Join(s.cfg.OutputPath(s.project), "mpress-manifest.json"))
+	cfg := s.publishedConfig()
+	data, err := s.files.ReadFile(filepath.Join(cfg.OutputPath(s.project), "mpress-manifest.json"))
 	if err != nil {
 		return "", err
 	}
@@ -3088,23 +3241,27 @@ func (s *Server) sourceForRoute(rawURL string) (string, error) {
 	wanted := strings.Trim(rawURL, "/")
 	for _, page := range manifest.Pages {
 		route := strings.Trim(page.URL, "/")
-		if page.Language != s.cfg.Site.DefaultLanguage || !s.cfg.Site.DefaultAtRoot {
+		if page.Language != cfg.Site.DefaultLanguage || !cfg.Site.DefaultAtRoot {
 			route = strings.Trim(page.Language+"/"+route, "/")
 		}
 		if route == wanted {
 			source := page.Source
-			if page.Language != s.cfg.Site.DefaultLanguage {
+			if page.Language != cfg.Site.DefaultLanguage {
 				source = filepath.ToSlash(filepath.Join(page.Language, source))
 			}
-			return filepath.ToSlash(filepath.Join(s.cfg.Build.ContentDir, source)), nil
+			return filepath.ToSlash(filepath.Join(cfg.Build.ContentDir, source)), nil
 		}
 	}
 	return "", errors.New("the current route does not map to a Markdown source file")
 }
 
 func (s *Server) handleSite(w http.ResponseWriter, r *http.Request) {
+	// Resolve the document root from the published snapshot for every request.
+	// outputDir can change with the configuration; a server captured at startup
+	// would keep serving the old tree after a successful rebuild.
+	fileServer := http.FileServer(projectHTTPFS{files: s.files, base: s.publishedConfig().OutputPath(s.project)})
 	recorder := httptest.NewRecorder()
-	s.fileServer.ServeHTTP(recorder, r)
+	fileServer.ServeHTTP(recorder, r)
 	for key, values := range recorder.Header() {
 		for _, value := range values {
 			w.Header().Add(key, value)
@@ -3324,6 +3481,7 @@ func (s *Server) canWrite(w http.ResponseWriter, r *http.Request) bool {
 }
 
 func (s *Server) sourcePath(name string, mutation bool) (string, error) {
+	cfg := s.activeConfig()
 	name = filepath.ToSlash(strings.TrimSpace(name))
 	if name == "" || strings.ContainsRune(name, 0) || filepath.IsAbs(name) {
 		return "", errors.New("invalid source path")
@@ -3332,9 +3490,9 @@ func (s *Server) sourcePath(name string, mutation bool) (string, error) {
 	if clean == "." || clean == ".." || strings.HasPrefix(clean, "../") {
 		return "", errors.New("source path must stay inside the project")
 	}
-	allowed := clean == config.Filename || clean == ".gitignore" || clean == s.cfg.Build.NavFile ||
-		clean == s.cfg.Build.ContentDir || strings.HasPrefix(clean, strings.TrimSuffix(s.cfg.Build.ContentDir, "/")+"/") ||
-		clean == s.cfg.Build.StaticDir || strings.HasPrefix(clean, strings.TrimSuffix(s.cfg.Build.StaticDir, "/")+"/")
+	allowed := clean == config.Filename || clean == ".gitignore" || clean == cfg.Build.NavFile ||
+		clean == cfg.Build.ContentDir || strings.HasPrefix(clean, strings.TrimSuffix(cfg.Build.ContentDir, "/")+"/") ||
+		clean == cfg.Build.StaticDir || strings.HasPrefix(clean, strings.TrimSuffix(cfg.Build.StaticDir, "/")+"/")
 	if !allowed {
 		return "", errors.New("source path is not editable")
 	}
@@ -3396,8 +3554,7 @@ func (s *Server) backup(path string, data []byte) error {
 }
 
 func revision(data []byte) string {
-	sum := sha256.Sum256(data)
-	return hex.EncodeToString(sum[:12])
+	return config.SourceRevision(data)
 }
 
 func newToken() (string, error) {
@@ -3413,9 +3570,10 @@ func isLoopbackHost(host string) bool {
 }
 
 func (s *Server) routeFor(projectPath, source string) string {
-	contentPrefix := strings.TrimSuffix(filepath.ToSlash(s.cfg.Build.ContentDir), "/") + "/"
+	cfg := s.activeConfig()
+	contentPrefix := strings.TrimSuffix(filepath.ToSlash(cfg.Build.ContentDir), "/") + "/"
 	rel := strings.TrimPrefix(filepath.ToSlash(projectPath), contentPrefix)
-	page, _, err := content.NewRenderer().Parse(rel, s.cfg.Site.DefaultLanguage, source)
+	page, _, err := content.NewRenderer().Parse(rel, cfg.Site.DefaultLanguage, source)
 	if err != nil {
 		return ""
 	}
@@ -3433,7 +3591,14 @@ func (s *Server) rebuild(reload bool) {
 
 func (s *Server) rebuildLocked(reload bool) error {
 	s.setState(BuildState{Status: "building", Revision: s.currentState().Revision + 1})
+	buildGeneration := s.configGenerationAt()
 	result, err := site.Build(s.project, site.BuildOptions{IncludeDrafts: true})
+	if err == nil {
+		// Publish only what the build actually used. On failure the previous
+		// published snapshot keeps serving the last usable site. A configuration
+		// accepted while this build ran is newer than the build's snapshot.
+		s.publishConfig(result.Config, result.ConfigRevision, buildGeneration)
+	}
 	state := BuildState{Status: "ready", Pages: result.Pages, Files: result.Files, DurationMS: result.Duration.Milliseconds(), Diagnostics: result.Diagnostics, BuiltAt: time.Now(), Revision: s.currentState().Revision}
 	if err != nil {
 		state.Status = "error"

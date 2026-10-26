@@ -59,7 +59,7 @@ func TestAuthoringConversionRejectsExternalInputs(t *testing.T) {
 				t.Errorf("conversion accepted external %s: HTTP %d", boundary, response.StatusCode)
 			}
 			assertDevFileUnchanged(t, filepath.Dir(sentinel), filepath.Base(sentinel), string(original))
-			if _, err := os.Stat(filepath.Join(server.cfg.ContentPath(server.project), "fr/index.mpd")); !os.IsNotExist(err) {
+			if _, err := os.Stat(filepath.Join(server.activeConfig().ContentPath(server.project), "fr/index.mpd")); !os.IsNotExist(err) {
 				t.Errorf("unsafe conversion published a target: %v", err)
 			}
 		})
@@ -70,7 +70,7 @@ func TestAuthoringConversionPreservesTemporarySentinels(t *testing.T) {
 	for _, linked := range []bool{false, true} {
 		t.Run(map[bool]string{false: "owned-file", true: "external-link"}[linked], func(t *testing.T) {
 			server := translationReviewFixture(t)
-			temporary := filepath.Join(server.cfg.ContentPath(server.project), "index.mpd.tmp")
+			temporary := filepath.Join(server.activeConfig().ContentPath(server.project), "index.mpd.tmp")
 			sentinel := temporary
 			if linked {
 				sentinel = filepath.Join(t.TempDir(), "must-survive")

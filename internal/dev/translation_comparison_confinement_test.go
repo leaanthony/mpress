@@ -11,12 +11,13 @@ import (
 	"testing"
 	"time"
 
+	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/translate"
 )
 
 func TestBorrowedComparisonEngineRetainsRootOwnership(t *testing.T) {
 	server, calls := comparisonBoundaryFixture(t)
-	engine := translate.NewEngine(server.project, server.cfg, nil)
+	engine := translate.NewEngine(server.project, server.activeConfig(), nil)
 	borrowed, err := engine.BorrowRoot(server.files)
 	if err != nil {
 		t.Fatal(err)
@@ -73,9 +74,11 @@ func comparisonBoundaryFixture(t *testing.T) (*Server, *atomic.Int32) {
 	}))
 	t.Cleanup(provider.Close)
 	t.Setenv("MPRESS_COMPARISON_TEST_KEY", "local-fixture-only")
-	server.cfg.Translation.Provider = "openrouter"
-	server.cfg.Translation.BaseURL = provider.URL
-	server.cfg.Translation.APIKeyEnv = "MPRESS_COMPARISON_TEST_KEY"
+	setTestConfig(server, func(cfg *config.Config) {
+		cfg.Translation.Provider = "openrouter"
+		cfg.Translation.BaseURL = provider.URL
+		cfg.Translation.APIKeyEnv = "MPRESS_COMPARISON_TEST_KEY"
+	})
 	server.modelCatalog = []translationModel{{ID: "boundary/first"}, {ID: "boundary/second"}}
 	server.modelCatalogAt = time.Now()
 	return server, calls
@@ -105,8 +108,8 @@ func TestAuthoringEstimateRejectsExternalFilesBeforeTargetsExist(t *testing.T) {
 	for _, boundary := range []string{"source", "style-guide"} {
 		t.Run(boundary, func(t *testing.T) {
 			server, calls := comparisonBoundaryFixture(t)
-			server.cfg.Site.Languages = []string{"en"}
-			if err := os.RemoveAll(filepath.Join(server.cfg.ContentPath(server.project), "fr")); err != nil {
+			setTestConfig(server, func(cfg *config.Config) { cfg.Site.Languages = []string{"en"} })
+			if err := os.RemoveAll(filepath.Join(server.activeConfig().ContentPath(server.project), "fr")); err != nil {
 				t.Fatal(err)
 			}
 			sentinel, original := installTranslationInputBoundary(t, server, boundary)

@@ -10,6 +10,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/leaanthony/mpress/internal/config"
 	"github.com/leaanthony/mpress/internal/translate"
 )
 
@@ -67,8 +68,8 @@ func translationReviewFixture(t *testing.T) *Server {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { _ = server.Close() })
-	server.cfg.Site.Languages = []string{"en", "fr"}
-	if _, err := translate.NewEngine(root, server.cfg, pageUpdateProvider{}).Run(context.Background(), translate.Options{Language: "fr", File: "index.md"}); err != nil {
+	setTestConfig(server, func(cfg *config.Config) { cfg.Site.Languages = []string{"en", "fr"} })
+	if _, err := translate.NewEngine(root, server.activeConfig(), pageUpdateProvider{}).Run(context.Background(), translate.Options{Language: "fr", File: "index.md"}); err != nil {
 		t.Fatal(err)
 	}
 	return server
@@ -77,11 +78,11 @@ func translationReviewFixture(t *testing.T) *Server {
 func translationReviewPath(server *Server, boundary string) string {
 	switch boundary {
 	case "source":
-		return filepath.Join(server.cfg.ContentPath(server.project), "index.md")
+		return filepath.Join(server.activeConfig().ContentPath(server.project), "index.md")
 	case "target":
-		return filepath.Join(server.cfg.ContentPath(server.project), "fr", "index.md")
+		return filepath.Join(server.activeConfig().ContentPath(server.project), "fr", "index.md")
 	default:
-		return filepath.Join(server.project, server.cfg.Translation.StateDir, "fr", "index.json")
+		return filepath.Join(server.project, server.activeConfig().Translation.StateDir, "fr", "index.json")
 	}
 }
 
@@ -199,9 +200,9 @@ func installTranslationInputBoundary(t *testing.T, server *Server, boundary stri
 	name, data := "style.txt", "Follow the project's writing style.\n"
 	if boundary == "glossary" {
 		name, data = "glossary.yaml", "terms:\n  - source: compiler\n    translations:\n      fr: compilateur\n"
-		server.cfg.Translation.Glossary = name
+		setTestConfig(server, func(cfg *config.Config) { cfg.Translation.Glossary = name })
 	} else {
-		server.cfg.Translation.StyleGuide = name
+		setTestConfig(server, func(cfg *config.Config) { cfg.Translation.StyleGuide = name })
 	}
 	sentinel := filepath.Join(t.TempDir(), name)
 	if err := os.WriteFile(sentinel, []byte(data), 0600); err != nil {
