@@ -240,10 +240,14 @@ func (scan *watchScan) hashFile(name string) error {
 		return fmt.Errorf("read %s: %w", name, err)
 	}
 	defer func() { _ = file.Close() }()
-	_, _ = fmt.Fprintf(scan.digest, "file\x00%s\x00", slashPath(name))
-	if _, err := copyWatchFile(scan.digest, file, scan.buffer); err != nil {
+	fileDigest := sha256.New()
+	if _, err := copyWatchFile(fileDigest, file, scan.buffer); err != nil {
 		return fmt.Errorf("read %s: %w", name, err)
 	}
+	// Fixed-size digests keep arbitrary binary content from mimicking the
+	// boundary between two input files.
+	_, _ = fmt.Fprintf(scan.digest, "file\x00%s\x00", slashPath(name))
+	_, _ = scan.digest.Write(fileDigest.Sum(nil))
 	_, _ = io.WriteString(scan.digest, "\x00")
 	return nil
 }

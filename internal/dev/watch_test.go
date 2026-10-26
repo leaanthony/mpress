@@ -524,3 +524,16 @@ func TestWatchFingerprintIncludesFilesUnderConfiguredInputDirectories(t *testing
 		}
 	}
 }
+
+func TestWatchFingerprintSeparatesBinaryFileContents(t *testing.T) {
+	server, root := newWatchFixture(t)
+	separator := "\x00file\x00static/b.bin\x00"
+	writeDevFixture(t, root, "static/a.bin", "X")
+	writeDevFixture(t, root, "static/b.bin", separator+"Y")
+	before := watchFingerprint(t, server)
+	writeDevFixture(t, root, "static/a.bin", "X"+separator)
+	writeDevFixture(t, root, "static/b.bin", "Y")
+	if watchFingerprint(t, server) == before {
+		t.Fatal("binary contents were confused with the boundary between files")
+	}
+}
