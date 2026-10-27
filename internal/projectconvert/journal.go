@@ -76,6 +76,15 @@ const (
 	fileChanged
 )
 
+// consumedSource is the verified planning snapshot of an original document
+// moved into recovery. commit rechecks it before discarding that evidence.
+type consumedSource struct {
+	digest [sha256.Size]byte
+	mode   os.FileMode
+	alias  string
+	isLink bool
+}
+
 type recoveryEntry struct {
 	kind     recoveryKind
 	files    *projectfs.FS
@@ -83,6 +92,7 @@ type recoveryEntry struct {
 	backup   string
 	expected []byte
 	mode     os.FileMode
+	source   *consumedSource
 }
 
 func (e recoveryEntry) detail() string {
@@ -176,7 +186,7 @@ func sourceChanged(path, reason string) error {
 // changes captured by it. Relative aliases can become dangling when moved;
 // their link text is checked here and their content before source consumption.
 func (j *recoveryJournal) confirmMovedSource(index int, item conversion) error {
-	entry := j.entries[index]
+	entry := &j.entries[index]
 	info, err := j.ops.lstat(entry.files, entry.backup)
 	if err != nil {
 		return fmt.Errorf("inspect moved source %s: %w", entry.path, err)
@@ -192,6 +202,7 @@ func (j *recoveryJournal) confirmMovedSource(index int, item conversion) error {
 		if target != item.sourceAlias {
 			return sourceChanged(entry.path, "symbolic link target changed")
 		}
+		entry.source = &consumedSource{alias: item.sourceAlias, isLink: true}
 		return nil
 	}
 	if info.Mode()&os.ModeSymlink != 0 {
@@ -207,6 +218,7 @@ func (j *recoveryJournal) confirmMovedSource(index int, item conversion) error {
 	if sha256.Sum256(data) != item.sourceDigest {
 		return sourceChanged(entry.path, "content changed")
 	}
+	entry.source = &consumedSource{digest: item.sourceDigest, mode: item.mode}
 	return nil
 }
 
@@ -439,10 +451,36 @@ func (j *recoveryJournal) rollback() error {
 }
 
 func (j *recoveryJournal) commit() error {
+	if err := j.verifyConsumedSources(); err != nil {
+		return err
+	}
 	if err := j.cleanup(); err != nil {
 		return fmt.Errorf("recovery copies were retained at %s: %w", strings.Join(j.roots(), ", "), err)
 	}
 	return nil
+}
+
+// verifyConsumedSources checks every original before removing any recovery
+// root, so a completed save through an old descriptor remains recoverable.
+func (j *recoveryJournal) verifyConsumedSources() error {
+	var problems []error
+	for index, entry := range j.entries {
+		if entry.source == nil {
+			continue
+		}
+		checkpoint := entry.source
+		original := conversion{
+			source: entry.path, sourceDigest: checkpoint.digest, mode: checkpoint.mode,
+			sourceAlias: checkpoint.alias, sourceIsLink: checkpoint.isLink,
+		}
+		if err := j.confirmMovedSource(index, original); err != nil {
+			problems = append(problems, fmt.Errorf("%s: %w", entry.detail(), err))
+		}
+	}
+	if len(problems) == 0 {
+		return nil
+	}
+	return fmt.Errorf("refusing to discard recovery copies: %w; recovery copies retained at %s", errors.Join(problems...), strings.Join(j.roots(), ", "))
 }
 
 func (j *recoveryJournal) cleanup() error {
