@@ -1681,7 +1681,7 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
   .brand-mark { width: 32px; height: 32px; }
   .theme-logo { flex-basis: min(var(--mpress-logo-width, 138px), 34vw); width: min(var(--mpress-logo-width, 138px), 34vw); height: 26px; }
   .search { display: block; flex: 0 0 44px; width: 44px; margin-left: auto; }
-  .search button { display: block; width: 44px; height: 44px; padding: .5rem 0 .5rem 2.4rem; color: transparent; }
+  .search button { display: block; overflow: hidden; width: 44px; height: 44px; padding: .5rem 0 .5rem 2.4rem; color: transparent; }
   .search-shortcut { display: none; }
   .mpress-search-overlay { padding: .5rem; }
   .mpress-search-dialog, .mpress-search-dialog.has-results { width: 100%; max-height: calc(100dvh - 1rem); grid-template: auto auto minmax(0, 1fr) / minmax(0, 1fr); border-radius: 9px; }

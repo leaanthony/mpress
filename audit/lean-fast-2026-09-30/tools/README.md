@@ -72,6 +72,22 @@ while the complete title remains the link's text, checks the short-title and
 logo variants, and confirms the phone header still hides the brand. Without
 `MPRESS_BRAND_BIN` the test skips; a skip does not qualify browser behaviour.
 
+The imported phone-header regression builds its own English/French site with
+the candidate CLI and dispatches real touch events:
+
+```sh
+MPRESS_HEADER_NAV_BIN=/absolute/path/to/candidate go test -count=1 -run '^TestImportedPhoneHeaderNavigation$' -v .
+```
+
+At 390 and 375 it requires the menu and search centres to hit their own
+controls, navigates through the open sidebar, and opens search to a
+locale-correct result and taps that result through to its page, in both
+menu/search orders with repeated Escape and close dismissals. It also covers
+the imported desktop header and a default-theme comparison with a Ctrl+K/Escape
+keyboard journey. Chrome defaults to `/usr/bin/google-chrome`; set
+`MPRESS_CHROME` for another installation. Without `MPRESS_HEADER_NAV_BIN` or
+Chrome the test skips; a skip does not qualify browser behaviour.
+
 For responsive article navigation, run the generated default site and the Wails
 release site through the same browser regression:
 

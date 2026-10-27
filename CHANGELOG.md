@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Restore phone navigation by preventing invisible search-button text from intercepting taps on nearby controls. Preserve localized search results and keyboard focus. Beads `mp-b52.2.16`.
+
 - Generate imported themes that keep text titles inside the header instead of letting long titles wrap over the page chrome. The full title remains the brand link's accessible name, short titles and logo branding keep their current size, and phone headers stay unchanged. Beads `mp-b52.2.15`.
 
 - Prevent Markdown/MPD round trips from silently deleting pricing plans and testimonials. Preserve plan names, prices, links, features and recommendations alongside quotes, attribution and controls; keep native structured components and literal examples working. Existing projects receive the corrected pages on their next rebuild through the parse-cache epoch bump, without editing source or clearing caches. Beads `mp-b52.3.8`.
