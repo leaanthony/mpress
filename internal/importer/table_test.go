@@ -113,6 +113,40 @@ func TestMarkdownToMPDRichTableKeepsInlineFormattingAndCodePipes(t *testing.T) {
 	}
 }
 
+func TestMarkdownToMPDRichTableUnmatchedBackticksKeepSeparators(t *testing.T) {
+	source := "@table{header}\n" +
+		"| Name | Action |\n" +
+		"| First ` | @button[Live](#){primary} |\n" +
+		"| Last ` | Text |\n" +
+		"| Code | `a|b` and ``c|d`` |\n" +
+		"@end\n"
+	native, markdown, html := renderImportedTable(t, source)
+
+	for _, want := range []string{
+		"| First \\` | @button[Live](#){primary} |",
+		"| Last \\` | Text |",
+		"| Code | `a\\|b` and ``c\\|d`` |",
+	} {
+		if !strings.Contains(native, want) {
+			t.Errorf("converted MPD missing %q:\n%s", want, native)
+		}
+	}
+	for _, want := range []string{"| First ` |", "| Last ` |", "`a\\|b`", "`c\\|d`"} {
+		if !strings.Contains(markdown, want) {
+			t.Errorf("round-tripped Markdown missing %q:\n%s", want, markdown)
+		}
+	}
+	for _, want := range []string{"<code>a|b</code>", "<code>c|d</code>", `href="#"`} {
+		if !strings.Contains(html, want) {
+			t.Errorf("rendered table missing %q\n%s", want, html)
+		}
+	}
+	// Header plus the three authored rows: no row may lose a cell boundary.
+	if got := strings.Count(html, "<tr"); got != 4 {
+		t.Errorf("rendered rows = %d, want 4 (header plus three body rows)\n%s", got, html)
+	}
+}
+
 func TestMarkdownToMPDTableBooleanMetadataIsExplicit(t *testing.T) {
 	native, _, html := renderImportedTable(t, "@table{header=true search=false filter=false sort=false paginate=false}\n| Name | State |\n| First | Published |\n@end\n")
 	for _, want := range []string{`search="false"`, `filter="false"`, `sort="false"`, `paginate="false"`} {

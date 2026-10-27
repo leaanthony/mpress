@@ -1419,12 +1419,13 @@ func escapeMarkdownTableCodePipes(line string) string {
 			continue
 		}
 		if line[index] == '`' {
-			run := 1
-			for index+run < len(line) && line[index+run] == '`' {
-				run++
-			}
+			run := markdownBacktickRun(line, index)
 			if codeFenceWidth == 0 {
-				codeFenceWidth = run
+				// An unmatched backtick belongs to literal cell text, not to a
+				// code span: it must not hide the row's remaining separators.
+				if markdownCodeSpanCloses(line, index+run, run) {
+					codeFenceWidth = run
+				}
 			} else if run == codeFenceWidth {
 				codeFenceWidth = 0
 			}
@@ -1439,6 +1440,37 @@ func escapeMarkdownTableCodePipes(line string) string {
 		index++
 	}
 	return output.String()
+}
+
+// markdownBacktickRun returns the length of the backtick run starting at index.
+func markdownBacktickRun(line string, index int) int {
+	run := 1
+	for index+run < len(line) && line[index+run] == '`' {
+		run++
+	}
+	return run
+}
+
+// markdownCodeSpanCloses reports whether a run of exactly width backticks
+// closes a code span opened before index, matching CommonMark's rule that the
+// closing delimiter must have the same length as the opening one.
+func markdownCodeSpanCloses(line string, index, width int) bool {
+	for index < len(line) {
+		if line[index] == '\\' && index+1 < len(line) {
+			index += 2
+			continue
+		}
+		if line[index] == '`' {
+			run := markdownBacktickRun(line, index)
+			if run == width {
+				return true
+			}
+			index += run
+			continue
+		}
+		index++
+	}
+	return false
 }
 
 func markdownHTMLBlockEnd(lines []string, start int) int {
