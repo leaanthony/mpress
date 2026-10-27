@@ -158,7 +158,7 @@ func normalizeMPressMarkdownComponents(source string) string {
 			}
 			if markdownMPDLeafComponents[name] {
 				output.WriteString(match[1] + "@" + name)
-				if converted := markdownAttributesToMPD(attributes); converted != "" {
+				if converted := markdownAttributesToMPD(name, attributes); converted != "" {
 					output.WriteByte(' ')
 					output.WriteString(converted)
 				}
@@ -348,7 +348,7 @@ func markdownLinesToMPDContext(lines []string, preserveLines bool) (string, erro
 				output.WriteString(indent)
 				output.WriteByte('@')
 				output.WriteString(name)
-				if attributes := markdownAttributesToMPD(opening[3]); attributes != "" {
+				if attributes := markdownAttributesToMPD(name, opening[3]); attributes != "" {
 					output.WriteByte(' ')
 					output.WriteString(attributes)
 				}
@@ -380,7 +380,7 @@ func markdownLinesToMPDContext(lines []string, preserveLines bool) (string, erro
 		if terminal := markdownTerminalDirective.FindStringSubmatch(line); len(terminal) > 0 {
 			output.WriteString(normalizeMPDIndentPrefix(terminal[1]))
 			output.WriteString("@terminal")
-			attributes := markdownAttributesToMPD(markdownMetadataSeparatorsToSpaces(terminal[2]))
+			attributes := markdownAttributesToMPD("terminal", markdownMetadataSeparatorsToSpaces(terminal[2]))
 			if attributes != "" {
 				output.WriteByte(' ')
 				output.WriteString(attributes)
@@ -526,7 +526,7 @@ func markdownNamedListToMPD(indent, outer, child, titleAttribute, attributes str
 	pattern := regexp.MustCompile(`^[ \t]*(?:[0-9]+\.|-)[ \t]+\*\*([^*]+)\*\*[ \t]*(.*)$`)
 	var output strings.Builder
 	output.WriteString(indent + "@" + outer)
-	if converted := markdownAttributesToMPD(attributes); converted != "" {
+	if converted := markdownAttributesToMPD(outer, attributes); converted != "" {
 		output.WriteByte(' ')
 		output.WriteString(converted)
 	}
@@ -573,7 +573,7 @@ func markdownResourcesToMPD(indent, attributes string, body []string) (string, e
 	sections = append(sections, body[start:])
 	var output strings.Builder
 	output.WriteString(indent + "@resources")
-	if converted := markdownAttributesToMPD(attributes); converted != "" {
+	if converted := markdownAttributesToMPD("resources", attributes); converted != "" {
 		output.WriteByte(' ')
 		output.WriteString(converted)
 	}
@@ -622,7 +622,7 @@ func markdownCardsToMPD(indent, attributes string, body []string) (string, error
 
 	var output strings.Builder
 	output.WriteString(indent + "@cards")
-	if converted := markdownAttributesToMPD(attributes); converted != "" {
+	if converted := markdownAttributesToMPD("cards", attributes); converted != "" {
 		output.WriteByte(' ')
 		output.WriteString(converted)
 	}
@@ -725,7 +725,7 @@ func markdownStepsToMPD(indent, attributes string, body []string) (string, error
 	if len(steps) == 0 {
 		var output strings.Builder
 		output.WriteString(indent + "@steps")
-		if converted := markdownAttributesToMPD(attributes); converted != "" {
+		if converted := markdownAttributesToMPD("steps", attributes); converted != "" {
 			output.WriteByte(' ')
 			output.WriteString(converted)
 		}
@@ -740,7 +740,7 @@ func markdownStepsToMPD(indent, attributes string, body []string) (string, error
 	}
 	var output strings.Builder
 	output.WriteString(indent + "@steps")
-	if converted := markdownAttributesToMPD(attributes); converted != "" {
+	if converted := markdownAttributesToMPD("steps", attributes); converted != "" {
 		output.WriteByte(' ')
 		output.WriteString(converted)
 	}
@@ -790,7 +790,7 @@ func matchingMarkdownDirective(lines []string, opening int) (int, error) {
 func markdownTabsToMPD(indent, name, attributes string, body []string) (string, error) {
 	var output strings.Builder
 	output.WriteString(indent + "@" + name)
-	if converted := markdownAttributesToMPD(attributes); converted != "" {
+	if converted := markdownAttributesToMPD(name, attributes); converted != "" {
 		output.WriteByte(' ')
 		output.WriteString(converted)
 	}
@@ -892,7 +892,7 @@ func markdownCompactButtonMPDMetadata(source string) string {
 	return strings.Join(attributes, " ")
 }
 
-func markdownAttributesToMPD(source string) string {
+func markdownAttributesToMPD(component, source string) string {
 	source = strings.TrimSpace(source)
 	if source == "" {
 		return ""
@@ -900,7 +900,7 @@ func markdownAttributesToMPD(source string) string {
 	var output []string
 	last := 0
 	for _, match := range markdownComponentMetadata.FindAllStringSubmatchIndex(source, -1) {
-		output = appendMarkdownBareFlags(output, source[last:match[0]])
+		output = appendMarkdownBareFlags(output, component, source[last:match[0]])
 		value := ""
 		for _, group := range [][2]int{{4, 5}, {6, 7}, {8, 9}} {
 			if match[group[0]] >= 0 {
@@ -911,21 +911,22 @@ func markdownAttributesToMPD(source string) string {
 		output = append(output, source[match[2]:match[3]]+"="+strconv.Quote(value))
 		last = match[1]
 	}
-	output = appendMarkdownBareFlags(output, source[last:])
+	output = appendMarkdownBareFlags(output, component, source[last:])
 	return strings.Join(output, " ")
 }
 
 // appendMarkdownBareFlags keeps shorthand Boolean metadata, such as the
 // header, search, and paginate flags on @table, which have no "=" or value.
 // The separators follow the same space-or-pipe grammar as explicit attributes.
-// Only declared Boolean attributes are kept; the native grammar rejects other
-// shorthand names.
-func appendMarkdownBareFlags(output []string, source string) []string {
+// Markdown-only flags need explicit values because native shorthand is narrower.
+func appendMarkdownBareFlags(output []string, component, source string) []string {
 	for _, token := range strings.FieldsFunc(source, func(character rune) bool {
 		return character == ' ' || character == '\t' || character == '|'
 	}) {
 		if mpd.IsBooleanAttribute(token) {
 			output = append(output, token)
+		} else if component == "image" && token == "expand" || component == "preview-tabs" && token == "source" {
+			output = append(output, token+`="true"`)
 		}
 	}
 	return output
