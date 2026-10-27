@@ -112,8 +112,9 @@ func normalizeMPressMarkdownComponents(source string) string {
 				continue
 			}
 			output.WriteString(match[1] + ":::button{href=" + strconv.Quote(match[3]))
-			if variant := strings.TrimSpace(match[4]); variant != "" {
-				output.WriteString(" variant=" + strconv.Quote(variant))
+			if attributes := markdownCompactButtonMPDMetadata(match[4]); attributes != "" {
+				output.WriteByte(' ')
+				output.WriteString(attributes)
 			}
 			output.WriteString("}\n" + match[2] + "\n:::\n")
 			continue
@@ -843,6 +844,52 @@ func markdownTabsToMPD(indent, name, attributes string, body []string) (string, 
 	}
 	output.WriteString(indent + "@end\n")
 	return output.String(), nil
+}
+
+// markdownCompactButtonMPDMetadata converts the legacy
+// @button[Label](href){...} metadata into canonical :::button attributes. The
+// legacy renderer accepts primary/secondary/outline flags (outline wins over
+// secondary, which wins over primary) plus action, size, icon and icon-right;
+// it ignores other metadata and defaults the variant to secondary. Pipe and
+// space separators, quoted values and literal pipes inside quotes keep their
+// existing meaning.
+func markdownCompactButtonMPDMetadata(source string) string {
+	if strings.TrimSpace(source) == "" {
+		return ""
+	}
+	source = markdownMetadataSeparatorsToSpaces(source)
+	metadata := make(map[string]string)
+	last := 0
+	for _, match := range markdownComponentMetadata.FindAllStringSubmatchIndex(source, -1) {
+		for _, flag := range strings.Fields(source[last:match[0]]) {
+			metadata[flag] = "true"
+		}
+		value := ""
+		for _, group := range [][2]int{{4, 5}, {6, 7}, {8, 9}} {
+			if match[group[0]] >= 0 {
+				value = source[match[group[0]]:match[group[1]]]
+				break
+			}
+		}
+		metadata[source[match[2]:match[3]]] = value
+		last = match[1]
+	}
+	for _, flag := range strings.Fields(source[last:]) {
+		metadata[flag] = "true"
+	}
+	variant := "secondary"
+	for _, candidate := range []string{"primary", "secondary", "outline"} {
+		if metadata[candidate] == "true" {
+			variant = candidate
+		}
+	}
+	attributes := []string{"variant=" + strconv.Quote(variant)}
+	for _, key := range []string{"action", "size", "icon", "icon-right"} {
+		if value := metadata[key]; value != "" {
+			attributes = append(attributes, key+"="+strconv.Quote(value))
+		}
+	}
+	return strings.Join(attributes, " ")
 }
 
 func markdownAttributesToMPD(source string) string {

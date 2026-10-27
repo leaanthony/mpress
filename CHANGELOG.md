@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve compact button actions and appearance during Markdown/MPD conversion, keeping reader accessibility controls working and ordinary link destinations, sizes and icons intact. Retain variant precedence, quoted spaces and pipes, and literal examples. Beads `mp-b52.3.8`.
+
 - Keep directive and tab-label examples inside backtick, tilde and longer code fences literal during Markdown-to-MPD conversion, so a valid `@note`/`:::note` container or tabs group converts instead of failing as unclosed. Real nested directives and tabs still convert, and genuinely unclosed directives are still refused. Beads `mp-b52.3.8`.
 
 - Remove the large empty space around table search on phones so readers can reach the data with less scrolling. Preserve desktop layout and existing table controls. Beads `mp-b52.2.14`.
