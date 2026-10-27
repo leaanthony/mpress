@@ -9,6 +9,8 @@ import (
 	"strings"
 
 	"gopkg.in/yaml.v3"
+
+	"github.com/leaanthony/mpress/internal/mpd"
 )
 
 var mpressDirectiveOpen = regexp.MustCompile(`^([ \t]*):::(\w[\w-]*)(?:\{([^}]*)\})?[ \t]*$`)
@@ -141,7 +143,7 @@ func normalizeMPressMarkdownComponents(source string) string {
 		}
 		if match := markdownAtComponent.FindStringSubmatch(line); len(match) > 0 {
 			name := match[2]
-			attributes := strings.ReplaceAll(match[3], "|", " ")
+			attributes := markdownMetadataSeparatorsToSpaces(match[3])
 			if markdownMPDContainerComponents[name] {
 				output.WriteString(match[1] + ":::" + name)
 				if attributes != "" {
@@ -358,7 +360,12 @@ func markdownLinesToMPDContext(lines []string, preserveLines bool) (string, erro
 				if name == "filetree" {
 					dedented = normalizeFiletreeIndent(dedented)
 				}
-				convertedBody, err := markdownLinesToMPDContext(dedented, markdownPreserveComponentLines[name])
+				convertedBody := ""
+				if name == "table" {
+					convertedBody = markdownTableBodyToMPD(dedented)
+				} else {
+					convertedBody, err = markdownLinesToMPDContext(dedented, markdownPreserveComponentLines[name])
+				}
 				if err != nil {
 					return "", err
 				}
@@ -372,7 +379,7 @@ func markdownLinesToMPDContext(lines []string, preserveLines bool) (string, erro
 		if terminal := markdownTerminalDirective.FindStringSubmatch(line); len(terminal) > 0 {
 			output.WriteString(normalizeMPDIndentPrefix(terminal[1]))
 			output.WriteString("@terminal")
-			attributes := markdownAttributesToMPD(strings.ReplaceAll(terminal[2], "|", " "))
+			attributes := markdownAttributesToMPD(markdownMetadataSeparatorsToSpaces(terminal[2]))
 			if attributes != "" {
 				output.WriteByte(' ')
 				output.WriteString(attributes)
@@ -817,22 +824,75 @@ func markdownTabsToMPD(indent, name, attributes string, body []string) (string, 
 }
 
 func markdownAttributesToMPD(source string) string {
-	if strings.TrimSpace(source) == "" {
+	source = strings.TrimSpace(source)
+	if source == "" {
 		return ""
 	}
-	matches := markdownComponentMetadata.FindAllStringSubmatch(source, -1)
 	var output []string
-	for _, match := range matches {
-		value := match[2]
-		if value == "" {
-			value = match[3]
+	last := 0
+	for _, match := range markdownComponentMetadata.FindAllStringSubmatchIndex(source, -1) {
+		output = appendMarkdownBareFlags(output, source[last:match[0]])
+		value := ""
+		for _, group := range [][2]int{{4, 5}, {6, 7}, {8, 9}} {
+			if match[group[0]] >= 0 {
+				value = source[match[group[0]]:match[group[1]]]
+				break
+			}
 		}
-		if value == "" {
-			value = match[4]
-		}
-		output = append(output, match[1]+"="+strconv.Quote(value))
+		output = append(output, source[match[2]:match[3]]+"="+strconv.Quote(value))
+		last = match[1]
 	}
+	output = appendMarkdownBareFlags(output, source[last:])
 	return strings.Join(output, " ")
+}
+
+// appendMarkdownBareFlags keeps shorthand Boolean metadata, such as the
+// header, search, and paginate flags on @table, which have no "=" or value.
+// The separators follow the same space-or-pipe grammar as explicit attributes.
+// Only declared Boolean attributes are kept; the native grammar rejects other
+// shorthand names.
+func appendMarkdownBareFlags(output []string, source string) []string {
+	for _, token := range strings.FieldsFunc(source, func(character rune) bool {
+		return character == ' ' || character == '\t' || character == '|'
+	}) {
+		if mpd.IsBooleanAttribute(token) {
+			output = append(output, token)
+		}
+	}
+	return output
+}
+
+// markdownMetadataSeparatorsToSpaces normalizes pipe-separated metadata without
+// rewriting a literal pipe inside a quoted attribute value.
+func markdownMetadataSeparatorsToSpaces(source string) string {
+	var output strings.Builder
+	var quote byte
+	for index := 0; index < len(source); index++ {
+		character := source[index]
+		if character == '\\' && index+1 < len(source) {
+			output.WriteByte(character)
+			index++
+			output.WriteByte(source[index])
+			continue
+		}
+		if quote != 0 {
+			if character == quote {
+				quote = 0
+			}
+			output.WriteByte(character)
+			continue
+		}
+		switch character {
+		case '"', '\'':
+			quote = character
+			output.WriteByte(character)
+		case '|':
+			output.WriteByte(' ')
+		default:
+			output.WriteByte(character)
+		}
+	}
+	return output.String()
 }
 
 func markdownInlineToMPD(line string) string {
@@ -1053,6 +1113,21 @@ func markdownTableRowToMPD(line string) string {
 	line = escapeMarkdownTableCodePipes(line)
 	line = escapeMarkdownTableBracketPipes(line)
 	return markdownInlineToMPD(line)
+}
+
+// markdownTableBodyToMPD converts the authored rows of a rich @table component
+// to native table rows. Rows are already explicit boundaries, so they must not
+// inherit paragraph soft-wrap backslashes or component line normalization.
+func markdownTableBodyToMPD(lines []string) string {
+	var output strings.Builder
+	for _, line := range lines {
+		if strings.TrimSpace(line) == "" {
+			continue
+		}
+		output.WriteString(markdownTableRowToMPD(line))
+		output.WriteByte('\n')
+	}
+	return output.String()
 }
 
 func markdownTableAlignment(separator string) string {

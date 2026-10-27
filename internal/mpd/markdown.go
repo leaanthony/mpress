@@ -327,8 +327,11 @@ func (r *markdownRenderer) table(index uint32, node *Node, indent int) {
 		return
 	}
 	attributes := r.attributeMap(node)
-	interactive := attributes["search"] != "" || attributes["filter"] != "" || attributes["sort"] != "" || attributes["paginate"] != "" || attributes["column-separators"] != ""
-	if interactive {
+	// Rich tables are authored as an explicit component: every line inside it
+	// is a row, so a Markdown separator would become a visible extra data row.
+	// Plain tables use the GFM separator for the header and alignment.
+	rich := markdownTableIsRich(attributes)
+	if rich {
 		r.writeIndent(indent)
 		r.output.WriteString("@table")
 		r.writeMarkdownAttributes(node)
@@ -339,7 +342,7 @@ func (r *markdownRenderer) table(index uint32, node *Node, indent int) {
 		r.output.WriteString("| ")
 		r.output.WriteString(strings.Join(cells, " | "))
 		r.output.WriteString(" |\n")
-		if rowIndex == 0 {
+		if !rich && rowIndex == 0 {
 			align := r.tableAlign(attributes["align"], len(cells))
 			r.writeIndent(indent)
 			r.output.WriteString("| ")
@@ -347,11 +350,39 @@ func (r *markdownRenderer) table(index uint32, node *Node, indent int) {
 			r.output.WriteString(" |\n")
 		}
 	}
-	if interactive {
+	if rich {
 		r.writeIndent(indent)
 		r.output.WriteString("@end\n")
 	}
 	r.output.WriteByte('\n')
+}
+
+// markdownTableIsRich reports whether a table needs the explicit component
+// form to keep its authored metadata. Boolean attributes are enabled only by a
+// true value, so search=false or header=false do not look enabled.
+func markdownTableIsRich(attributes map[string]string) bool {
+	for _, name := range []string{"search", "filter", "sort", "paginate", "column-separators"} {
+		if markdownAttributeEnabled(attributes, name) {
+			return true
+		}
+	}
+	if _, ok := attributes["page-size"]; ok {
+		return true
+	}
+	// GFM tables always render their first row as a header, so a disabled
+	// header can only be preserved by the explicit component.
+	if _, ok := attributes["header"]; ok && !markdownAttributeEnabled(attributes, "header") {
+		return true
+	}
+	return false
+}
+
+func markdownAttributeEnabled(attributes map[string]string, name string) bool {
+	value, ok := attributes[name]
+	if !ok {
+		return false
+	}
+	return strings.EqualFold(strings.TrimSpace(value), "true")
 }
 
 func (r *markdownRenderer) tableRows(index uint32) [][]string {

@@ -28,14 +28,20 @@ func componentClassFor(name []byte) componentClass {
 	}
 }
 
-func isBooleanAttribute(name []byte) bool {
-	switch string(name) {
+// IsBooleanAttribute reports whether a component attribute name may use the
+// native Boolean shorthand form, where the name alone means true.
+func IsBooleanAttribute(name string) bool {
+	switch name {
 	case "column-separators", "default", "filter", "header", "lineNumbers",
 		"open", "paginate", "recommended", "search", "sort":
 		return true
 	default:
 		return false
 	}
+}
+
+func isBooleanAttribute(name []byte) bool {
+	return IsBooleanAttribute(string(name))
 }
 
 func isEmojiName(name []byte) bool {

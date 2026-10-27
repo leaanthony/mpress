@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve interactive table rows and controls during Markdown/MPD conversion, and stop rendering an extra separator row. Keep literal code-cell pipes and ordinary table alignment intact. Beads `mp-b52.3.8`.
+
 - Reject translation-state migrations when a saved review has changed since planning, and retain saves that collide with publication with recovery details for retry. Beads `mp-b52.1.6`.
 
 - Preserve completed translation review saves through already-open file handles during document conversion, reporting the retained state copy for recovery and retry. Beads `mp-b52.1.6`.
