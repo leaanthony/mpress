@@ -3,12 +3,15 @@ package site
 import (
 	"bytes"
 	"compress/gzip"
+	"context"
 	"crypto/sha256"
 	"fmt"
 	"os"
+	"os/exec"
 	"path/filepath"
 	"strings"
 	"testing"
+	"time"
 
 	"github.com/andybalholm/brotli"
 )
@@ -121,6 +124,186 @@ outer: for (;;) { break outer }`
 		t.Fatalf("ASI or label semantics changed: %s", minified)
 	}
 }
+
+func TestMinifiedScriptPreservesRuntimeBehavior(t *testing.T) {
+	node, err := exec.LookPath("node")
+	if err != nil {
+		t.Skip("node is required to compare JavaScript execution results")
+	}
+	programs := []struct {
+		name   string
+		source string
+	}{
+		{
+			name: "template interpolation reads a local binding",
+			source: `(() => {
+  const greeting = "hello";
+  globalThis.result = ` + "`message: ${greeting}`" + `;
+})();`,
+		},
+		{
+			name: "template interpolation reads a parameter",
+			source: `(() => {
+  const format = (name) => ` + "`hi ${name}`" + `;
+  globalThis.result = format("reader");
+})();`,
+		},
+		{
+			name:   "escaped ordinary reference keeps its binding",
+			source: "(() => { const greeting = \"hello\"; globalThis.result = greet\\u0069ng; })();",
+		},
+		{
+			name: "escaped interpolation reference keeps its binding",
+			source: `(() => {
+  const greeting = "hello";
+  globalThis.result = ` + "`${greet\\u0069ng}`" + `;
+})();`,
+		},
+		{
+			name: "direct eval inside interpolation keeps its bindings",
+			source: `(() => {
+  const greeting = "hello";
+  const pieces = ["greet", "ing"];
+  globalThis.result = ` + "`${eval(pieces.join(\"\"))}`" + `;
+})();`,
+		},
+		{
+			name: "nested template interpolation keeps its bindings",
+			source: `(() => {
+  const name = "reader";
+  const inner = ` + "`inner ${name}`" + `;
+  globalThis.result = ` + "`outer ${`${inner}!`}`" + `;
+})();`,
+		},
+		{
+			name: "short name does not capture a template reference",
+			source: "globalThis.a = \"outer\";\n" + `(() => {
+  const description = "local";
+  globalThis.result = ` + "`${a}`" + ` + "/" + description;
+})();`,
+		},
+		{
+			name: "closure keeps its captured state",
+			source: `(() => {
+  const makeCounter = (start) => {
+    let count = start;
+    return () => {
+      count += 1;
+      return count;
+    };
+  };
+  const counter = makeCounter(4);
+  counter();
+  globalThis.result = counter();
+})();`,
+		},
+		{
+			name: "shorthand property keeps its key",
+			source: `(() => {
+  const label = "ready";
+  const payload = { label };
+  globalThis.result = payload.label;
+})();`,
+		},
+		{
+			name: "automatic semicolon insertion keeps statement boundaries",
+			source: `(() => {
+  const make = () => {
+    return
+    { value: 1 };
+  };
+  const first = 1
+  const second = 2
+  globalThis.result = [make() === undefined ? "undefined" : "object", first + second];
+})();`,
+		},
+		{
+			name: "regular expression literal keeps its pattern",
+			source: `(() => {
+  const pattern = /a\/[b c]+/gi;
+  const matches = "A/b c".match(pattern);
+  globalThis.result = matches.length + ":" + matches[0];
+})();`,
+		},
+		{
+			name: "labels keep their target loop",
+			source: `(() => {
+  let visited = 0;
+  outer: for (let row = 0; row < 3; row++) {
+    for (let column = 0; column < 3; column++) {
+      if (column === 1) continue outer;
+      visited += 1;
+    }
+  }
+  globalThis.result = visited;
+})();`,
+		},
+		{
+			name: "optional chaining and nullish coalescing keep their values",
+			source: `(() => {
+  const state = { nested: { ready: true } };
+  const missing = undefined;
+  globalThis.result = [state?.nested?.ready ?? false, missing?.value ?? "fallback"];
+})();`,
+		},
+	}
+	for _, program := range programs {
+		t.Run(program.name, func(t *testing.T) {
+			minified, err := minifyScript(program.source)
+			if err != nil {
+				t.Fatalf("minify script: %v", err)
+			}
+			if minified == strings.TrimSpace(program.source) {
+				t.Fatal("script was not minified")
+			}
+			want, err := executeJavaScript(t, node, program.source)
+			if err != nil {
+				t.Fatalf("execute original: %v", err)
+			}
+			got, err := executeJavaScript(t, node, minified)
+			if err != nil {
+				t.Fatalf("execute minified %q: %v", minified, err)
+			}
+			if got != want {
+				t.Fatalf("minified script behaved differently:\noriginal=%s\nminified=%s\nwant=%s\ngot=%s", program.source, minified, want, got)
+			}
+		})
+	}
+}
+
+// executeJavaScript evaluates source in an isolated context and returns the
+// serialized globalThis.result. The vm timeout and process deadline bound a
+// fixture that fails to terminate.
+func executeJavaScript(t *testing.T, node, source string) (string, error) {
+	t.Helper()
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
+	defer cancel()
+	command := exec.CommandContext(ctx, node, "-e", jsExecutionHarness)
+	command.Env = append(os.Environ(), "MPRESS_JS_PROGRAM="+source)
+	var stdout, stderr bytes.Buffer
+	command.Stdout = &stdout
+	command.Stderr = &stderr
+	err := command.Run()
+	if ctx.Err() != nil {
+		return "", fmt.Errorf("execution timed out: %w", ctx.Err())
+	}
+	if err != nil {
+		return "", fmt.Errorf("%w: %s", err, strings.TrimSpace(stdout.String()+" "+stderr.String()))
+	}
+	return stdout.String(), nil
+}
+
+const jsExecutionHarness = `
+const vm = require('node:vm');
+const context = vm.createContext({});
+try {
+  vm.runInContext(process.env.MPRESS_JS_PROGRAM, context, { timeout: 2000, filename: 'fixture.js' });
+  process.stdout.write(JSON.stringify(context.result));
+} catch (error) {
+  process.stdout.write('threw ' + error.name + ': ' + error.message);
+  process.exit(1);
+}
+`
 
 func TestMinifiersRejectUnterminatedInput(t *testing.T) {
 	if _, err := minifyStylesheet(`.broken { content: "nope; }`); err == nil {

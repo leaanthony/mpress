@@ -21,6 +21,7 @@ func FuzzMinifyJavaScriptDoesNotPanic(f *testing.F) {
 		`const pattern = /[a-z/]+/gi;`,
 		"const message = `outer ${`inner ${value}`}`;",
 		"function value() { return\n{ready: true}; }",
+		"const label = 'ready'; const text = `value ${label}`;",
 	} {
 		f.Add(source)
 	}

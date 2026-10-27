@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve values and references in template interpolations and escaped identifiers during JavaScript minification. Keep binding names when their references cannot be safely analyzed, while still compacting the script. Beads `mp-b52.3.6`.
+
 - Restore phone navigation by preventing invisible search-button text from intercepting taps on nearby controls. Preserve localized search results and keyboard focus. Beads `mp-b52.2.16`.
 
 - Generate imported themes that keep text titles inside the header instead of letting long titles wrap over the page chrome. The full title remains the brand link's accessible name, short titles and logo branding keep their current size, and phone headers stay unchanged. Beads `mp-b52.2.15`.

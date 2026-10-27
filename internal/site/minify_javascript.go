@@ -70,6 +70,19 @@ func removeOptionalJSSemicolons(tokens []jsToken) []jsToken {
 	return output
 }
 
+// Dynamic scope, escaped identifiers and template expressions hide binding
+// references from the lexical renamer. Preserve names rather than guess.
+func jsNeedsOriginalBindings(token jsToken) bool {
+	switch token.kind {
+	case jsIdentifier:
+		return token.text == "eval" || token.text == "with" || strings.Contains(token.text, "\\")
+	case jsTemplate:
+		return strings.Contains(token.text, "${")
+	default:
+		return false
+	}
+}
+
 func mangleJavaScriptIdentifiers(tokens []jsToken) []jsToken {
 	declarationCounts := collectJSDeclarations(tokens)
 	declared := make(map[string]bool, len(declarationCounts))
@@ -82,7 +95,7 @@ func mangleJavaScriptIdentifiers(tokens []jsToken) []jsToken {
 		return tokens
 	}
 	for _, token := range tokens {
-		if token.kind == jsIdentifier && (token.text == "eval" || token.text == "with") {
+		if jsNeedsOriginalBindings(token) {
 			return tokens
 		}
 	}
