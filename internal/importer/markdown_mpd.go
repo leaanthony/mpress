@@ -759,8 +759,19 @@ func markdownStepsToMPD(indent, attributes string, body []string) (string, error
 
 func matchingMarkdownDirective(lines []string, opening int) (int, error) {
 	depth := 0
+	fence := ""
 	for index := opening + 1; index < len(lines); index++ {
 		trimmed := strings.TrimSpace(lines[index])
+		if fence != "" {
+			if markdownFenceClose(trimmed, fence) {
+				fence = ""
+			}
+			continue
+		}
+		if marker := markdownFenceMarker(trimmed); marker != "" {
+			fence = marker
+			continue
+		}
 		if trimmed == ":::" || trimmed == ":::endtabs" {
 			if depth == 0 {
 				return index, nil
@@ -799,8 +810,19 @@ func markdownTabsToMPD(indent, name, attributes string, body []string) (string, 
 		output.WriteString(indent + "@end\n")
 		return nil
 	}
+	fence := ""
 	for index, line := range body {
 		trimmed := strings.TrimSpace(line)
+		if fence != "" {
+			if markdownFenceClose(trimmed, fence) {
+				fence = ""
+			}
+			continue
+		}
+		if marker := markdownFenceMarker(trimmed); marker != "" {
+			fence = marker
+			continue
+		}
 		if (trimmed == ":::" || trimmed == ":::endtabs") && depth > 0 {
 			depth--
 		} else if mpressDirectiveOpen.MatchString(line) {

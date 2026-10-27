@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep directive and tab-label examples inside backtick, tilde and longer code fences literal during Markdown-to-MPD conversion, so a valid `@note`/`:::note` container or tabs group converts instead of failing as unclosed. Real nested directives and tabs still convert, and genuinely unclosed directives are still refused. Beads `mp-b52.3.8`.
+
 - Remove the large empty space around table search on phones so readers can reach the data with less scrolling. Preserve desktop layout and existing table controls. Beads `mp-b52.2.14`.
 
 - Preserve interactive table rows and controls during Markdown/MPD conversion, and stop rendering an extra separator row. Keep literal code-cell pipes and ordinary table alignment intact. Beads `mp-b52.3.8`.
