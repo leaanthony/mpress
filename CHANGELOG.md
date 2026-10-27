@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Recheck the selected project directory after a queued export waits for a running build, refusing with actionable restart guidance instead of exporting a different project installed at the old path. Preserve both directories and keep ordinary exports working after restoration. Beads `mp-b52.1.3`.
+
 - Preserve descendant selectors in nested CSS so rules such as `& :not(...)` keep styling child elements after minification. Beads `mp-b52.3.6`.
 
 - Preserve comment-only boundaries during CSS minification so compound selectors keep matching the intended elements. Keep real descendant whitespace, value token separation and license comments. Beads `mp-b52.3.6`.

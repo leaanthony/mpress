@@ -1735,6 +1735,14 @@ func (s *Server) handleExport(w http.ResponseWriter, r *http.Request) {
 	defer os.Remove(archivePath)
 
 	s.buildMu.Lock()
+	// The dispatch guard checked the root before this handler ran, but the
+	// request may have waited here while another build held the lock. Recheck
+	// after the wait, before reopening the project path for the export build.
+	if err := s.files.CheckRoot(); err != nil {
+		s.buildMu.Unlock()
+		writeAPIError(w, http.StatusConflict, err)
+		return
+	}
 	result, err := exportzip.Create(s.project, archivePath, exportzip.Options{Strict: input.Strict, IncludeDrafts: input.Drafts})
 	s.buildMu.Unlock()
 	if err != nil {
@@ -3022,6 +3030,12 @@ func (s *Server) captureVersion(payload versionActionPayload) error {
 	// language directory while Capture is walking it.
 	s.buildMu.Lock()
 	defer s.buildMu.Unlock()
+
+	// The dispatch guard ran before this request may have waited for the lock.
+	// Refuse before writing configuration if the selected path changed meanwhile.
+	if err := s.files.CheckRoot(); err != nil {
+		return err
+	}
 
 	configurationPath := filepath.Join(s.project, config.Filename)
 	previousSource, err := s.files.ReadFile(configurationPath)
