@@ -26,7 +26,8 @@ import (
 // Increment this whenever parser or component rendering changes can alter the
 // cached page HTML without changing the source document.
 // v22 validates and canonicalizes page routes before caching their output paths.
-const parseCacheVersion = "mpress-parse-v23"
+// v24 refreshes pages cached before flat pricing/testimonial bodies were kept.
+const parseCacheVersion = "mpress-parse-v24"
 
 const maxParseWorkers = 8
 
