@@ -158,28 +158,52 @@ func disabledAttribute(disabled bool) string {
 }
 
 func parseDataTableRow(line string) ([]string, error) {
-	line = strings.TrimSpace(line)
-	if len(line) < 2 || line[0] != '|' || line[len(line)-1] != '|' {
+	ranges, err := dataTableCellRanges(line)
+	if err != nil {
+		return nil, err
+	}
+	cells := make([]string, 0, len(ranges))
+	for _, cell := range ranges {
+		cells = append(cells, strings.TrimSpace(strings.ReplaceAll(line[cell[0]:cell[1]], `\|`, `|`)))
+	}
+	return cells, nil
+}
+
+// dataTableCellRanges returns the raw source range of each cell in a table row.
+// Escaped pipes stay inside their cell so callers can preserve the authored
+// bytes while table parsing unescapes them.
+func dataTableCellRanges(line string) ([][2]int, error) {
+	trimmed := strings.TrimSpace(line)
+	if len(trimmed) < 2 || trimmed[0] != '|' || trimmed[len(trimmed)-1] != '|' {
 		return nil, fmt.Errorf("table rows must begin and end with |")
 	}
-	line = line[1 : len(line)-1]
-	var cells []string
-	var cell strings.Builder
-	for index := 0; index < len(line); index++ {
-		if line[index] == '\\' && index+1 < len(line) && line[index+1] == '|' {
-			cell.WriteByte('|')
+	start := strings.Index(line, trimmed)
+	innerStart := start + 1
+	innerEnd := start + len(trimmed) - 1
+	var ranges [][2]int
+	cellStart := innerStart
+	for index := innerStart; index < innerEnd; index++ {
+		if line[index] == '\\' && index+1 < innerEnd && line[index+1] == '|' {
 			index++
 			continue
 		}
 		if line[index] == '|' {
-			cells = append(cells, strings.TrimSpace(cell.String()))
-			cell.Reset()
-			continue
+			ranges = append(ranges, trimTableCellRange(line, cellStart, index))
+			cellStart = index + 1
 		}
-		cell.WriteByte(line[index])
 	}
-	cells = append(cells, strings.TrimSpace(cell.String()))
-	return cells, nil
+	ranges = append(ranges, trimTableCellRange(line, cellStart, innerEnd))
+	return ranges, nil
+}
+
+func trimTableCellRange(line string, start, end int) [2]int {
+	for start < end && (line[start] == ' ' || line[start] == '\t') {
+		start++
+	}
+	for end > start && (line[end-1] == ' ' || line[end-1] == '\t') {
+		end--
+	}
+	return [2]int{start, end}
 }
 
 func metadataBool(meta map[string]string, key string, fallback bool) bool {

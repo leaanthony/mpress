@@ -12,6 +12,10 @@ import (
 
 	"github.com/leaanthony/mpress/internal/highlight"
 	"github.com/leaanthony/mpress/internal/icons"
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/text"
 )
 
 // Component is the interface all custom components must implement.
@@ -207,6 +211,224 @@ func fenceMarkerAtLine(content string, start, end int) int {
 	return -1
 }
 
+// protectedInlineCode is a Markdown code span held aside while components are
+// expanded. Unlike a fence, a span has no container prefix and is always
+// substituted in place.
+type protectedInlineCode struct {
+	text  string
+	token string
+}
+
+// inlineCodeGuard owns the placeholders for one document. The marker is
+// derived from the source so an authored token-looking string is never
+// overwritten, and every span in the document receives a distinct token.
+type inlineCodeGuard struct {
+	marker string
+	spans  []protectedInlineCode
+}
+
+func newInlineCodeGuard(source string) *inlineCodeGuard {
+	marker := "\x00MPRESS_INLINE_"
+	for strings.Contains(source, marker) {
+		marker += "_"
+	}
+	return &inlineCodeGuard{marker: marker}
+}
+
+func (g *inlineCodeGuard) token(index int) string {
+	return g.marker + strconv.Itoa(index) + "\x00"
+}
+
+// protectDocument holds legitimate code spans aside before component syntax is
+// expanded. Spans come from the Markdown parser itself, so block boundaries,
+// container prefixes, escapes and delimiter precedence keep their real
+// meaning, including spans that continue inside a quote or list item.
+func (g *inlineCodeGuard) protectDocument(source string) string {
+	if !strings.Contains(source, "`") {
+		return source
+	}
+	if !strings.Contains(source, "@table") && !strings.Contains(source, ":::table") {
+		return g.protectMarkdown(source)
+	}
+	// Component tables need not have a Markdown separator row, so the parser
+	// would treat all of its rows as one paragraph and pair delimiters across
+	// cells and rows. Protect its cells with the table owner instead, while
+	// the surrounding document keeps full Markdown span semantics.
+	lines := strings.SplitAfter(source, "\n")
+	legacyEnds := make(map[int]int)
+	if strings.Contains(source, ":::table") {
+		lineAt := make(map[int]int, len(lines))
+		offset := 0
+		for index, line := range lines {
+			lineAt[offset] = index
+			offset += len(line)
+		}
+		for _, match := range componentBlockRegex.FindAllStringSubmatchIndex(source, -1) {
+			if source[match[4]:match[5]] == "table" {
+				legacyEnds[lineAt[match[0]]] = lineAt[match[9]]
+			}
+		}
+	}
+	var out strings.Builder
+	out.Grow(len(source))
+	var chunk strings.Builder
+	flush := func() {
+		if chunk.Len() == 0 {
+			return
+		}
+		out.WriteString(g.protectMarkdown(chunk.String()))
+		chunk.Reset()
+	}
+	for index := 0; index < len(lines); {
+		end, legacy := legacyEnds[index]
+		if !legacy {
+			match := nativeOpenRE.FindStringSubmatch(strings.TrimSpace(lines[index]))
+			if match == nil || match[1] != "table" {
+				chunk.WriteString(lines[index])
+				index++
+				continue
+			}
+			end = nativeBlockClose(lines, index)
+		}
+		if end == len(lines) {
+			chunk.WriteString(lines[index])
+			index++
+			continue
+		}
+		flush()
+		out.WriteString(lines[index])
+		for row := index + 1; row < end; row++ {
+			out.WriteString(g.protectTableRow(lines[row]))
+		}
+		out.WriteString(lines[end])
+		index = end + 1
+	}
+	flush()
+	return out.String()
+}
+
+func (g *inlineCodeGuard) protectMarkdown(source string) string {
+	ranges := CodeSpanRanges([]byte(source))
+	if len(ranges) == 0 {
+		return source
+	}
+	var out strings.Builder
+	out.Grow(len(source))
+	last := 0
+	for _, span := range ranges {
+		if span[0] < last || span[1] > len(source) || span[1] <= span[0] {
+			continue
+		}
+		out.WriteString(source[last:span[0]])
+		token := g.token(len(g.spans))
+		g.spans = append(g.spans, protectedInlineCode{text: source[span[0]:span[1]], token: token})
+		out.WriteString(token)
+		last = span[1]
+	}
+	out.WriteString(source[last:])
+	return out.String()
+}
+
+func (g *inlineCodeGuard) protectTableRow(line string) string {
+	body, newline := splitLineEnding(line)
+	cells, err := dataTableCellRanges(body)
+	if err != nil {
+		return g.protectMarkdown(line)
+	}
+	var out strings.Builder
+	out.Grow(len(line))
+	last := 0
+	for _, cell := range cells {
+		if cell[0] < last || cell[1] > len(body) || cell[1] <= cell[0] {
+			continue
+		}
+		out.WriteString(body[last:cell[0]])
+		out.WriteString(g.protectMarkdown(body[cell[0]:cell[1]]))
+		last = cell[1]
+	}
+	out.WriteString(body[last:])
+	out.WriteString(newline)
+	return out.String()
+}
+
+func (g *inlineCodeGuard) restore(content string) string {
+	return restoreInlineCodeSpans(content, g.spans)
+}
+
+// CodeSpanRanges returns the raw source range of every code span, including
+// its delimiters and any container prefixes between its lines. The parser's
+// Text segments cover the content; the delimiter bytes are recovered around
+// them because a trimmed edge space is not part of a segment.
+func CodeSpanRanges(source []byte) [][2]int {
+	markdown := goldmark.New(goldmark.WithExtensions(extension.GFM, extension.Footnote, extension.Typographer))
+	document := markdown.Parser().Parse(text.NewReader(source))
+	var ranges [][2]int
+	_ = ast.Walk(document, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
+		if span, ok := node.(*ast.CodeSpan); ok {
+			if start, end, ok := codeSpanRange(source, span); ok {
+				ranges = append(ranges, [2]int{start, end})
+			}
+		}
+		return ast.WalkContinue, nil
+	})
+	return ranges
+}
+
+func codeSpanRange(source []byte, span *ast.CodeSpan) (start, end int, ok bool) {
+	first, last := -1, -1
+	for child := span.FirstChild(); child != nil; child = child.NextSibling() {
+		textNode, isText := child.(*ast.Text)
+		if !isText {
+			continue
+		}
+		if first < 0 {
+			first = textNode.Segment.Start
+		}
+		last = textNode.Segment.Stop
+	}
+	if first < 0 || last > len(source) {
+		return 0, 0, false
+	}
+	// A segment may exclude one trimmed edge space. Step over that space
+	// before counting the delimiter run so the raw bytes are replaced exactly.
+	for first > 0 && source[first-1] == ' ' {
+		first--
+	}
+	start = first
+	for start > 0 && source[start-1] == '`' {
+		start--
+	}
+	if start == first {
+		return 0, 0, false
+	}
+	for last < len(source) && source[last] == ' ' {
+		last++
+	}
+	end = last
+	for end < len(source) && source[end] == '`' {
+		end++
+	}
+	if end == last {
+		return 0, 0, false
+	}
+	return start, end, true
+}
+
+// restoreInlineCodeSpans substitutes every held span back into content.
+func restoreInlineCodeSpans(content string, spans []protectedInlineCode) string {
+	if len(spans) == 0 {
+		return content
+	}
+	replacements := make([]string, 0, len(spans)*2)
+	for _, span := range spans {
+		replacements = append(replacements, span.token, span.text)
+	}
+	return strings.NewReplacer(replacements...).Replace(content)
+}
+
 // reindentCodeBlock rewrites a held block so every line carries prefix in place
 // of the container prefix it was captured with.
 func reindentCodeBlock(block protectedCodeBlock, prefix string) string {
@@ -343,13 +565,21 @@ func ProcessWithLanguageInstances(content string, language string, instances *In
 	}
 	var warnings []string
 
-	// Step 1: Extract fenced code blocks and replace with placeholders. The
+	// Step 1: Hold real code spans aside before any fence or component
+	// placeholder rewrites the source. Native inline syntax is the only pass
+	// that expands directives inside them.
+	guard := newInlineCodeGuard(content)
+	content = guard.protectDocument(content)
+	// Extract fenced code blocks and replace with placeholders. The
 	// placeholder keeps the container prefix of the fence it stands for, so a
 	// fence inside a list item or blockquote stays in its container while
 	// components are expanded around it.
 	protected, codeBlocks := protectFencedCodeBlocks(content, "CODEBLOCK_")
-	protected = injectPreviewTabSources(protected, codeBlocks)
+	protected = injectPreviewTabSources(protected, codeBlocks, guard)
 	protected = processNativeSyntax(protected)
+	// Restore the authored spans before component renderers see the document,
+	// so they render code as code and derive stable identities from source.
+	protected = guard.restore(protected)
 
 	// Step 2: Process components on the protected content.
 	// Loop until stable so that inner (nested) components are replaced first;
@@ -426,8 +656,10 @@ func ProcessWithLanguageInstances(content string, language string, instances *In
 		result = next
 	}
 
-	// Step 3: Re-insert protected code blocks
+	// Step 3: Re-insert protected code blocks, then any inline span that a
+	// fence held aside (for example a table example inside a code fence).
 	result = restoreCodeBlocks(result, "CODEBLOCK_", codeBlocks)
+	result = guard.restore(result)
 	warnings = append(warnings, instances.takeWarnings()...)
 
 	return result, warnings

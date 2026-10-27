@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve component syntax in inline code examples, including lists and quotes, and refresh previously cached pages on rebuild. Beads `mp-b52.3.7`.
+
 - Preserve expandable images and preview-tab source panels when converting documentation between Markdown and MPD. Beads `mp-b52.3.8`.
 
 - Recheck the selected project directory after a queued export waits for a running build, refusing with actionable restart guidance instead of exporting a different project installed at the old path. Preserve both directories and keep ordinary exports working after restoration. Beads `mp-b52.1.3`.

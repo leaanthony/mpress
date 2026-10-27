@@ -24,7 +24,6 @@ var (
 	badgeRE          = regexp.MustCompile(`<Badge\s+([^>]*)/?>`)
 	imageRE          = regexp.MustCompile(`<Image\s+([^>]*)/?>`)
 	unsupportedRE    = regexp.MustCompile(`<\/?([A-Z][A-Za-z0-9]*)\b[^>]*>`)
-	inlineCodeRE     = regexp.MustCompile("`+[^`\\n]+`+")
 	nativeAsideRE    = regexp.MustCompile(`(?ms)^:::(note|tip|warning|caution|danger|info)(?:\[([^\]]+)\])?(?:\{([^\n}]*)\})?(?:[ \t]+([^\n{]+))?\n(.*?)^:::[ \t]*$`)
 	nativeTabsRE     = regexp.MustCompile(`(?ms)^:::tabs[^\n]*\n(.*?)^(:::endtabs|:::)[ \t]*$`)
 	nativeTabLabelRE = regexp.MustCompile(`(?m)^\[([^\]]+)\]\s*$`)
@@ -361,12 +360,18 @@ func protectFences(source string) (string, []protectedFence) {
 	if in {
 		out.WriteString(block.String())
 	}
-	protected := inlineCodeRE.ReplaceAllStringFunc(out.String(), func(code string) string {
+	source = out.String()
+	var protected strings.Builder
+	last := 0
+	for _, span := range legacycomponents.CodeSpanRanges([]byte(source)) {
 		token := fenceToken(len(blocks))
-		blocks = append(blocks, protectedFence{text: code, token: token})
-		return token
-	})
-	return protected, blocks
+		blocks = append(blocks, protectedFence{text: source[span[0]:span[1]], token: token})
+		protected.WriteString(source[last:span[0]])
+		protected.WriteString(token)
+		last = span[1]
+	}
+	protected.WriteString(source[last:])
+	return protected.String(), blocks
 }
 
 // reindentFence rewrites a held block so every line carries prefix in place of

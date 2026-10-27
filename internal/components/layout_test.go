@@ -321,6 +321,26 @@ func main() { // (1)
 	}
 }
 
+func TestPreviewTabsSourceShowsInlineCodeAsAuthored(t *testing.T) {
+	input := "@preview-tabs{source}\n[Prose]\nUse `@button[Literal](#){primary}` in prose.\n@end\n"
+	got, warnings := ProcessWithLanguage(input, "en")
+	if len(warnings) != 0 {
+		t.Fatalf("warnings: %#v\n%s", warnings, got)
+	}
+	if count := strings.Count(got, `class="mpress-preview-source"`); count != 1 {
+		t.Fatalf("expected a source panel for the tab, got %d:\n%s", count, got)
+	}
+	if !strings.Contains(got, "Use `@button[Literal](#){primary}` in prose.") {
+		t.Errorf("source panel lost the authored inline code:\n%s", got)
+	}
+	if strings.Contains(got, "mpress-button") {
+		t.Errorf("inline code in a preview tab source was rendered live:\n%s", got)
+	}
+	if strings.Contains(got, "MPRESS_INLINE_") || strings.ContainsRune(got, 0) {
+		t.Errorf("inline code placeholder leaked into output:\n%s", got)
+	}
+}
+
 func TestFileTabsRenderSourceFilesAndOutput(t *testing.T) {
 	input := `@file-tabs
 [index.md]

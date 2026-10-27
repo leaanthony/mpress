@@ -18,6 +18,26 @@ var (
 	nativeMetaRE   = regexp.MustCompile(`([A-Za-z][A-Za-z0-9_-]*)(?:=(?:"((?:\\.|[^"\\])*)"|'((?:\\.|[^'\\])*)'|([^|\s]+)))?`)
 )
 
+// nativeBlockClose returns the index of the @end line that closes the native
+// block opened at start, or len(lines) when no matching close exists.
+func nativeBlockClose(lines []string, start int) int {
+	depth := 0
+	for end := start + 1; end < len(lines); end++ {
+		trimmed := strings.TrimSpace(lines[end])
+		if trimmed != "@end" {
+			if nested := nativeOpenRE.FindStringSubmatch(trimmed); nested != nil && isNativeBlock(nested[1]) {
+				depth++
+			}
+			continue
+		}
+		if depth == 0 {
+			return end
+		}
+		depth--
+	}
+	return len(lines)
+}
+
 // processNativeSyntax lowers the canonical @ syntax into the older fenced
 // component representation used by the renderer. It runs after fenced code has
 // been protected, so examples in documentation remain literal.
@@ -47,21 +67,7 @@ func processNativeSyntax(source string) string {
 			}
 			continue
 		}
-		end := i + 1
-		depth := 0
-		for ; end < len(lines); end++ {
-			trimmed := strings.TrimSpace(lines[end])
-			if trimmed != "@end" {
-				if nested := nativeOpenRE.FindStringSubmatch(trimmed); nested != nil && isNativeBlock(nested[1]) {
-					depth++
-				}
-				continue
-			}
-			if depth == 0 {
-				break
-			}
-			depth--
-		}
+		end := nativeBlockClose(lines, i)
 		if end == len(lines) {
 			// Compact leaf components such as @button and @image do not need an
 			// @end marker. If no matching close exists, give the inline renderer
@@ -105,7 +111,7 @@ func processNativeSyntax(source string) string {
 // then restores each fence only in the escaped display copy. This keeps source
 // examples inert even when they contain live component directives or nested
 // code fences.
-func injectPreviewTabSources(source string, codeBlocks []protectedCodeBlock) string {
+func injectPreviewTabSources(source string, codeBlocks []protectedCodeBlock, guard *inlineCodeGuard) string {
 	if !strings.Contains(source, "@preview-tabs") || !strings.Contains(source, "source") {
 		return source
 	}
@@ -159,10 +165,15 @@ func injectPreviewTabSources(source string, codeBlocks []protectedCodeBlock) str
 		out.WriteByte('\n')
 		for index, section := range tabs.Sections {
 			fmt.Fprintf(&out, "[%s]\n%s\n\n", section.Label, section.Content)
-			display := restoreCodeBlocks(section.Content, "CODEBLOCK_", codeBlocks)
+			display := guard.restore(section.Content)
+			display = restoreCodeBlocks(display, "CODEBLOCK_", codeBlocks)
 			escaped := html.EscapeString(strings.TrimSpace(display))
 			escaped = strings.ReplaceAll(escaped, "\r\n", "&#10;")
 			escaped = strings.ReplaceAll(escaped, "\n", "&#10;")
+			// The escaped copy is inert source. Protect its code spans from the
+			// native inline pass that follows, then restore them with the rest
+			// of the document.
+			escaped = guard.protectDocument(escaped)
 			out.WriteString(`<div class="mpress-preview-source"><div class="mpress-preview-source-label">Markdown</div><pre><code class="language-markdown">`)
 			out.WriteString(escaped)
 			out.WriteString("</code></pre></div>")
