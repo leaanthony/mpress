@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve comment-only boundaries during CSS minification so compound selectors keep matching the intended elements. Keep real descendant whitespace, value token separation and license comments. Beads `mp-b52.3.6`.
+
 - Preserve values and references in template interpolations and escaped identifiers during JavaScript minification. Keep binding names when their references cannot be safely analyzed, while still compacting the script. Beads `mp-b52.3.6`.
 
 - Restore phone navigation by preventing invisible search-button text from intercepting taps on nearby controls. Preserve localized search results and keyboard focus. Beads `mp-b52.2.16`.

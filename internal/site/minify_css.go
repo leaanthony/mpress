@@ -14,10 +14,19 @@ const (
 	cssComment
 )
 
+// A removed comment separates tokens without introducing selector whitespace.
+type cssGap uint8
+
+const (
+	cssAdjacent cssGap = iota
+	cssCommentBoundary
+	cssWhitespace
+)
+
 type cssToken struct {
 	kind cssTokenKind
 	text string
-	gap  bool
+	gap  cssGap
 }
 
 func minifyCSS(source string) (string, error) {
@@ -41,8 +50,9 @@ func minifyCSS(source string) (string, error) {
 			havePrevious = false
 		}
 		inSelector := len(blocks) == 0 || blocks[len(blocks)-1]
-		if havePrevious && token.gap && cssNeedsSpace(previous, token, !inSelector) {
-			output = append(output, ' ')
+		if havePrevious && token.gap != cssAdjacent && cssNeedsSpace(previous, token, !inSelector) {
+			separator := [...]string{"", "/**/", " "}[token.gap]
+			output = append(output, separator...)
 		}
 		output = append(output, token.text...)
 		if token.text == "{" {
@@ -81,11 +91,11 @@ func cssHeaderContainsRules(tokens []cssToken, open int) bool {
 
 func lexCSS(source string) ([]cssToken, error) {
 	tokens := make([]cssToken, 0, len(source)/4)
-	gap := false
+	gap := cssAdjacent
 	braces, brackets, parentheses := 0, 0, 0
 	for index := 0; index < len(source); {
 		if isCSSSpace(source[index]) {
-			gap = true
+			gap = cssWhitespace
 			index++
 			for index < len(source) && isCSSSpace(source[index]) {
 				index++
@@ -100,9 +110,9 @@ func lexCSS(source string) ([]cssToken, error) {
 			end += index + 4
 			if index+2 < len(source) && source[index+2] == '!' {
 				tokens = append(tokens, cssToken{kind: cssComment, text: source[index:end], gap: gap})
-				gap = false
+				gap = cssAdjacent
 			} else {
-				gap = true
+				gap = max(gap, cssCommentBoundary)
 			}
 			index = end
 			continue
@@ -113,7 +123,7 @@ func lexCSS(source string) ([]cssToken, error) {
 				return nil, err
 			}
 			tokens = append(tokens, cssToken{kind: cssString, text: source[index:end], gap: gap})
-			gap = false
+			gap = cssAdjacent
 			index = end
 			continue
 		}
@@ -137,7 +147,7 @@ func lexCSS(source string) ([]cssToken, error) {
 				return nil, fmt.Errorf("minify CSS: unexpected %q at byte %d", text, index)
 			}
 			tokens = append(tokens, cssToken{kind: cssSymbol, text: text, gap: gap})
-			gap = false
+			gap = cssAdjacent
 			index++
 			continue
 		}
@@ -157,7 +167,7 @@ func lexCSS(source string) ([]cssToken, error) {
 			continue
 		}
 		tokens = append(tokens, cssToken{kind: cssWord, text: source[start:index], gap: gap})
-		gap = false
+		gap = cssAdjacent
 	}
 	if braces != 0 || brackets != 0 || parentheses != 0 {
 		return nil, fmt.Errorf("minify CSS: unbalanced delimiters (braces %d, brackets %d, parentheses %d)", braces, brackets, parentheses)
