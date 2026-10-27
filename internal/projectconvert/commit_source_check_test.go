@@ -30,11 +30,10 @@ func requireOpenFileRename(t *testing.T) {
 	}
 }
 
-// requireSourceRecoveryCopy names the single recovery copy of a consumed
-// project document.
-func requireSourceRecoveryCopy(t *testing.T, root, name string) string {
+// requireRecoveryCopy names the single recovery copy of a consumed project file.
+func requireRecoveryCopy(t *testing.T, root, name string) string {
 	t.Helper()
-	copies, err := filepath.Glob(filepath.Join(root, "content", recoveryPrefix+"*", "content", name+recoverySuffix))
+	copies, err := filepath.Glob(filepath.Join(root, "content", recoveryPrefix+"*", name+recoverySuffix))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -96,7 +95,7 @@ func TestConversionCommitKeepsSourceSavedThroughOpenDescriptor(t *testing.T) {
 		if err := fixture.file.Close(); err != nil {
 			return err
 		}
-		recoveryPath = requireSourceRecoveryCopy(t, fixture.root, "page.md")
+		recoveryPath = requireRecoveryCopy(t, fixture.root, filepath.Join("content", "page.md"))
 		inRecovery, err := os.ReadFile(recoveryPath)
 		if err != nil {
 			return err
@@ -146,6 +145,114 @@ func TestConversionCommitKeepsSourceSavedThroughOpenDescriptor(t *testing.T) {
 	}
 }
 
+func TestConversionCommitKeepsSettingsSavedThroughOpenDescriptor(t *testing.T) {
+	requireOpenFileRename(t)
+	cfg := config.Default()
+	cfg.Translation.StyleGuide = "content/guide.md"
+	root, files := openConversionProject(t, &cfg)
+	writeConversionSource(t, filepath.Join(root, "content", "guide.md"), 0644, "# Guide\n\nOriginal guide.\n")
+	writeConversionSource(t, filepath.Join(root, "content", "page.md"), 0600, "# Page\n\nOriginal page.\n")
+	// SaveRoot publishes the settings conversion will capture and compare.
+	if err := config.SaveRoot(files, cfg); err != nil {
+		t.Fatal(err)
+	}
+	configurationPath := filepath.Join(root, config.Filename)
+	if err := os.Chmod(configurationPath, 0640); err != nil {
+		t.Fatal(err)
+	}
+	// The author already has the settings open before conversion starts, so
+	// this descriptor follows the captured leaf into recovery.
+	file, err := os.OpenFile(configurationPath, os.O_RDWR, 0)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { _ = file.Close() })
+	author := cfg
+	author.Site.Title = "Author settings saved through an open descriptor"
+	saved := []byte(matchingConfigurationBytes(t, author))
+	var recoveryPath string
+	ops := saveConfigAtFinalPublication(t, func() error {
+		if n, err := file.WriteAt(saved, 0); err != nil || n != len(saved) {
+			t.Fatalf("settings save incomplete: %d bytes, %v", n, err)
+		}
+		if err := file.Truncate(int64(len(saved))); err != nil {
+			return err
+		}
+		if err := file.Sync(); err != nil {
+			return err
+		}
+		if err := file.Close(); err != nil {
+			return err
+		}
+		recoveryPath = requireRecoveryCopy(t, root, config.Filename)
+		inRecovery, err := os.ReadFile(recoveryPath)
+		if err != nil {
+			return err
+		}
+		if !bytes.Equal(inRecovery, saved) {
+			t.Fatalf("completed settings save was not in recovery before cleanup: %q", inRecovery)
+		}
+		return nil
+	})
+
+	result, err := runConversionWithOps(root, &cfg, "", "mpd", files, files, ops)
+	if err == nil {
+		t.Fatal("completed settings save was discarded silently")
+	}
+	for _, want := range []string{"refusing to discard recovery copies", "content changed", config.Filename, recoveryPath} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("diagnostic missing %q: %v", want, err)
+		}
+	}
+	if result.Count != 2 {
+		t.Fatalf("conversion result changed: %+v", result)
+	}
+	got, readErr := os.ReadFile(recoveryPath)
+	if readErr != nil || !bytes.Equal(got, saved) {
+		t.Fatalf("author settings did not survive cleanup: %v %q", readErr, got)
+	}
+	info, statErr := os.Lstat(recoveryPath)
+	if statErr != nil || runtime.GOOS != "windows" && info.Mode().Perm() != 0640 {
+		t.Fatalf("author settings mode was not retained: %v %v", info, statErr)
+	}
+
+	// The retained bytes are usable author settings: restore them with the
+	// original documents and retry the conversion.
+	if err := os.Remove(configurationPath); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Rename(recoveryPath, configurationPath); err != nil {
+		t.Fatal(err)
+	}
+	for _, name := range []string{"guide.md", "page.md"} {
+		copyPath := requireRecoveryCopy(t, root, filepath.Join("content", name))
+		if err := os.Rename(copyPath, filepath.Join(root, "content", name)); err != nil {
+			t.Fatal(err)
+		}
+		if err := os.Remove(filepath.Join(root, "content", strings.TrimSuffix(name, ".md")+".mpd")); err != nil {
+			t.Fatal(err)
+		}
+	}
+	retry, loadErr := config.Load(root)
+	if loadErr != nil {
+		t.Fatalf("retained settings are not usable: %v", loadErr)
+	}
+	if retry.Site.Title != "Author settings saved through an open descriptor" || retry.Translation.StyleGuide != "content/guide.md" {
+		t.Fatalf("retained settings changed: %+v", retry)
+	}
+	if _, err := runConversionWithOps(root, &retry, "", "mpd", files, files, defaultConversionOps); err != nil {
+		t.Fatalf("retry from the retained settings failed: %v", err)
+	}
+	convertedGuide, readErr := os.ReadFile(filepath.Join(root, "content", "guide.mpd"))
+	if readErr != nil || !bytes.Contains(convertedGuide, []byte("Original guide.")) {
+		t.Fatalf("retry did not convert the restored document: %v %q", readErr, convertedGuide)
+	}
+	reloaded, loadErr := config.Load(root)
+	if loadErr != nil || reloaded.Translation.StyleGuide != "content/guide.mpd" {
+		t.Fatalf("retry did not update the retained settings: %v %q", loadErr, reloaded.Translation.StyleGuide)
+	}
+}
+
 func TestConversionCommitKeepsSourceChangedBeforeCleanup(t *testing.T) {
 	if runtime.GOOS == "windows" {
 		t.Skip("permission-bit changes require Unix mode semantics")
@@ -153,7 +260,7 @@ func TestConversionCommitKeepsSourceChangedBeforeCleanup(t *testing.T) {
 	fixture := newOpenSourceFixture(t)
 	var recoveryPath string
 	ops := saveConfigAtFinalPublication(t, func() error {
-		recoveryPath = requireSourceRecoveryCopy(t, fixture.root, "page.md")
+		recoveryPath = requireRecoveryCopy(t, fixture.root, filepath.Join("content", "page.md"))
 		return os.Chmod(recoveryPath, 0644)
 	})
 
@@ -173,7 +280,7 @@ func TestConversionCommitRefusesCleanupAfterRecoveryReadError(t *testing.T) {
 	var recoveryPath string
 	armed := false
 	ops := saveConfigAtFinalPublication(t, func() error {
-		recoveryPath = requireSourceRecoveryCopy(t, fixture.root, "page.md")
+		recoveryPath = requireRecoveryCopy(t, fixture.root, filepath.Join("content", "page.md"))
 		armed = true
 		return nil
 	})
@@ -198,7 +305,7 @@ func TestConversionCommitRefusesCleanupWhenRecoveryCopyMissing(t *testing.T) {
 	fixture := newOpenSourceFixture(t)
 	var recoveryPath string
 	ops := saveConfigAtFinalPublication(t, func() error {
-		recoveryPath = requireSourceRecoveryCopy(t, fixture.root, "page.md")
+		recoveryPath = requireRecoveryCopy(t, fixture.root, filepath.Join("content", "page.md"))
 		return os.Remove(recoveryPath)
 	})
 

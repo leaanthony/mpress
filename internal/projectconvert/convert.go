@@ -337,6 +337,11 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 				if err := configState.confirmCaptured(ops, projectFiles, journal.entries[index].backup); err != nil {
 					return fail(err)
 				}
+				// Keep completed saves through an open settings handle recoverable.
+				journal.entries[index].source = &consumedSource{
+					digest: sha256.Sum256(configState.data), mode: configState.mode,
+					alias: configState.link, isLink: configState.alias,
+				}
 			case statErr == nil && !configState.regular && !info.Mode().IsRegular():
 				// Keep a non-regular destination in place so the save reports it
 				// instead of silently replacing an unrelated directory.

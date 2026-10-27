@@ -76,8 +76,8 @@ const (
 	fileChanged
 )
 
-// consumedSource is the verified planning snapshot of an original document
-// moved into recovery. commit rechecks it before discarding that evidence.
+// consumedSource is the verified planning snapshot of an original document or
+// settings file moved into recovery. commit rechecks it before discarding it.
 type consumedSource struct {
 	digest [sha256.Size]byte
 	mode   os.FileMode
