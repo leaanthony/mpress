@@ -60,6 +60,18 @@ pagination, sorting, and a touch-opened column filter. Set
 Without `MPRESS_TABLE_SEARCH_BIN` the test skips; a skip does not qualify browser
 behaviour.
 
+The imported-brand regression builds its own text-title and logo fixtures with
+the candidate CLI:
+
+```sh
+MPRESS_BRAND_BIN=/absolute/path/to/candidate go test -count=1 -run '^TestImportedBrandTitleStaysInsideHeader$' -v .
+```
+
+It requires the measured title box to stay inside the header at 1280 and 1024
+while the complete title remains the link's text, checks the short-title and
+logo variants, and confirms the phone header still hides the brand. Without
+`MPRESS_BRAND_BIN` the test skips; a skip does not qualify browser behaviour.
+
 For responsive article navigation, run the generated default site and the Wails
 release site through the same browser regression:
 

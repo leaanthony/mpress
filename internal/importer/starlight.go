@@ -1292,6 +1292,8 @@ body > header { height: 64px; padding-inline: 24px; background: var(--surface); 
 .docs-page .docs-stage > .toc { grid-column: 4; }
 
 :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .brand { order: 1; width: 188.45px; height: 40px; }
+:is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .brand > span:not(.brand-mark):not(.theme-logo) { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+:is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .brand .brand-mark { flex: 0 0 auto; }
 :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .theme-logo { flex-basis: 188.45px; width: 188.45px; height: 40px; }
 :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .primary-links { order: 4; height: 32px; margin-right: -.9rem; padding-inline: .65rem; justify-content: center; border-left: 1px solid var(--border); }
 :is(.docs-page, .landing-page, .blog-index-page, .blog-article-page) .primary-links a { padding: 0; color: var(--accent-text); font-weight: 600; line-height: 32px; }
