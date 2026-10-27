@@ -40,7 +40,7 @@ var markdownMPDLeafComponents = map[string]bool{
 }
 
 var markdownMPDContainerComponents = map[string]bool{
-	"actions": true, "api": true, "api-playground": true, "audience": true,
+	"accessibility-demo": true, "actions": true, "api": true, "api-playground": true, "audience": true,
 	"badge": true, "button": true, "calendar": true, "callout": true,
 	"capabilities": true, "capability": true, "card": true, "cards": true,
 	"changelog": true, "column": true, "columns": true, "comment": true,

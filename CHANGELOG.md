@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep embedded reader-control demos working when importing Markdown: the accessibility demo now stays a real container, so its controls render and the surrounding section, prose and neighbouring components keep their boundaries instead of failing the build. Beads `mp-b52.3.8`.
+
 - Preserve compact button actions and appearance during Markdown/MPD conversion, keeping reader accessibility controls working and ordinary link destinations, sizes and icons intact. Retain variant precedence, quoted spaces and pipes, and literal examples. Beads `mp-b52.3.8`.
 
 - Keep directive and tab-label examples inside backtick, tilde and longer code fences literal during Markdown-to-MPD conversion, so a valid `@note`/`:::note` container or tabs group converts instead of failing as unclosed. Real nested directives and tabs still convert, and genuinely unclosed directives are still refused. Beads `mp-b52.3.8`.
