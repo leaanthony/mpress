@@ -1729,6 +1729,7 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
   .mpress-filetree-row { align-items: flex-start; }
   .mpress-filetree-desc { white-space: normal; text-align: right; }
   .mpress-table-toolbar { align-items: stretch; flex-direction: column; }
+  .mpress-table-search { min-width: 0; flex: 0 0 auto; align-self: stretch; }
   .mpress-table-footer { align-items: flex-start; flex-direction: column; }
   .mpress-table-pagination button { width: 44px; height: 44px; }
   .mpress-data-table table { display: table; overflow: visible; }

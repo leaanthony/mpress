@@ -45,6 +45,21 @@ page scrolling after closing. Without `MPRESS_TOUCH_SITE`, this test skips;
 a skip does not qualify browser behaviour. It is a focused regression, while
 the broader overflow-family matrix remains Beads task `mp-b52.2.4`.
 
+For the compact phone table search toolbar, the regression builds its own fixture
+with the candidate CLI:
+
+```sh
+MPRESS_TABLE_SEARCH_BIN=/absolute/path/to/candidate go test -count=1 -run '^TestCompactMobileTableSearch$' -v .
+```
+
+It measures the real toolbar at 390x844 in English and French, requires the
+toolbar to track the search field plus normal padding, and checks the 1280x900
+row layout is unchanged. It then exercises keyboard search with live status,
+pagination, sorting, and a touch-opened column filter. Set
+`MPRESS_TABLE_SEARCH_SCREENSHOTS` to an external directory to save screenshots.
+Without `MPRESS_TABLE_SEARCH_BIN` the test skips; a skip does not qualify browser
+behaviour.
+
 For responsive article navigation, run the generated default site and the Wails
 release site through the same browser regression:
 
