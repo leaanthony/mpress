@@ -42,7 +42,10 @@ type conversionOps struct {
 
 var defaultConversionOps = conversionOps{
 	write: func(files *projectfs.FS, name string, data []byte, mode os.FileMode) error {
-		return files.WriteAtomicMode(name, data, mode)
+		// In-place sources were moved aside first, so the destination must be
+		// absent. Refuse to replace a leaf saved while the migration publishes.
+		_, err := files.WriteNewAtomicMode(name, data, mode)
+		return err
 	},
 	writeNew: func(files *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
 		return files.WriteNewAtomicMode(name, data, mode)
@@ -181,8 +184,13 @@ func sourceChanged(path, reason string) error {
 	return fmt.Errorf("source %s %s after planning; refusing to remove it", path, reason)
 }
 
+func stateChanged(path, reason string) error {
+	return fmt.Errorf("translation state %s %s; refusing to migrate it", path, reason)
+}
+
 // checkpointInPlaceSource records original permissions independently of the
-// generated file's mode. Aliases keep their verbatim link without following it.
+// generated file's mode. Alias contents are read at the canonical path before
+// relocation; the moved alias is later checked by its verbatim link text.
 func (j *recoveryJournal) checkpointInPlaceSource(files *projectfs.FS, name string) (*consumedSource, error) {
 	info, err := j.ops.lstat(files, name)
 	if err != nil {
@@ -193,7 +201,11 @@ func (j *recoveryJournal) checkpointInPlaceSource(files *projectfs.FS, name stri
 		if err != nil {
 			return nil, fmt.Errorf("inspect source alias %s before writing: %w", name, err)
 		}
-		return &consumedSource{alias: target, isLink: true}, nil
+		data, err := j.ops.readFile(files, name)
+		if err != nil {
+			return nil, fmt.Errorf("read source alias %s before writing: %w", name, err)
+		}
+		return &consumedSource{alias: target, isLink: true, digest: sha256.Sum256(data)}, nil
 	}
 	if !info.Mode().IsRegular() {
 		return nil, fmt.Errorf("refusing to rewrite non-regular source %s", name)

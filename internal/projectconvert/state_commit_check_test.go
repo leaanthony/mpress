@@ -173,6 +173,139 @@ func hasReviewedProvenance(segments map[string]translate.SegmentState) bool {
 	return true
 }
 
+func TestConversionRejectsTranslationStateSavedAfterPlanning(t *testing.T) {
+	fixture := setupStateRollbackFixture(t)
+	author := reviewedState(t, fixture.originalState)
+	saved := false
+	ops := defaultConversionOps
+	writeNew := ops.writeNew
+	ops.writeNew = func(files *projectfs.FS, name string, data []byte, mode os.FileMode) (bool, error) {
+		published, err := writeNew(files, name, data, mode)
+		if err != nil || !published || saved {
+			return published, err
+		}
+		// The author completes the review while the conversion publishes its
+		// first document, after the state migration was planned.
+		saved = true
+		if err := files.WriteAtomicMode(fixture.statePath, author, 0600); err != nil {
+			return published, err
+		}
+		canonical, err := files.ReadFile(fixture.statePath)
+		if err != nil {
+			return published, err
+		}
+		if !bytes.Equal(canonical, author) {
+			return published, errors.New("review save was not canonical before continuing")
+		}
+		return published, nil
+	}
+
+	_, err := runConversionWithOps(fixture.root, &fixture.cfg, "", "markdown", fixture.files, fixture.files, ops)
+	if !saved {
+		t.Fatal("review save after planning was not injected")
+	}
+	if err == nil {
+		t.Fatal("migration planned from older state replaced the completed review")
+	}
+	for _, want := range []string{"refusing to migrate", fixture.statePath} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("diagnostic missing %q: %v", want, err)
+		}
+	}
+	assertConversionSource(t, fixture.statePath, author, 0600)
+	assertConversionSource(t, filepath.Join(fixture.root, "content", "page.mpd"), fixture.source, 0644)
+	assertConversionSource(t, filepath.Join(fixture.root, "content", "fr", "page.mpd"), fixture.target, 0644)
+	for _, target := range []string{"content/page.md", "content/fr/page.md"} {
+		if _, statErr := os.Stat(filepath.Join(fixture.root, target)); !os.IsNotExist(statErr) {
+			t.Fatalf("stale generated target %s survived the rejection: %v", target, statErr)
+		}
+	}
+	if copies := recoveryCopies(t, fixture.root); len(copies) != 0 {
+		t.Fatalf("rejected conversion retained recovery copies: %v", copies)
+	}
+
+	result, retryErr := runConversionWithOps(fixture.root, &fixture.cfg, "", "markdown", fixture.files, fixture.files, defaultConversionOps)
+	if retryErr != nil {
+		t.Fatalf("retry from the completed review failed: %v", retryErr)
+	}
+	if result.MigratedStates != 1 {
+		t.Fatalf("retry did not migrate the completed review: %+v", result)
+	}
+	migratedData, readErr := os.ReadFile(fixture.statePath)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	var migrated translate.FileState
+	if err := json.Unmarshal(migratedData, &migrated); err != nil {
+		t.Fatalf("retry produced an unreadable state: %v", err)
+	}
+	if migrated.SchemaVersion != 2 || migrated.SourceFile != "page.md" {
+		t.Fatalf("retry did not migrate the completed review: %+v", migrated)
+	}
+	if !hasReviewedProvenance(migrated.Segments) {
+		t.Fatalf("retry lost the completed review provenance: %+v", migrated.Segments)
+	}
+}
+
+func TestConversionKeepsTranslationStateSavedDuringStateMove(t *testing.T) {
+	fixture := setupStateRollbackFixture(t)
+	author := reviewedState(t, fixture.originalState)
+	saved := false
+	ops := defaultConversionOps
+	rename := ops.renameLexical
+	ops.renameLexical = func(files *projectfs.FS, old, new string) error {
+		err := rename(files, old, new)
+		if err == nil && !saved && filepath.Clean(old) == fixture.statePath {
+			saved = true
+			if err := authorWriteFile(fixture.statePath, author, 0600); err != nil {
+				return err
+			}
+		}
+		return err
+	}
+
+	_, err := runConversionWithOps(fixture.root, &fixture.cfg, "", "markdown", fixture.files, fixture.files, ops)
+	if !saved {
+		t.Fatal("review save during the state move was not injected")
+	}
+	if err == nil {
+		t.Fatal("migration published over the completed review")
+	}
+	for _, want := range []string{"refusing to replace", fixture.statePath, "rollback incomplete"} {
+		if !strings.Contains(err.Error(), want) {
+			t.Fatalf("diagnostic missing %q: %v", want, err)
+		}
+	}
+	assertConversionSource(t, fixture.statePath, author, 0600)
+	requireOriginalStateBackup(t, fixture)
+	assertConversionSource(t, filepath.Join(fixture.root, "content", "page.mpd"), fixture.source, 0644)
+	assertConversionSource(t, filepath.Join(fixture.root, "content", "fr", "page.mpd"), fixture.target, 0644)
+	for _, target := range []string{"content/page.md", "content/fr/page.md"} {
+		if _, statErr := os.Stat(filepath.Join(fixture.root, target)); !os.IsNotExist(statErr) {
+			t.Fatalf("stale generated target %s survived rollback: %v", target, statErr)
+		}
+	}
+
+	result, retryErr := runConversionWithOps(fixture.root, &fixture.cfg, "", "markdown", fixture.files, fixture.files, defaultConversionOps)
+	if retryErr != nil {
+		t.Fatalf("retry from the preserved review failed: %v", retryErr)
+	}
+	if result.MigratedStates != 1 {
+		t.Fatalf("retry did not migrate the preserved review: %+v", result)
+	}
+	migratedData, readErr := os.ReadFile(fixture.statePath)
+	if readErr != nil {
+		t.Fatal(readErr)
+	}
+	var migrated translate.FileState
+	if err := json.Unmarshal(migratedData, &migrated); err != nil {
+		t.Fatalf("retry produced an unreadable state: %v", err)
+	}
+	if !hasReviewedProvenance(migrated.Segments) {
+		t.Fatalf("retry lost the preserved review provenance: %+v", migrated.Segments)
+	}
+}
+
 func TestConversionFailsBeforePublishingStateWhenOriginalCannotBeRead(t *testing.T) {
 	fixture := setupStateRollbackFixture(t)
 	readFailure := errors.New("state checkpoint read failed")
@@ -202,5 +335,32 @@ func TestConversionFailsBeforePublishingStateWhenOriginalCannotBeRead(t *testing
 	}
 	if copies := recoveryCopies(t, fixture.root); len(copies) != 0 {
 		t.Fatalf("rollback retained recovery copies: %v", copies)
+	}
+}
+
+func TestConversionRestoresStateAfterPublicationReportsFailure(t *testing.T) {
+	fixture := setupStateRollbackFixture(t)
+	failure := errors.New("state publication cleanup failed")
+	ops := defaultConversionOps
+	ops.write = func(files *projectfs.FS, name string, data []byte, mode os.FileMode) error {
+		if err := defaultConversionOps.write(files, name, data, mode); err != nil {
+			return err
+		}
+		return failure
+	}
+	_, err := runConversionWithOps(fixture.root, &fixture.cfg, "", "markdown", fixture.files, fixture.files, ops)
+	if !errors.Is(err, failure) {
+		t.Fatalf("publication failure was not preserved: %v", err)
+	}
+	assertConversionSource(t, fixture.statePath, fixture.originalState, 0600)
+	assertConversionSource(t, filepath.Join(fixture.root, "content/page.mpd"), fixture.source, 0644)
+	assertConversionSource(t, filepath.Join(fixture.root, "content/fr/page.mpd"), fixture.target, 0644)
+	for _, name := range []string{"content/page.md", "content/fr/page.md"} {
+		if _, e := os.Stat(filepath.Join(fixture.root, name)); !os.IsNotExist(e) {
+			t.Fatalf("generated target remains after rollback: %s %v", name, e)
+		}
+	}
+	if copies := recoveryCopies(t, fixture.root); len(copies) != 0 {
+		t.Fatalf("complete rollback left recovery copies: %v", copies)
 	}
 }

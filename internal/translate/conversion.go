@@ -1,6 +1,7 @@
 package translate
 
 import (
+	"crypto/sha256"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -22,6 +23,9 @@ type ConvertedState struct {
 	Path           string
 	Data           []byte
 	RequiresReview int
+	// SourceDigest fingerprints the exact raw state bytes decoded to plan Data.
+	// Publishing must refuse a state file whose current bytes differ from it.
+	SourceDigest [sha256.Size]byte
 }
 
 // PlanConversionStatesRoot borrows the already pinned project state boundary.
@@ -52,7 +56,8 @@ func PlanConversionStatesRoot(files *projectfs.FS, root string, cfg config.Confi
 			} else if err != nil {
 				return nil, err
 			}
-			old, err := loadStateRoot(files, path, doc.SourceFile, cfg.Translation.SourceLanguage, language, "")
+			raw, readErr := files.ReadFile(path)
+			old, err := decodeState(path, raw, readErr, doc.SourceFile, cfg.Translation.SourceLanguage, language, "")
 			if err != nil {
 				return nil, err
 			}
@@ -70,7 +75,12 @@ func PlanConversionStatesRoot(files *projectfs.FS, root string, cfg config.Confi
 			if err != nil {
 				return nil, err
 			}
-			result = append(result, ConvertedState{path, append(data, '\n'), review})
+			result = append(result, ConvertedState{
+				Path:           path,
+				Data:           append(data, '\n'),
+				RequiresReview: review,
+				SourceDigest:   sha256.Sum256(raw),
+			})
 		}
 	}
 	return result, nil

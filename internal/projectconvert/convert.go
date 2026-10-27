@@ -224,7 +224,7 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 	count := len(conversions)
 	review := 0
 	for _, state := range states {
-		conversions = append(conversions, conversion{source: state.Path, target: state.Path, mode: 0644, data: state.Data})
+		conversions = append(conversions, conversion{source: state.Path, target: state.Path, mode: 0644, data: state.Data, sourceDigest: state.SourceDigest})
 		review += state.RequiresReview
 	}
 	plannedTargets := make(map[string]string, len(conversions))
@@ -274,15 +274,29 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 			if err != nil {
 				return fail(err)
 			}
+			if original.digest != item.sourceDigest {
+				return fail(stateChanged(item.target, "content changed after conversion planning"))
+			}
 			index, err := journal.moveAside(projectFiles, item.target)
 			if err != nil {
 				return fail(err)
 			}
-			journal.entries[index].source = original
-			if err := ops.write(projectFiles, item.target, item.data, item.mode); err != nil {
+			captured := conversion{
+				sourceDigest: item.sourceDigest, mode: original.mode,
+				sourceIsLink: original.isLink, sourceAlias: original.alias,
+			}
+			if err := journal.confirmMovedSource(index, captured); err != nil {
 				return fail(err)
 			}
+			err = ops.write(projectFiles, item.target, item.data, item.mode)
+			// A failed publication can still leave the complete generated leaf.
 			journal.recordWritten(index, item.data, item.mode)
+			if errors.Is(err, os.ErrExist) {
+				return fail(fmt.Errorf("translation state %s changed during publication; refusing to replace it: %w", item.target, err))
+			}
+			if err != nil {
+				return fail(err)
+			}
 			continue
 		}
 		published, err := ops.writeNew(contentFiles, item.target, item.data, item.mode)

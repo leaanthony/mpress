@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Reject translation-state migrations when a saved review has changed since planning, and retain saves that collide with publication with recovery details for retry. Beads `mp-b52.1.6`.
+
 - Preserve completed translation review saves through already-open file handles during document conversion, reporting the retained state copy for recovery and retry. Beads `mp-b52.1.6`.
 
 - Recheck consumed documents before discarding conversion recovery copies, preserving completed saves through already-open file handles and reporting where to recover them. Beads `mp-b52.1.6`.
