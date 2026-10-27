@@ -269,10 +269,16 @@ func runConversionWithOps(root string, cfg *config.Config, directory, format str
 
 	for _, item := range conversions {
 		if item.source == item.target {
+			// Preserve later saves through a handle opened on the original state.
+			original, err := journal.checkpointInPlaceSource(projectFiles, item.target)
+			if err != nil {
+				return fail(err)
+			}
 			index, err := journal.moveAside(projectFiles, item.target)
 			if err != nil {
 				return fail(err)
 			}
+			journal.entries[index].source = original
 			if err := ops.write(projectFiles, item.target, item.data, item.mode); err != nil {
 				return fail(err)
 			}

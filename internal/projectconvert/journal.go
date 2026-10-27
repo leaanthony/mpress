@@ -76,8 +76,8 @@ const (
 	fileChanged
 )
 
-// consumedSource is the verified planning snapshot of an original document or
-// settings file moved into recovery. commit rechecks it before discarding it.
+// consumedSource records an original file before its replacement or removal.
+// commit rechecks the recovery copy before discarding it.
 type consumedSource struct {
 	digest [sha256.Size]byte
 	mode   os.FileMode
@@ -179,6 +179,30 @@ func (j *recoveryJournal) recordWritten(index int, expected []byte, mode os.File
 
 func sourceChanged(path, reason string) error {
 	return fmt.Errorf("source %s %s after planning; refusing to remove it", path, reason)
+}
+
+// checkpointInPlaceSource records original permissions independently of the
+// generated file's mode. Aliases keep their verbatim link without following it.
+func (j *recoveryJournal) checkpointInPlaceSource(files *projectfs.FS, name string) (*consumedSource, error) {
+	info, err := j.ops.lstat(files, name)
+	if err != nil {
+		return nil, fmt.Errorf("inspect source %s before writing: %w", name, err)
+	}
+	if info.Mode()&os.ModeSymlink != 0 {
+		target, err := j.ops.readLink(files, name)
+		if err != nil {
+			return nil, fmt.Errorf("inspect source alias %s before writing: %w", name, err)
+		}
+		return &consumedSource{alias: target, isLink: true}, nil
+	}
+	if !info.Mode().IsRegular() {
+		return nil, fmt.Errorf("refusing to rewrite non-regular source %s", name)
+	}
+	data, err := j.ops.readFile(files, name)
+	if err != nil {
+		return nil, fmt.Errorf("read source %s before writing: %w", name, err)
+	}
+	return &consumedSource{digest: sha256.Sum256(data), mode: info.Mode().Perm()}, nil
 }
 
 // confirmMovedSource checks the leaf captured by moveAside against the

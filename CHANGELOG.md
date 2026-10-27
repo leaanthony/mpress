@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve completed translation review saves through already-open file handles during document conversion, reporting the retained state copy for recovery and retry. Beads `mp-b52.1.6`.
+
 - Recheck consumed documents before discarding conversion recovery copies, preserving completed saves through already-open file handles and reporting where to recover them. Beads `mp-b52.1.6`.
 
 - Preserve completed settings saves through already-open file handles during document conversion, reporting the recovery copy when cleanup cannot safely proceed. Beads `mp-b52.1.6`.
