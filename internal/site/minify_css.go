@@ -213,7 +213,10 @@ func cssNeedsSpace(previous, next cssToken, inBlock bool) bool {
 	if previous.text == "{" || previous.text == "}" || previous.text == ";" || previous.text == "," || previous.text == "(" || previous.text == "[" {
 		return false
 	}
-	if inBlock && (previous.text == ":" || next.text == ":" || previous.text == "!" || next.text == "!") {
+	// Inside a block the scanner cannot tell a nested selector prelude from a
+	// declaration, so a gap before a colon is kept. Whitespace after a
+	// declaration colon is still optional and removed.
+	if inBlock && (previous.text == ":" || previous.text == "!" || next.text == "!") {
 		return false
 	}
 	if previous.text == ">" || previous.text == "~" || next.text == ">" || next.text == "~" {
