@@ -585,6 +585,10 @@ func (r *markdownRenderer) video(node *Node, indent int) {
 }
 
 func (r *markdownRenderer) pricing(index uint32, node *Node, indent int) {
+	if !r.hasComponentChild(index, "plan") {
+		r.literalComponent(index, node, indent)
+		return
+	}
 	r.writeIndent(indent)
 	r.output.WriteString("@pricing")
 	r.writeMarkdownAttributes(node)
@@ -623,6 +627,10 @@ func (r *markdownRenderer) pricing(index uint32, node *Node, indent int) {
 }
 
 func (r *markdownRenderer) testimonials(index uint32, node *Node, indent int) {
+	if !r.hasComponentChild(index, "testimonial") {
+		r.literalComponent(index, node, indent)
+		return
+	}
 	r.writeIndent(indent)
 	r.output.WriteString("@testimonials")
 	r.writeMarkdownAttributes(node)
@@ -659,6 +667,22 @@ func (r *markdownRenderer) testimonials(index uint32, node *Node, indent int) {
 	}
 	r.writeIndent(indent)
 	r.output.WriteString("@end\n\n")
+}
+
+// hasComponentChild reports whether a container has a named native child of
+// the given component type. Container bodies without one use the documented
+// flat body form instead.
+func (r *markdownRenderer) hasComponentChild(index uint32, name string) bool {
+	iterator := r.document.Children(index)
+	for {
+		_, child, ok := iterator.Next()
+		if !ok {
+			return false
+		}
+		if child.Kind == KindComponent && string(r.document.Text(child.Name)) == name {
+			return true
+		}
+	}
 }
 
 func (r *markdownRenderer) tabs(index uint32, node *Node, indent int, name string) {
