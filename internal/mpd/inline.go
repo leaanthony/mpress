@@ -194,7 +194,8 @@ func (p *parser) parseInlineDepth(parent uint32, start, end int, position Positi
 		if char == '@' && i+1 < end {
 			nameEnd := scanName(p.source, i+1)
 			if nameEnd > i+1 && nameEnd < end && p.source[nameEnd] == '[' {
-				if close := findBalancedBracket(p.source, nameEnd, end); close >= 0 {
+				// Compact buttons keep their Markdown shape through the link parser.
+				if close := findBalancedBracket(p.source, nameEnd, end); close >= 0 && !isCompactInlineButton(p.source, i, nameEnd, close, end) {
 					flush(i)
 					kind := KindInlineRole
 					name := p.source[i+1 : nameEnd]
@@ -242,6 +243,18 @@ func (p *parser) parseInlineDepth(parent uint32, start, end int, position Positi
 			parentNode.LastChild = last
 		}
 	}
+}
+
+// A destination distinguishes a compact button from an ordinary inline role.
+func isCompactInlineButton(source []byte, start, nameEnd, close, end int) bool {
+	if nameEnd-start != len("button")+1 || string(source[start+1:nameEnd]) != "button" {
+		return false
+	}
+	if close == nameEnd+1 || close+1 >= end || source[close+1] != '(' {
+		return false
+	}
+	destinationClose := findBalancedParenthesis(source, close+1, end)
+	return destinationClose > close+2
 }
 
 func indexInlineSpecial(source []byte) int {

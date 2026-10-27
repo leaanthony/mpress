@@ -187,3 +187,29 @@ func TestMarkdownToMPDCompactButtonKeepsInlineTextAndFencedExamplesOpaque(t *tes
 		t.Errorf("fenced example rendered a live accessibility button:\n%s", html)
 	}
 }
+
+func TestMarkdownToMPDInlineCompactButtonSurvivesRoundTrip(t *testing.T) {
+	source := "# Start\n\nUse @button[Read the guide](/guide/){secondary} inside prose with {badge.info:Beta} and [ordinary link](/docs/).\n"
+	native, markdown, html := renderImportedTable(t, source)
+
+	if !strings.Contains(native, "@button[Read the guide](/guide/){secondary}") {
+		t.Errorf("converted MPD dropped the inline compact button:\n%s", native)
+	}
+	if !strings.Contains(markdown, "@button[Read the guide](/guide/){secondary}") {
+		t.Errorf("MPD-to-Markdown dropped the inline compact button metadata:\n%s", markdown)
+	}
+	for _, want := range []string{
+		`<a class="mpress-button mpress-button-secondary" href="/guide/">Read the guide</a>`,
+		"Use ",
+		" inside prose with ",
+		`mpress-badge-info">Beta`,
+		`href="/docs/"`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("rendered output missing %q:\n%s", want, html)
+		}
+	}
+	if got := strings.Count(html, `class="mpress-button`); got != 1 {
+		t.Errorf("rendered %d live buttons, want only the prose button:\n%s", got, html)
+	}
+}

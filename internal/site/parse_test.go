@@ -156,3 +156,37 @@ func TestNativeEmphasisSurvivesAdjacentTranslatedWords(t *testing.T) {
 		}
 	}
 }
+
+func TestBuildRefreshesCachedInlineCompactButtons(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, root, "mpress.yaml", "site:\n  languages: [en]\nbuild:\n  contentDir: content\n")
+	source := "# Guide\n\nUse @button[Read the guide](/guide/){secondary} inside prose.\n"
+	writeFixture(t, root, "content/guide.mpd", source)
+	cache := newParseCache(root)
+	stale := sha256.Sum256([]byte("mpress-parse-v24\x00en\x00guide.mpd\x00" + source))
+	key := hex.EncodeToString(stale[:])
+	cache.saveWithQuickEdit(key, &content.Page{
+		Language: "en", URLPath: "guide", OutputPath: "guide/index.html",
+		Title: "Guide", SourcePath: "guide.mpd",
+		HTML: `<p>Use Read the guide(/guide/){secondary} inside prose.</p>`,
+	}, nil, nil)
+	if _, ok := cache.loadEntry(key); !ok {
+		t.Fatal("stale button cache fixture was not saved")
+	}
+	for attempt := 0; attempt < 2; attempt++ {
+		if _, err := Build(root, BuildOptions{Strict: true}); err != nil {
+			t.Fatal(err)
+		}
+		markup, err := os.ReadFile(filepath.Join(root, "site/guide/index.html"))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if !strings.Contains(string(markup), `<a class="mpress-button mpress-button-secondary" href="/guide/">Read the guide</a>`) {
+			t.Fatal("build reused cached HTML without the inline button")
+		}
+		current, err := os.ReadFile(filepath.Join(root, "content/guide.mpd"))
+		if err != nil || !bytes.Equal(current, []byte(source)) {
+			t.Fatal("build modified authored source")
+		}
+	}
+}
