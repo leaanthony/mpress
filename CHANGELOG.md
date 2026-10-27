@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep inline code spans that wrap across physical lines inside blockquotes and list items literal during Markdown/MPD conversion, so every example keeps its exact text and container instead of gaining escaped backticks or a soft-wrap backslash. Beads `mp-b52.3.7`.
+
 - Preserve component syntax in inline code examples, including lists and quotes, and refresh previously cached pages on rebuild. Beads `mp-b52.3.7`.
 
 - Preserve expandable images and preview-tab source panels when converting documentation between Markdown and MPD. Beads `mp-b52.3.8`.

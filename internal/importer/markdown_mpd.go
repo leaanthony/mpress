@@ -5,9 +5,14 @@ import (
 	"errors"
 	"fmt"
 	"regexp"
+	"sort"
 	"strconv"
 	"strings"
 
+	"github.com/yuin/goldmark"
+	"github.com/yuin/goldmark/ast"
+	"github.com/yuin/goldmark/extension"
+	"github.com/yuin/goldmark/text"
 	"gopkg.in/yaml.v3"
 
 	"github.com/leaanthony/mpress/internal/mpd"
@@ -77,6 +82,150 @@ func markdownToMPD(source string) (string, error) {
 		return "", err
 	}
 	return metadata + strings.TrimLeft(converted, "\n"), nil
+}
+
+type markdownCodeSpanJoin struct {
+	line string
+	end  int
+}
+
+// markdownConverterOwnsLine reports whether markdownLinesToMPDContext takes a
+// dedicated branch for the line, so a code span must not be joined across it.
+func markdownConverterOwnsLine(line string) bool {
+	trimmed := strings.TrimSpace(line)
+	if markdownFenceMarker(trimmed) != "" || trimmed == ":::" || trimmed == "@end" ||
+		mpressDirectiveOpen.MatchString(line) || markdownTerminalDirective.MatchString(line) {
+		return true
+	}
+	if leaf := markdownNativeLeaf.FindStringSubmatch(line); len(leaf) > 0 && markdownMPDLeafComponents[leaf[2]] {
+		return true
+	}
+	if strings.HasPrefix(trimmed, "<") && !strings.HasPrefix(trimmed, "<http") && !strings.HasPrefix(trimmed, "<mailto:") {
+		return true
+	}
+	return markdownTableSeparator.MatchString(line)
+}
+
+// markdownMultilineCodeSpanLines returns the joined logical line for each code
+// span that wraps onto later physical lines. Delimiters and content come from
+// Goldmark segments, which exclude container prefixes between lines. Spans that
+// cross a block owned by the line converter are left alone.
+func markdownMultilineCodeSpanLines(lines []string) map[int]markdownCodeSpanJoin {
+	source := strings.Join(lines, "\n")
+	if !strings.Contains(source, "`") {
+		return nil
+	}
+	raw := []byte(source)
+	markdown := goldmark.New(goldmark.WithExtensions(extension.GFM, extension.Footnote, extension.Typographer))
+	document := markdown.Parser().Parse(text.NewReader(raw))
+	lineStarts := []int{0}
+	for index, character := range raw {
+		if character == '\n' {
+			lineStarts = append(lineStarts, index+1)
+		}
+	}
+	lineOf := func(offset int) int {
+		return sort.Search(len(lineStarts), func(index int) bool { return lineStarts[index] > offset }) - 1
+	}
+	type multilineSpan struct {
+		start, end         int
+		startLine, endLine int
+		text               string
+	}
+	var spans []multilineSpan
+	_ = ast.Walk(document, func(node ast.Node, entering bool) (ast.WalkStatus, error) {
+		if !entering {
+			return ast.WalkContinue, nil
+		}
+		span, ok := node.(*ast.CodeSpan)
+		if !ok {
+			return ast.WalkContinue, nil
+		}
+		first, last := -1, -1
+		var content strings.Builder
+		endsSpace := false
+		for child := span.FirstChild(); child != nil; child = child.NextSibling() {
+			segment, ok := child.(*ast.Text)
+			if !ok {
+				continue
+			}
+			if first < 0 {
+				first = segment.Segment.Start
+			}
+			last = segment.Segment.Stop
+			value := strings.ReplaceAll(string(segment.Segment.Value(raw)), "\n", " ")
+			if content.Len() > 0 && !endsSpace && !strings.HasPrefix(value, " ") {
+				content.WriteByte(' ')
+			}
+			content.WriteString(value)
+			if value != "" {
+				endsSpace = strings.HasSuffix(value, " ")
+			}
+		}
+		if first < 0 || last > len(raw) || first >= last || strings.IndexByte(source[first:last], '\n') < 0 {
+			return ast.WalkContinue, nil
+		}
+		start := first
+		for start > 0 && raw[start-1] == ' ' {
+			start--
+		}
+		for start > 0 && raw[start-1] == '`' {
+			start--
+		}
+		if start == first {
+			return ast.WalkContinue, nil
+		}
+		end := last
+		for end < len(raw) && raw[end] == ' ' {
+			end++
+		}
+		for end < len(raw) && raw[end] == '`' {
+			end++
+		}
+		if end == last {
+			return ast.WalkContinue, nil
+		}
+		startLine, endLine := lineOf(start), lineOf(end-1)
+		if endLine <= startLine {
+			return ast.WalkContinue, nil
+		}
+		for index := startLine; index <= endLine; index++ {
+			if markdownConverterOwnsLine(lines[index]) {
+				return ast.WalkContinue, nil
+			}
+		}
+		spans = append(spans, multilineSpan{
+			start:     start,
+			end:       end,
+			startLine: startLine,
+			endLine:   endLine,
+			text:      source[start:first] + content.String() + source[last:end],
+		})
+		return ast.WalkContinue, nil
+	})
+	joins := make(map[int]markdownCodeSpanJoin)
+	for index := 0; index < len(spans); {
+		groupStart, groupEnd := index, spans[index].endLine
+		for index++; index < len(spans) && spans[index].startLine <= groupEnd; index++ {
+			groupEnd = max(groupEnd, spans[index].endLine)
+		}
+		startLine := spans[groupStart].startLine
+		lineStart := lineStarts[startLine]
+		lineEnd := len(source)
+		if groupEnd+1 < len(lineStarts) {
+			lineEnd = lineStarts[groupEnd+1] - 1
+		}
+		var line strings.Builder
+		cursor := lineStart
+		for _, span := range spans[groupStart:index] {
+			line.WriteString(source[cursor:span.start])
+			line.WriteString(span.text)
+			cursor = span.end
+		}
+		line.WriteString(source[cursor:lineEnd])
+		joins[startLine] = markdownCodeSpanJoin{line: line.String(), end: groupEnd}
+	}
+	return joins
 }
 
 // normalizeMPressMarkdownComponents reduces MPress's current Markdown-facing
@@ -269,6 +418,10 @@ func markdownLinesToMPD(lines []string) (string, error) {
 }
 
 func markdownLinesToMPDContext(lines []string, preserveLines bool) (string, error) {
+	var joins map[int]markdownCodeSpanJoin
+	if !preserveLines {
+		joins = markdownMultilineCodeSpanLines(lines)
+	}
 	var output strings.Builder
 	for index := 0; index < len(lines); {
 		line := lines[index]
@@ -434,7 +587,9 @@ func markdownLinesToMPDContext(lines []string, preserveLines bool) (string, erro
 			index = end
 			continue
 		}
-		if joined, next := markdownJoinedListLine(lines, index); next > index {
+		if join, ok := joins[index]; ok {
+			line, index = join.line, join.end
+		} else if joined, next := markdownJoinedListLine(lines, index); next > index {
 			line, index = joined, next
 		}
 		convertedLine := markdownInlineToMPD(normalizeMPDLineIndent(line))
