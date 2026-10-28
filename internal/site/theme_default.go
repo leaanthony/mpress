@@ -954,6 +954,7 @@ details[open] > summary .mpress-disclosure-icon .lucide-chevron-down { display: 
 .mpress-tutorial-check input { position: absolute; opacity: 0; }
 .mpress-tutorial-check { display: grid; width: 32px; height: 32px; place-items: center; cursor: pointer; }
 .mpress-tutorial-checkmark { display: grid; width: 1.25rem; height: 1.25rem; place-items: center; border: 1px solid var(--border); border-radius: 4px; cursor: pointer; }
+.mpress-tutorial-check input:focus-visible + .mpress-tutorial-checkmark { outline: 2px solid var(--accent); outline-offset: 2px; }
 .mpress-tutorial-check input:checked + .mpress-tutorial-checkmark { border-color: var(--accent-2); background: transparent; }
 .mpress-tutorial-checkmark .lucide { width: 13px; height: 13px; opacity: 0; color: var(--accent-2); stroke-width: 3; }
 .mpress-tutorial-check input:checked + .mpress-tutorial-checkmark .lucide { opacity: 1; }
