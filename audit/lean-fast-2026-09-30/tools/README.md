@@ -108,6 +108,23 @@ matrix. Chrome defaults to `/usr/bin/google-chrome`; set `MPRESS_CHROME` for
 another installation. Without `MPRESS_HEADER_NAV_BIN` or Chrome the test skips;
 a skip does not qualify browser behaviour.
 
+The reader-overflow regression builds its own four-page site with wide code,
+terminal, plain-table and data-table content:
+
+```sh
+MPRESS_HEADER_NAV_BIN=/absolute/path/to/candidate go test -count=1 -run '^TestReaderOverflowTouch$' -v .
+```
+
+At 320x844 and 390x844 it requires each widget to overflow horizontally and sit
+on screen, then finger-swipes left across the widget and requires its own
+`scrollLeft` to increase while `window.scrollX`, `window.scrollY` and the
+document scroll position stay unchanged. It then swipes vertically below the
+widget and requires the page to advance. This is focused runtime coverage for
+code fences, terminals and the two documented table variants, not a full
+overflow-family matrix. Chrome defaults to `/usr/bin/google-chrome`; set
+`MPRESS_CHROME` for another installation. Without `MPRESS_HEADER_NAV_BIN` or
+Chrome the test skips; a skip does not qualify browser behaviour.
+
 For responsive article navigation, run the generated default site and the Wails
 release site through the same browser regression:
 

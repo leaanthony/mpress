@@ -4,6 +4,8 @@
 
 ### Testing
 
+- Add a focused real-touch browser regression for wide reader content: phone swipes inspect off-screen code, terminal, plain-table and data-table content without moving the document, after which a vertical body swipe still advances the page. Beads `mp-b52.2.4`.
+
 - Add a focused real-touch browser regression for the phone landing primary navigation: open the 44px trigger, focus the first link, swipe an overflowing 20-link dropdown to its last configured link while the document stays put, follow it, return, dismiss by Escape and outside tap, then keep scrolling the document. Beads `mp-b52.2.4`.
 
 ### Fixed
