@@ -2,6 +2,10 @@
 
 ## Unreleased
 
+### Testing
+
+- Add a focused real-touch browser regression for the phone landing primary navigation: open the 44px trigger, focus the first link, swipe an overflowing 20-link dropdown to its last configured link while the document stays put, follow it, return, dismiss by Escape and outside tap, then keep scrolling the document. Beads `mp-b52.2.4`.
+
 ### Fixed
 
 - Recognize YAML frontmatter in a Markdown file that starts with one UTF-8 byte-order mark when importing it as MPD, so metadata such as `title`, `layout`, `slug` and `draft: true` is converted instead of leaking into the body and accidentally publishing the page; interior U+FEFF characters and all accepted YAML are unchanged. Beads `mp-b52.3.12`.

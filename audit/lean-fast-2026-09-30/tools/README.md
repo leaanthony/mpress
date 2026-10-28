@@ -88,6 +88,26 @@ keyboard journey. Chrome defaults to `/usr/bin/google-chrome`; set
 `MPRESS_CHROME` for another installation. Without `MPRESS_HEADER_NAV_BIN` or
 Chrome the test skips; a skip does not qualify browser behaviour.
 
+The landing primary-navigation regression builds its own small landing site with
+20 configured header links and dispatches real touch swipes:
+
+```sh
+MPRESS_HEADER_NAV_BIN=/absolute/path/to/candidate go test -count=1 -run '^TestLandingPrimaryNavigationTouch$' -v .
+```
+
+At 320x667, 390x844 and 375x375 it requires the 44px primary toggle to receive
+its own centre tap, focuses the first link on open, swipes to the last of the 20
+links while only the dropdown scrolls, follows it to `/guide/`, and returns home.
+It then checks Escape closes the dropdown and restores trigger focus, an outside
+tap closes it, and a body swipe still advances the long landing document. A
+1280x900 desktop smoke check confirms the toggle is hidden and direct navigation
+is rendered, with its first link receiving taps. It does not qualify whether an
+arbitrarily long desktop navigation bar fits the viewport.
+This is focused phone-primary-navigation coverage, not the full overflow-family
+matrix. Chrome defaults to `/usr/bin/google-chrome`; set `MPRESS_CHROME` for
+another installation. Without `MPRESS_HEADER_NAV_BIN` or Chrome the test skips;
+a skip does not qualify browser behaviour.
+
 For responsive article navigation, run the generated default site and the Wails
 release site through the same browser regression:
 
