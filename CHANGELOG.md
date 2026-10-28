@@ -18,6 +18,8 @@
 
 ### Fixed
 
+- Hide the calendar month navigation buttons when JavaScript is blocked, so script-blocked readers no longer see previous/next controls that cannot change the month. Authored month grids, titles and content stay readable, and enhanced calendars keep localised labels, keyboard navigation and independent instances. Beads `mp-b52.2.11`.
+
 - Show every authored carousel slide and hide its inert controls when JavaScript is blocked, so readers with scripts disabled keep all slide content and links; enhanced carousels keep their one-slide navigation. Beads `mp-b52.2.11`.
 
 - Show the theme focus ring on the visible tutorial checkmark when its hidden checkbox receives keyboard focus, so keyboard readers can see which step checkbox is active. Progress tracking, component markup and the reset behaviour are unchanged. Beads `mp-b52.2.8`.

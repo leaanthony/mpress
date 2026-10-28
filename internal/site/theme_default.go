@@ -836,6 +836,7 @@ details[open] > summary .mpress-disclosure-icon .lucide-chevron-down { display: 
 .mpress-calendar-header { display: flex; align-items: center; justify-content: space-between; padding: .75rem; border-bottom: 1px solid var(--border); }
 .mpress-calendar-title { font-weight: 760; }
 .mpress-calendar-nav { display: grid; width: 40px; height: 40px; place-items: center; border: 1px solid var(--border); border-radius: 6px; background: var(--surface); color: var(--text); cursor: pointer; }
+html:not(.js) .mpress-calendar-nav { display: none; }
 .mpress-calendar-grid { display: grid; grid-template-columns: repeat(7, 1fr); }
 .mpress-calendar-day-header, .mpress-calendar-cell { min-height: 3.5rem; padding: .45rem; border-right: 1px solid var(--border); border-bottom: 1px solid var(--border); }
 .mpress-calendar-day-header { min-height: auto; background: var(--panel); color: var(--muted); font-size: .7rem; font-weight: 800; text-align: center; text-transform: uppercase; }
