@@ -18,6 +18,8 @@
 
 ### Fixed
 
+- Hide unavailable API playground Send actions when scripts are blocked while preserving the request reference. Beads `mp-b52.2.11`.
+
 - Hide the tutorial progress bar, completion count and reset button when JavaScript is blocked, so readers no longer see progress stuck at `0/2` or a reset control that does nothing. Authored titles, steps and native checkboxes stay unchanged, and enhanced progress, persistence and reset keep working. Beads `mp-b52.2.11`.
 
 - Keep all testimonial quotes and attributions readable and accessible when scripts are blocked; hide inert navigation and initialise enhanced visibility correctly. Beads `mp-b52.2.11`.
