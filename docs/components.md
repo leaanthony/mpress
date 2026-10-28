@@ -55,8 +55,8 @@ Run `mpress build --strict`.
 ```
 @end
 
-Tabs use buttons, tab panels, and ARIA state. The first panel remains readable
-when scripts are unavailable.
+Tabs use buttons, tab panels, and ARIA state. Every panel stays readable with
+its label when scripts are unavailable.
 
 ## Cards and links
 

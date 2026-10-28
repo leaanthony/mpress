@@ -4,6 +4,8 @@
 
 ### Testing
 
+- Add a focused browser regression for ordinary tabs on a strict build: with scripts blocked every panel of two independent groups is readable under its visible label and no tab buttons are presented, while the enhanced tablist still selects exactly one panel by click and supports Home/End. Add a parse-cache upgrade check for the new panel labels. Beads `mp-b52.2.11`.
+
 - Add a focused real-browser regression for the phone documentation sidebar with JavaScript blocked: the sidebar is in normal flow with 44px touch targets, the document still scrolls, a sidebar-only `/reference/` destination opens by tap and keyboard, and the enhanced menu and search still open on the same minified build. Beads `mp-b52.2.11`.
 
 - Add a focused real-touch browser regression for wide reader content: phone swipes inspect off-screen code, terminal, plain-table and data-table content without moving the document, after which a vertical body swipe still advances the page. Beads `mp-b52.2.4`.
@@ -11,6 +13,8 @@
 - Add a focused real-touch browser regression for the phone landing primary navigation: open the 44px trigger, focus the first link, swipe an overflowing 20-link dropdown to its last configured link while the document stays put, follow it, return, dismiss by Escape and outside tap, then keep scrolling the document. Beads `mp-b52.2.4`.
 
 ### Fixed
+
+- Keep every ordinary tab panel readable under its own label when JavaScript is blocked on any screen: panels are no longer left hidden behind inert tab buttons, while the enhanced tab list, selected panel, keyboard navigation and independent tab groups keep their existing behaviour. Bumps the parse cache to `v31`. Beads `mp-b52.2.11`.
 
 - Keep the documentation sidebar readable in normal flow when JavaScript is blocked on phones: links, touch and keyboard stay usable, the document still scrolls, and the inert sidebar and search launchers are hidden. The enhanced phone menu, search and desktop sidebar keep their existing behaviour. Beads `mp-b52.2.11`.
 

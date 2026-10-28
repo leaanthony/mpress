@@ -34,7 +34,8 @@ import (
 // v29 refreshes pages whose escaped @button/:::button prefixes expanded into
 // generated HTML instead of staying literal reader-facing text.
 // v30 refreshes pages whose leading UTF-8 BOM hid their YAML frontmatter.
-const parseCacheVersion = "mpress-parse-v30"
+// v31 refreshes pages whose tab panels gain their no-script labels.
+const parseCacheVersion = "mpress-parse-v31"
 
 const maxParseWorkers = 8
 

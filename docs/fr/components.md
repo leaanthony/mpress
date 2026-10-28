@@ -55,8 +55,8 @@ Exécuter `mpress build --strict`.
 ```
 @end
 
-Les onglets utilisent des boutons, des panneaux d'onglets et des états ARIA. Le premier panneau reste lisible
-lorsque les scripts sont indisponibles.
+Les onglets utilisent des boutons, des panneaux d'onglets et des états ARIA. Tous les panneaux restent lisibles
+avec leur libellé lorsque les scripts sont indisponibles.
 
 ## Cartes et liens
 

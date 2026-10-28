@@ -227,3 +227,43 @@ func TestBuildRefreshesCachedInlineCodeExamples(t *testing.T) {
 		}
 	}
 }
+
+// A v30 parse-cache entry could hold tab panels rendered without their
+// no-script labels. Rebuilding unchanged source must not keep serving that
+// stale HTML from the previous cache epoch.
+func TestBuildRefreshesTabsCachedBeforeFallbackLabels(t *testing.T) {
+	root := t.TempDir()
+	writeFixture(t, root, "mpress.yaml", "site:\n  languages: [en]\nbuild:\n  contentDir: content\n")
+	source := "---\ntitle: Platforms\n---\n\n:::tabs\n[Windows]\nSteps Windows\n\n[Linux]\nSteps Linux\n:::\n"
+	writeFixture(t, root, "content/platforms.md", source)
+
+	cache := newParseCache(root)
+	staleKey := sha256.Sum256([]byte("mpress-parse-v30\x00en\x00platforms.md\x00" + source))
+	cache.saveWithQuickEdit(hex.EncodeToString(staleKey[:]), &content.Page{
+		Language:   "en",
+		URLPath:    "platforms",
+		OutputPath: "platforms/index.html",
+		Title:      "Platforms",
+		SourcePath: "platforms.md",
+		HTML:       `<p>stale tabs</p>`,
+	}, nil, nil)
+	if _, ok := cache.loadEntry(hex.EncodeToString(staleKey[:])); !ok {
+		t.Fatal("stale tab cache fixture was not saved")
+	}
+
+	if _, err := Build(root, BuildOptions{Strict: true}); err != nil {
+		t.Fatal(err)
+	}
+	markup, err := os.ReadFile(filepath.Join(root, "site", "platforms", "index.html"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if strings.Contains(string(markup), "stale tabs") {
+		t.Fatalf("build reused the v30 tab cache entry:\n%s", markup)
+	}
+	for _, want := range []string{`data-tab-label="Windows"`, `data-tab-label="Linux"`} {
+		if !strings.Contains(string(markup), want) {
+			t.Fatalf("build did not render %q after the cache upgrade:\n%s", want, markup)
+		}
+	}
+}

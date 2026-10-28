@@ -1190,7 +1190,7 @@ func (t *Tabs) renderWithPanelContent(render func(string) string) string {
 		}
 		tabID := tabIDs[i]
 		panelID := panelIDs[i]
-		b.WriteString(fmt.Sprintf("<div id=\"%s\" role=\"tabpanel\" aria-labelledby=\"%s\"%s>\n\n", html.EscapeString(panelID), html.EscapeString(tabID), hidden))
+		fmt.Fprintf(&b, "<div id=\"%s\" role=\"tabpanel\" aria-labelledby=\"%s\" data-tab-label=\"%s\"%s>\n\n", html.EscapeString(panelID), html.EscapeString(tabID), html.EscapeString(s.Label), hidden)
 		b.WriteString(render(s.Content))
 		b.WriteString("\n\n</div>\n")
 	}
