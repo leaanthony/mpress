@@ -651,3 +651,32 @@ func TestPageEditSourceTargetsTheTranslatedFile(t *testing.T) {
 		}
 	}
 }
+
+func TestPrimaryNavigationDisclosureUsesConfiguredLinks(t *testing.T) {
+	for _, layout := range []string{"landing", "docs"} {
+		cfg := config.Default()
+		cfg.Site.HeaderLinks = []config.HeaderLink{{Label: "Guide <start>", URL: "/guide/"}}
+		page := &content.Page{Language: "en", Title: "Home", Layout: layout, HTML: "<p>Home</p>"}
+		markup, err := renderPage(templateData{Config: cfg, Page: page})
+		if err != nil {
+			t.Fatal(err)
+		}
+		got := string(markup)
+		for _, want := range []string{`id="mpress-primary-toggle"`, `aria-expanded="false" aria-controls="mpress-primary-navigation"`, `id="mpress-primary-navigation" class="primary-links"`, `Guide &lt;start&gt;`} {
+			if !strings.Contains(got, want) {
+				t.Errorf("%s page missing %q", layout, want)
+			}
+		}
+		if strings.Count(got, `Guide &lt;start&gt;`) != 1 {
+			t.Fatal("primary links must not be duplicated for mobile")
+		}
+		cfg.Site.HeaderLinks = nil
+		markup, err = renderPage(templateData{Config: cfg, Page: page})
+		if err != nil {
+			t.Fatal(err)
+		}
+		if strings.Contains(string(markup), `id="mpress-primary-toggle"`) {
+			t.Fatal("empty navigation has a menu button")
+		}
+	}
+}

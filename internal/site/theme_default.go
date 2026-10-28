@@ -308,7 +308,7 @@ body.mpress-search-open { overflow: hidden; }
 .social-links { gap: .1rem; }
 .social-link { display: grid; width: 34px; height: 34px; place-items: center; border-radius: 6px; color: var(--muted); }
 .social-link:hover { background: var(--surface); color: var(--text); text-decoration: none; }
-.header-links select, .header-links button, #mpress-menu-toggle {
+.header-links select, .header-links button, #mpress-menu-toggle, #mpress-primary-toggle {
   border: 0;
   border-radius: 6px;
   background: transparent;
@@ -452,6 +452,8 @@ body.mpress-search-open { overflow: hidden; }
 .theme-toggle[data-theme-mode="dark"] .lucide-moon,
 .theme-toggle[data-theme-mode="light"] .lucide-sun { display: inline-flex; }
 .social-link:hover { color: var(--hover); }
+#mpress-primary-toggle { display: none; flex: 0 0 44px; width: 44px; height: 44px; padding: 11px; order: 10; }
+#mpress-primary-toggle .lucide { margin: auto; }
 #mpress-menu-toggle { display: none; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 11px; }
 #mpress-menu-toggle .lucide { margin: auto; }
 
@@ -1667,7 +1669,10 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
 }
 
 @media (max-width: 1080px) {
-  .primary-links { display: none; }
+  #mpress-primary-toggle { display: block; }
+  .primary-links { display: none; position: absolute; top: 58px; right: .9rem; width: min(320px, calc(100vw - 1.8rem)); max-height: calc(100dvh - 74px); overflow-y: auto; padding: .5rem; flex-direction: column; align-items: stretch; gap: .25rem; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-solid); box-shadow: var(--shadow); }
+  .primary-links.primary-open { display: flex; }
+  .primary-links a, .primary-links a.header-link-button { display: flex; align-items: center; min-height: 44px; height: auto; padding: .65rem .8rem; white-space: normal; overflow-wrap: anywhere; }
   .splash-hero-inner { grid-template-columns: 1fr 420px; gap: 3rem; }
   .splash-strip-inner { grid-template-columns: 1fr 1fr; }
   .splash-strip-item:nth-child(odd) { border-right: 1px solid var(--border); }
@@ -1678,6 +1683,7 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
   body > header { height: 58px; padding: 0 .9rem; }
   #mpress-menu-toggle { display: block; }
   .landing-page #mpress-menu-toggle { display: none; }
+  .landing-page .brand { flex-shrink: 1; min-width: 0; overflow: hidden; white-space: nowrap; }
   .brand-mark { width: 32px; height: 32px; }
   .theme-logo { flex-basis: min(var(--mpress-logo-width, 138px), 34vw); width: min(var(--mpress-logo-width, 138px), 34vw); height: 26px; }
   .search { display: block; flex: 0 0 44px; width: 44px; margin-left: auto; }
@@ -1842,6 +1848,33 @@ const defaultThemeJS = `
     storage.set('mpress-theme', next);
     syncThemeButton();
   });
+
+  const primaryToggle = document.querySelector('#mpress-primary-toggle');
+  const primaryNavigation = document.querySelector('#mpress-primary-navigation');
+  const compactHeader = window.matchMedia('(max-width: 1080px)');
+  const closePrimaryNavigation = restoreFocus => {
+    primaryNavigation?.classList.remove('primary-open');
+    primaryToggle?.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) primaryToggle?.focus();
+  };
+  primaryToggle?.addEventListener('click', () => {
+    const open = primaryNavigation.classList.toggle('primary-open');
+    primaryToggle.setAttribute('aria-expanded', String(open));
+    if (open) primaryNavigation.querySelector('a')?.focus();
+  });
+  primaryNavigation?.addEventListener('click', event => {
+    if (event.target.closest('a')) closePrimaryNavigation(false);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && primaryNavigation?.classList.contains('primary-open')) closePrimaryNavigation(true);
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('#mpress-primary-navigation, #mpress-primary-toggle')) closePrimaryNavigation(false);
+  });
+  document.addEventListener('focusin', event => {
+    if (!event.target.closest('#mpress-primary-navigation, #mpress-primary-toggle')) closePrimaryNavigation(false);
+  });
+  compactHeader.addEventListener('change', () => closePrimaryNavigation(false));
 
   const menu = document.querySelector('#mpress-menu-toggle');
   const sidebar = document.querySelector('.sidebar');

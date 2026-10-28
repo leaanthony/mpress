@@ -91,6 +91,33 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
     syncThemeButton();
   });
 
+  const primaryToggle = document.querySelector('#mpress-primary-toggle');
+  const primaryNavigation = document.querySelector('#mpress-primary-navigation');
+  const compactHeader = window.matchMedia('(max-width: 1080px)');
+  const closePrimaryNavigation = restoreFocus => {
+    primaryNavigation?.classList.remove('primary-open');
+    primaryToggle?.setAttribute('aria-expanded', 'false');
+    if (restoreFocus) primaryToggle?.focus();
+  };
+  primaryToggle?.addEventListener('click', () => {
+    const open = primaryNavigation.classList.toggle('primary-open');
+    primaryToggle.setAttribute('aria-expanded', String(open));
+    if (open) primaryNavigation.querySelector('a')?.focus();
+  });
+  primaryNavigation?.addEventListener('click', event => {
+    if (event.target.closest('a')) closePrimaryNavigation(false);
+  });
+  document.addEventListener('keydown', event => {
+    if (event.key === 'Escape' && primaryNavigation?.classList.contains('primary-open')) closePrimaryNavigation(true);
+  });
+  document.addEventListener('click', event => {
+    if (!event.target.closest('#mpress-primary-navigation, #mpress-primary-toggle')) closePrimaryNavigation(false);
+  });
+  document.addEventListener('focusin', event => {
+    if (!event.target.closest('#mpress-primary-navigation, #mpress-primary-toggle')) closePrimaryNavigation(false);
+  });
+  compactHeader.addEventListener('change', () => closePrimaryNavigation(false));
+
   const menu = document.querySelector('#mpress-menu-toggle');
   const sidebar = document.querySelector('.sidebar');
   const mobileNavigation = window.matchMedia('(max-width: 760px)');

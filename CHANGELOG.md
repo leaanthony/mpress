@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Keep configured header links accessible on phones and tablets through a right-aligned navigation menu, including landing pages. Support keyboard focus, Escape and outside-click dismissal, and resizing back to desktop. Beads `mp-b52.2.17`.
+
 - Preserve explicit punctuation escapes (`\*`, `\_`, `\[`, `\#`, escaped backticks and pipes) when rendering MPD back to Markdown, so authored literal stars, underscores, bracketed text and hashes stay literal through repeated format conversions instead of becoming emphasis, links or headings; bump the parse cache version so cached pages pick up the corrected rendering. Beads `mp-b52.3.8`.
 
 - Convert each table cell independently so an unmatched literal backtick and a matched code cell of the same delimiter width stay separate cells, and escape every tick of an unmatched run so a width-2 literal stays two literal ticks. Beads `mp-b52.3.8`.

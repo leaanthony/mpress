@@ -358,7 +358,7 @@ func (r *pageRenderer) renderHeader() {
 	}
 	r.raw(`</a>`)
 	if len(site.HeaderLinks) > 0 {
-		r.raw("<nav class=\"primary-links\" aria-label=\"")
+		r.raw("<nav id=\"mpress-primary-navigation\" class=\"primary-links\" aria-label=\"")
 		r.uiText("Primary navigation")
 		r.raw("\">")
 		for _, link := range site.HeaderLinks {
@@ -421,7 +421,15 @@ func (r *pageRenderer) renderHeader() {
 	r.icon("monitor", 17)
 	r.icon("moon", 17)
 	r.icon("sun", 17)
-	r.raw(`</button></span></nav></header>`)
+	r.raw(`</button></span></nav>`)
+	if len(site.HeaderLinks) > 0 {
+		r.raw(`<button id="mpress-primary-toggle" type="button" aria-expanded="false" aria-controls="mpress-primary-navigation" aria-label="`)
+		r.uiText("Primary navigation")
+		r.raw(`">`)
+		r.icon("menu", 20)
+		r.raw(`</button>`)
+	}
+	r.raw(`</header>`)
 }
 
 func (r *pageRenderer) renderContributionTrigger(label, className string) {
