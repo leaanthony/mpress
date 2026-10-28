@@ -7,6 +7,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"slices"
 	"testing"
 
 	"github.com/chromedp/cdproto/input"
@@ -15,16 +16,22 @@ import (
 )
 
 type tutorialFocusState struct {
-	Missing      bool    `json:"missing"`
-	Count        string  `json:"count"`
-	Checked      int     `json:"checked"`
-	Tutorials    int     `json:"tutorials"`
-	Focused      bool    `json:"focused"`
-	FocusVisible bool    `json:"focusVisible"`
-	InputOpacity string  `json:"inputOpacity"`
-	OutlineStyle string  `json:"outlineStyle"`
-	OutlineWidth float64 `json:"outlineWidth"`
-	OutlineColor string  `json:"outlineColor"`
+	Title           string   `json:"title"`
+	Steps           []string `json:"steps"`
+	Contents        []string `json:"contents"`
+	ProgressDisplay string   `json:"progressDisplay"`
+	CountDisplay    string   `json:"countDisplay"`
+	ResetDisplay    string   `json:"resetDisplay"`
+	Missing         bool     `json:"missing"`
+	Count           string   `json:"count"`
+	Checked         int      `json:"checked"`
+	Tutorials       int      `json:"tutorials"`
+	Focused         bool     `json:"focused"`
+	FocusVisible    bool     `json:"focusVisible"`
+	InputOpacity    string   `json:"inputOpacity"`
+	OutlineStyle    string   `json:"outlineStyle"`
+	OutlineWidth    float64  `json:"outlineWidth"`
+	OutlineColor    string   `json:"outlineColor"`
 }
 
 // TestTutorialCheckboxShowsKeyboardFocus checks the visible checkmark, not the
@@ -88,6 +95,82 @@ func TestTutorialCheckboxShowsKeyboardFocus(t *testing.T) {
 	}
 }
 
+// TestTutorialWithoutJavaScript checks a strict build with scripts blocked: the
+// authored titles, steps and native checkboxes stay usable and independent,
+// while the script-driven progress bar, count and reset button are not shown.
+func TestTutorialWithoutJavaScript(t *testing.T) {
+	binary := os.Getenv("MPRESS_TUTORIAL_BIN")
+	if binary == "" {
+		t.Skip("set MPRESS_TUTORIAL_BIN to the candidate CLI")
+	}
+	ctx, stop := newHeaderBrowser(t)
+	defer stop()
+	site := buildTutorialFocusFixture(t, binary)
+	server := httptest.NewServer(http.FileServer(http.Dir(site)))
+	defer server.Close()
+
+	want := []struct {
+		title    string
+		steps    []string
+		contents []string
+	}{
+		{"Focus first", []string{"First step", "Second step"}, []string{"Read the first step.", "Read the second step."}},
+		{"Focus second", []string{"Alpha", "Beta"}, []string{"Read the alpha step.", "Read the beta step."}},
+	}
+
+	for _, viewport := range []struct {
+		name   string
+		width  int64
+		height int64
+	}{
+		{"phone", 320, 720},
+		{"desktop", 1280, 900},
+	} {
+		t.Run(viewport.name, func(t *testing.T) {
+			b := newBrandPage(t, ctx)
+			b.run(chromedp.EmulateViewport(viewport.width, viewport.height))
+			loadWithoutJavaScript(&b, server.URL+"/tutorial/")
+			b.poll(`!document.documentElement.classList.contains('js')`, "blocked JavaScript still marked the document as enhanced")
+
+			for index, tutorial := range want {
+				b.expectTutorialNoJSState(index, tutorial.title, tutorial.steps, tutorial.contents)
+			}
+
+			b.focusTutorialCheckboxByKeyboard()
+			focused := b.tutorialState(0)
+			if !focused.Focused || !focused.FocusVisible {
+				t.Fatalf("keyboard focus did not reach the first tutorial checkbox: %+v", focused)
+			}
+			if focused.OutlineStyle != "solid" || focused.OutlineWidth < 2 || focused.OutlineColor == "rgba(0, 0, 0, 0)" {
+				t.Fatalf("visible checkmark has no focus ring: %+v", focused)
+			}
+
+			b.run(chromedp.KeyEvent(" "))
+			b.poll(`document.querySelectorAll(".mpress-tutorial")[0].querySelectorAll("input:checked").length===1 && document.querySelectorAll(".mpress-tutorial")[1].querySelectorAll("input:checked").length===0`, "Space did not toggle only its own tutorial")
+		})
+	}
+}
+
+func (b *browserActions) expectTutorialNoJSState(index int, title string, steps, contents []string) {
+	b.t.Helper()
+	state := b.tutorialState(index)
+	if state.Tutorials != 2 {
+		b.t.Fatalf("fixture should render two independent tutorials, got %d", state.Tutorials)
+	}
+	if state.Title != title {
+		b.t.Fatalf("tutorial %d title is %q, want %q", index, state.Title, title)
+	}
+	if !slices.Equal(state.Steps, steps) || !slices.Equal(state.Contents, contents) {
+		b.t.Fatalf("tutorial %d lost authored steps: %+v", index, state)
+	}
+	if state.Checked != 0 {
+		b.t.Fatalf("tutorial %d starts with %d checked steps", index, state.Checked)
+	}
+	if state.ProgressDisplay != "none" || state.CountDisplay != "none" || state.ResetDisplay != "none" {
+		b.t.Fatalf("tutorial %d still presents script-dependent progress: %+v", index, state)
+	}
+}
+
 func tutorialFocusScript(index int) string {
 	return fmt.Sprintf(`(() => {
       const tutorials = [...document.querySelectorAll('.mpress-tutorial')];
@@ -97,6 +180,12 @@ func tutorialFocusScript(index int) string {
       const mark = box && box.nextElementSibling;
       const style = mark && getComputedStyle(mark);
       return {
+        title: tutorial.querySelector('.mpress-tutorial-title').textContent,
+        steps: [...tutorial.querySelectorAll('.mpress-tutorial-step-title')].map(e=>e.textContent),
+        contents: [...tutorial.querySelectorAll('.mpress-tutorial-step-content')].map(e=>e.textContent.trim()),
+        progressDisplay:getComputedStyle(tutorial.querySelector('.mpress-tutorial-progress')).display,
+        countDisplay:getComputedStyle(tutorial.querySelector('.mpress-tutorial-count')).display,
+        resetDisplay:getComputedStyle(tutorial.querySelector('.mpress-tutorial-reset')).display,
         count: tutorial.querySelector('.mpress-tutorial-count')?.textContent || '',
         checked: [...tutorial.querySelectorAll('input[type="checkbox"]')].filter(input => input.checked).length,
         tutorials: tutorials.length,

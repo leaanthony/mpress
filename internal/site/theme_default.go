@@ -970,6 +970,7 @@ html:not(.js) .mpress-carousel-controls { display: none; }
 .mpress-tutorial-footer { padding: .65rem 1rem; text-align: right; }
 .mpress-tutorial-reset { min-height: 36px; padding: .4rem .6rem; border: 0; border-radius: 5px; background: none; color: var(--muted); cursor: pointer; font-size: .78rem; }
 .mpress-tutorial-reset:hover { background: var(--accent-soft); color: var(--text); }
+html:not(.js) :is(.mpress-tutorial-progress, .mpress-tutorial-count, .mpress-tutorial-reset) { display: none; }
 
 .mpress-audience-selector { margin: 0 0 1rem; padding: .6rem .75rem; border: 1px solid var(--border); border-radius: 7px; background: var(--panel); }
 .mpress-audience-label { font-size: .82rem; font-weight: 700; }
