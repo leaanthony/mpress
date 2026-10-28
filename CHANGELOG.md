@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Convert each table cell independently so an unmatched literal backtick and a matched code cell of the same delimiter width stay separate cells, and escape every tick of an unmatched run so a width-2 literal stays two literal ticks. Beads `mp-b52.3.8`.
+
 - Preserve an explicitly escaped backtick and choose a code-span delimiter wider than any internal backtick run when rendering MPD back to Markdown, so repeated conversions keep literal instructional code intact; bump the parse cache version so cached pages pick up the corrected rendering. Beads `mp-b52.3.8`.
 
 - Keep a table cell's literal backtick next to a wider backtick code span intact during Markdown conversion by requiring the closing delimiter to match the opening width exactly, so rendered cell and code text stay literal instead of gaining stray backticks or unclosed-code warnings. Beads `mp-b52.3.8`.

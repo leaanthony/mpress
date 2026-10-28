@@ -311,3 +311,36 @@ func TestMarkdownToMPDQuotedTableAttributeValues(t *testing.T) {
 		}
 	}
 }
+
+// A literal unmatched backtick cell and a matched code cell of the same width
+// are separate cells: the literal tick may not close in the next cell, and a
+// width-2 literal must stay two literal ticks in native MPD.
+func TestMarkdownToMPDSameWidthLiteralAndCodeCells(t *testing.T) {
+	for _, ticks := range []string{"`", "``"} {
+		rows := "| Name | Value |\n| Literal " + ticks + " | " + ticks + "a\\|b" + ticks + " |\n"
+		sources := []string{
+			"@table{header}\n" + rows + "@end\n",
+			":::table{header}\n" + rows + ":::\n",
+			"| Name | Value |\n| --- | --- |\n" + strings.SplitN(rows, "\n", 2)[1],
+		}
+		for _, source := range sources {
+			native, markdown, html := renderImportedTable(t, source)
+			if !strings.Contains(html, "<td>Literal "+ticks+"</td>") ||
+				!strings.Contains(html, "<code>a|b</code>") ||
+				strings.Count(html, "<code>") != 1 {
+				t.Fatalf("cell scope changed for %q: %s\n%s", ticks, html, native)
+			}
+			_, _, again := renderImportedTable(t, markdown)
+			if again != html {
+				t.Fatalf("roundtrip changed for %q: %s -> %s", ticks, html, again)
+			}
+		}
+	}
+}
+
+func TestMarkdownToMPDKeepsLiteralPipesInHeaders(t *testing.T) {
+	_, _, html := renderImportedTable(t, "@table{header}\n| `a|b` | Value |\n| First | One |\n@end\n")
+	if strings.Count(html, "<th>") != 2 || !strings.Contains(html, "<code>a|b</code>") {
+		t.Fatalf("header cells changed: %s", html)
+	}
+}

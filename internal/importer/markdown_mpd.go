@@ -567,9 +567,10 @@ func markdownLinesToMPDContext(lines []string, preserveLines bool) (string, erro
 				output.WriteString(" align=" + align)
 			}
 			output.WriteByte('\n')
-			output.WriteString(markdownTableRowToMPD(line) + "\n")
+			columns := markdownTableColumns(line)
+			output.WriteString(markdownTableRowToMPD(line, columns) + "\n")
 			for cursor := index + 2; cursor < end; cursor++ {
-				output.WriteString(markdownTableRowToMPD(lines[cursor]) + "\n")
+				output.WriteString(markdownTableRowToMPD(lines[cursor], columns) + "\n")
 			}
 			output.WriteString(indent + "@end\n")
 			index = end
@@ -1121,8 +1122,14 @@ func markdownMetadataSeparatorsToSpaces(source string) string {
 }
 
 func markdownInlineToMPD(line string) string {
+	return markdownInlineToMPDText(line, true)
+}
+
+// markdownInlineToMPDText converts inline syntax; directive escaping applies
+// only to a whole line, not to a table cell that begins with @.
+func markdownInlineToMPDText(line string, escapeDirective bool) string {
 	contentStart := len(line) - len(strings.TrimLeft(line, " \t"))
-	if contentStart < len(line) && line[contentStart] == '@' {
+	if escapeDirective && contentStart < len(line) && line[contentStart] == '@' {
 		line = line[:contentStart] + `\` + line[contentStart:]
 	}
 	var output strings.Builder
@@ -1139,8 +1146,7 @@ func markdownInlineToMPD(line string) string {
 			}
 			end := markdownCodeSpanCloseIndex(line, index+run, run)
 			if end < 0 {
-				output.WriteByte('\\')
-				output.WriteString(line[index : index+run])
+				output.WriteString(strings.Repeat("\\`", run))
 				index += run
 				continue
 			}
@@ -1326,7 +1332,58 @@ func markdownFenceClose(line, marker string) bool {
 	return run >= len(marker) && strings.TrimSpace(line[run:]) == ""
 }
 
-func markdownTableRowToMPD(line string) string {
+func markdownTableRowToMPD(line string, columns int) string {
+	line = strings.TrimSpace(line)
+	if !strings.HasPrefix(line, "|") {
+		line = "| " + line
+	}
+	if !strings.HasSuffix(line, "|") {
+		line += " |"
+	}
+	cells := markdownTableCells(line)
+	if columns <= 0 || len(cells) != columns {
+		line = escapeMarkdownTableCodePipes(line)
+		line = escapeMarkdownTableBracketPipes(line)
+		cells = markdownTableCells(line)
+	}
+	for index := range cells {
+		cells[index] = markdownInlineToMPDText(cells[index], false)
+	}
+	return "| " + strings.Join(cells, " | ") + " |"
+}
+
+// markdownTableCells splits a row on unescaped pipes. Escaped pipes stay in
+// their cell so a code span or link keeps its literal separator.
+func markdownTableCells(line string) []string {
+	var cells []string
+	var cell strings.Builder
+	flush := func() {
+		cells = append(cells, strings.TrimSpace(cell.String()))
+		cell.Reset()
+	}
+	for index := 0; index < len(line); index++ {
+		if line[index] == '\\' && index+1 < len(line) {
+			cell.WriteString(line[index : index+2])
+			index++
+			continue
+		}
+		if line[index] == '|' {
+			flush()
+			continue
+		}
+		cell.WriteByte(line[index])
+	}
+	flush()
+	if len(cells) > 0 && cells[0] == "" {
+		cells = cells[1:]
+	}
+	if len(cells) > 0 && cells[len(cells)-1] == "" {
+		cells = cells[:len(cells)-1]
+	}
+	return cells
+}
+
+func markdownTableColumns(line string) int {
 	line = strings.TrimSpace(line)
 	if !strings.HasPrefix(line, "|") {
 		line = "| " + line
@@ -1336,7 +1393,7 @@ func markdownTableRowToMPD(line string) string {
 	}
 	line = escapeMarkdownTableCodePipes(line)
 	line = escapeMarkdownTableBracketPipes(line)
-	return markdownInlineToMPD(line)
+	return len(markdownTableCells(line))
 }
 
 // markdownTableBodyToMPD converts the authored rows of a rich @table component
@@ -1344,11 +1401,15 @@ func markdownTableRowToMPD(line string) string {
 // inherit paragraph soft-wrap backslashes or component line normalization.
 func markdownTableBodyToMPD(lines []string) string {
 	var output strings.Builder
+	columns := 0
 	for _, line := range lines {
 		if strings.TrimSpace(line) == "" {
 			continue
 		}
-		output.WriteString(markdownTableRowToMPD(line))
+		if columns == 0 {
+			columns = markdownTableColumns(line)
+		}
+		output.WriteString(markdownTableRowToMPD(line, columns))
 		output.WriteByte('\n')
 	}
 	return output.String()
