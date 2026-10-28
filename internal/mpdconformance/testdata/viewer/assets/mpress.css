@@ -930,6 +930,8 @@ details[open] > summary .mpress-disclosure-icon .lucide-chevron-down { display: 
 .mpress-carousel-viewport { min-height: 13rem; }
 .mpress-carousel-slide { min-height: inherit; padding: clamp(1.25rem, 3vw, 2rem); }
 .mpress-carousel-slide[hidden] { display: none; }
+html:not(.js) .mpress-carousel-slide[hidden] { display: block; }
+html:not(.js) .mpress-carousel-controls { display: none; }
 .mpress-carousel-slide > :first-child { margin-top: 0; }
 .mpress-carousel-slide > :last-child { margin-bottom: 0; }
 .mpress-carousel-controls { display: flex; min-height: 48px; align-items: center; gap: .55rem; padding: .4rem .55rem; border-top: 1px solid var(--border); background: color-mix(in srgb, var(--panel) 62%, transparent); }

@@ -18,6 +18,8 @@
 
 ### Fixed
 
+- Show every authored carousel slide and hide its inert controls when JavaScript is blocked, so readers with scripts disabled keep all slide content and links; enhanced carousels keep their one-slide navigation. Beads `mp-b52.2.11`.
+
 - Show the theme focus ring on the visible tutorial checkmark when its hidden checkbox receives keyboard focus, so keyboard readers can see which step checkbox is active. Progress tracking, component markup and the reset behaviour are unchanged. Beads `mp-b52.2.8`.
 
 - Preserve disabled option groups in enhanced select controls: unavailable choices are skipped by keyboard and cannot be selected by pointer, while opening with an unavailable current choice focuses an enabled option. Beads `mp-b52.2.8`.
