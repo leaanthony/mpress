@@ -198,28 +198,27 @@ func (r *markdownRenderer) inline(index uint32, node *Node) {
 	}
 }
 
-// preserveEscapedText reports whether a text node carries an explicitly
-// escaped backtick that must survive serialization, so a literal ` in a table
-// cell cannot pair with a backtick in the next cell.
+// preserveEscapedText reports whether a text node carries explicit punctuation
+// escapes that must survive serialization, such as a literal ` in a table cell
+// or authored \*stars\*, \_underscores\_, \[text\](url) and \#text. The source
+// is reused only when unescaping it reproduces the node content exactly.
 func preserveEscapedText(source, content []byte) bool {
 	if len(source) <= len(content) {
 		return false
 	}
-	escapedBacktick := false
+	escaped := false
 	plain := 0
 	for index := 0; index < len(source); index++ {
 		if source[index] == '\\' && index+1 < len(source) && isASCIIPunctuation(source[index+1]) {
 			index++
-			if source[index] == '`' {
-				escapedBacktick = true
-			}
+			escaped = true
 		}
 		if plain >= len(content) || content[plain] != source[index] {
 			return false
 		}
 		plain++
 	}
-	return escapedBacktick && plain == len(content)
+	return escaped && plain == len(content)
 }
 
 func (r *markdownRenderer) inlineRole(index uint32, name string) {

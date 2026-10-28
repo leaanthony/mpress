@@ -344,3 +344,37 @@ func TestMarkdownToMPDKeepsLiteralPipesInHeaders(t *testing.T) {
 		t.Fatalf("header cells changed: %s", html)
 	}
 }
+
+// Explicit punctuation escapes must stay literal through repeated conversion,
+// while a real link, live action and fenced copy keep their meaning.
+func TestMarkdownToMPDRepeatedConversionKeepsEscapedPunctuation(t *testing.T) {
+	source := "\\*stars\\* and \\_underscores\\_ and \\[Guide\\](/guide/) and \\#paragraph\n\n" +
+		"Real [Guide](/guide/).\n\n" +
+		"@button[Guide](/guide/){primary}\n\n" +
+		"```txt\n*copy* [Guide](/guide/)\n```\n"
+	native, markdown, html := renderImportedTable(t, source)
+	for _, want := range []string{
+		"*stars* and _underscores_ and [Guide](/guide/) and #paragraph",
+		`href="/guide/"`,
+	} {
+		if !strings.Contains(html, want) {
+			t.Errorf("rendered page missing %q\n%s", want, html)
+		}
+	}
+	if strings.Contains(html, "<h1") || strings.Contains(html, "<h2") {
+		t.Errorf("escaped # became a heading\n%s", html)
+	}
+	for _, want := range []string{"\\*stars\\*", "\\_underscores\\_", "\\[Guide\\](/guide/)", "\\#paragraph"} {
+		if !strings.Contains(native, want) {
+			t.Errorf("native MPD lost escaped punctuation %q\n%s", want, native)
+		}
+	}
+	if !strings.Contains(html, "*copy* [Guide](/guide/)") {
+		t.Errorf("fenced copy changed\n%s", html)
+	}
+
+	_, _, again := renderImportedTable(t, markdown)
+	if again != html {
+		t.Errorf("repeated conversion changed rendered page\nfirst: %s\nagain: %s\nnative: %s", html, again, native)
+	}
+}

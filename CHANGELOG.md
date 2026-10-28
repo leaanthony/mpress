@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Preserve explicit punctuation escapes (`\*`, `\_`, `\[`, `\#`, escaped backticks and pipes) when rendering MPD back to Markdown, so authored literal stars, underscores, bracketed text and hashes stay literal through repeated format conversions instead of becoming emphasis, links or headings; bump the parse cache version so cached pages pick up the corrected rendering. Beads `mp-b52.3.8`.
+
 - Convert each table cell independently so an unmatched literal backtick and a matched code cell of the same delimiter width stay separate cells, and escape every tick of an unmatched run so a width-2 literal stays two literal ticks. Beads `mp-b52.3.8`.
 
 - Preserve an explicitly escaped backtick and choose a code-span delimiter wider than any internal backtick run when rendering MPD back to Markdown, so repeated conversions keep literal instructional code intact; bump the parse cache version so cached pages pick up the corrected rendering. Beads `mp-b52.3.8`.

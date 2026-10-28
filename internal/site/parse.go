@@ -30,7 +30,8 @@ import (
 // v26 refreshes pages whose inline code examples were cached after component
 // expansion had rewritten them.
 // v27 refreshes MPD pages serialized with colliding code delimiters.
-const parseCacheVersion = "mpress-parse-v27"
+// v28 refreshes MPD pages whose literal punctuation lost its escapes.
+const parseCacheVersion = "mpress-parse-v28"
 
 const maxParseWorkers = 8
 
