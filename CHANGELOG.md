@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Keep configured primary header links visible in normal flow when JavaScript is blocked on phones and tablets, so readers can still follow them from landing and documentation pages. The compact menu and toggle now appear only after the theme's enhancement marker runs, while the enhanced phone menu and desktop links keep their existing behaviour. Beads `mp-b52.2.19`.
+
 - Report a lexically invalid configured custom stylesheet during a minifying build with the configured filename and a byte offset relative to the authored file, instead of only an offset into the combined generated CSS, and label minify failures in generated CSS distinctly. A failed build still preserves the published site and authored bytes, non-minifying builds accept the same source unchanged, and correcting the stylesheet recovers the intended styles. Beads `mp-b52.3.11`.
 
 - Make the default theme's tab strip the horizontal scroll owner so phone readers can swipe to and tap later platform tabs instead of losing them off-screen; tab labels keep their width, keyboard End/Home focus scrolls the selected tab into view, and short desktop groups are unchanged. Beads `mp-b52.2.18`.

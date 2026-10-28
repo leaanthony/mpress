@@ -1669,10 +1669,13 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
 }
 
 @media (max-width: 1080px) {
-  #mpress-primary-toggle { display: block; }
-  .primary-links { display: none; position: absolute; top: 58px; right: .9rem; width: min(320px, calc(100vw - 1.8rem)); max-height: calc(100dvh - 74px); overflow-y: auto; padding: .5rem; flex-direction: column; align-items: stretch; gap: .25rem; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-solid); box-shadow: var(--shadow); }
-  .primary-links.primary-open { display: flex; }
-  .primary-links a, .primary-links a.header-link-button { display: flex; align-items: center; min-height: 44px; height: auto; padding: .65rem .8rem; white-space: normal; overflow-wrap: anywhere; }
+  html.js #mpress-primary-toggle { display: block; }
+  html.js .primary-links { display: none; position: absolute; top: 58px; right: .9rem; width: min(320px, calc(100vw - 1.8rem)); max-height: calc(100dvh - 74px); overflow-y: auto; padding: .5rem; flex-direction: column; align-items: stretch; gap: .25rem; border: 1px solid var(--border); border-radius: 9px; background: var(--surface-solid); box-shadow: var(--shadow); }
+  html.js .primary-links.primary-open { display: flex; }
+  html.js .primary-links a, html.js .primary-links a.header-link-button { display: flex; align-items: center; min-height: 44px; height: auto; padding: .65rem .8rem; white-space: normal; overflow-wrap: anywhere; }
+  html:not(.js) body > header { position: static; height: auto; min-height: 58px; flex-wrap: wrap; padding-block: .4rem; }
+  html:not(.js) .primary-links { order: 20; flex: 1 1 100%; flex-wrap: wrap; min-width: 0; }
+  html:not(.js) .primary-links a { display: inline-flex; align-items: center; min-height: 44px; overflow-wrap: anywhere; }
   .splash-hero-inner { grid-template-columns: 1fr 420px; gap: 3rem; }
   .splash-strip-inner { grid-template-columns: 1fr 1fr; }
   .splash-strip-item:nth-child(odd) { border-right: 1px solid var(--border); }

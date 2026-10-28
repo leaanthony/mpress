@@ -66,6 +66,10 @@ func documentationLayoutCSS(layout config.LayoutConfig) string {
   .docs-page .docs-stage > main { padding-top: calc(2rem + 44px); }
   .docs-page article :is(h2, h3, h4, h5, h6) { scroll-margin-top: calc(var(--mpress-header-height, 58px) + 60px); }
   body.nav-open .docs-stage > .toc { visibility: hidden; }
+  html:not(.js) .docs-page .docs-stage > .toc {
+    position: static; max-height: none; padding-inline: 0; border-bottom: 0; background: transparent;
+  }
+  html:not(.js) .docs-page .docs-stage > main { padding-top: 2rem; }
 }
 @media (max-width: 760px) {
   .docs-stage, .docs-page-wide .docs-stage { width: 100%%; padding: 0; }
