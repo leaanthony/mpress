@@ -131,7 +131,7 @@ func TestMarkdownToMPDRichTableUnmatchedBackticksKeepSeparators(t *testing.T) {
 			t.Errorf("converted MPD missing %q:\n%s", want, native)
 		}
 	}
-	for _, want := range []string{"| First ` |", "| Last ` |", "`a\\|b`", "`c\\|d`"} {
+	for _, want := range []string{"| First \\` |", "| Last \\` |", "`a\\|b`", "`c\\|d`"} {
 		if !strings.Contains(markdown, want) {
 			t.Errorf("round-tripped Markdown missing %q:\n%s", want, markdown)
 		}
@@ -144,6 +144,54 @@ func TestMarkdownToMPDRichTableUnmatchedBackticksKeepSeparators(t *testing.T) {
 	// Header plus the three authored rows: no row may lose a cell boundary.
 	if got := strings.Count(html, "<tr"); got != 4 {
 		t.Errorf("rendered rows = %d, want 4 (header plus three body rows)\n%s", got, html)
+	}
+}
+
+// A literal backtick cell followed by a wider code span must keep both the
+// literal backtick and the double-backtick span. Searching for the closing
+// delimiter may not stop at one backtick inside a wider run.
+func TestMarkdownToMPDRichTableKeepsExactBacktickWidths(t *testing.T) {
+	source := "# Examples\n\n@table{header}\n" +
+		"| Name | Value |\n" +
+		"| Literal ` | ``a\\|b`` |\n" +
+		"@end\n"
+	native, markdown, html := renderImportedTable(t, source)
+
+	if !strings.Contains(native, "| Literal \\` | ``a\\|b`` |") {
+		t.Errorf("converted MPD missing the literal backtick or exact code span:\n%s", native)
+	}
+	document := parseImportedMPD(t, native)
+	var cells []string
+	for index := range document.Nodes {
+		if document.Nodes[index].Kind == mpd.KindTableCell {
+			cells = append(cells, string(document.Text(document.Nodes[index].Content)))
+		}
+	}
+	if len(cells) != 4 || cells[2] != "Literal \\`" || cells[3] != "``a\\|b``" {
+		t.Errorf("native table cells = %q\n%s", cells, native)
+	}
+	if got := mpdCodeSpanText(document); got != "a\\|b" {
+		t.Errorf("native code span text = %q, want %q\n%s", got, "a\\|b", native)
+	}
+	for _, want := range []string{"<td>Literal `</td>", "<code>a|b</code>"} {
+		if !strings.Contains(html, want) {
+			t.Errorf("rendered table missing %q\n%s", want, html)
+		}
+	}
+
+	roundTrip, diagnostics, err := content.NewRenderer().ParseBytes("roundtrip.md", "en", []byte(markdown))
+	if err != nil {
+		t.Fatalf("round-trip render failed: %v\n%s", err, markdown)
+	}
+	for _, diagnostic := range diagnostics {
+		if diagnostic.Severity == "error" {
+			t.Fatalf("round-trip diagnostic %s: %s\n%s", diagnostic.Code, diagnostic.Message, markdown)
+		}
+	}
+	for _, want := range []string{"<td>Literal `</td>", "<code>a|b</code>"} {
+		if !strings.Contains(roundTrip.HTML, want) {
+			t.Errorf("round-tripped Markdown lost %q\n%s", want, markdown)
+		}
 	}
 }
 

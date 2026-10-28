@@ -4,6 +4,10 @@
 
 ### Fixed
 
+- Preserve an explicitly escaped backtick and choose a code-span delimiter wider than any internal backtick run when rendering MPD back to Markdown, so repeated conversions keep literal instructional code intact; bump the parse cache version so cached pages pick up the corrected rendering. Beads `mp-b52.3.8`.
+
+- Keep a table cell's literal backtick next to a wider backtick code span intact during Markdown conversion by requiring the closing delimiter to match the opening width exactly, so rendered cell and code text stay literal instead of gaining stray backticks or unclosed-code warnings. Beads `mp-b52.3.8`.
+
 - Stop rich-table conversion from escaping the rest of a row when a cell contains an unmatched backtick, so valid native tables with literal backticks or adjacent live actions convert in both directions. Keep matched single- and double-backtick code spans containing pipes intact. Beads `mp-b52.3.8`.
 
 - Keep inline code spans that wrap across physical lines inside blockquotes and list items literal during Markdown/MPD conversion, so every example keeps its exact text and container instead of gaining escaped backticks or a soft-wrap backslash. Beads `mp-b52.3.7`.

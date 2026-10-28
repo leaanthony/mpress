@@ -124,7 +124,13 @@ func (r *markdownRenderer) inlineChildren(parent uint32) {
 func (r *markdownRenderer) inline(index uint32, node *Node) {
 	switch node.Kind {
 	case KindText:
-		r.output.Write(r.document.Text(node.Content))
+		source := r.document.Text(node.Source)
+		content := r.document.Text(node.Content)
+		if preserveEscapedText(source, content) {
+			r.output.Write(source)
+			break
+		}
+		r.output.Write(content)
 	case KindSoftBreak:
 		r.output.WriteByte(' ')
 	case KindHardBreak:
@@ -139,12 +145,28 @@ func (r *markdownRenderer) inline(index uint32, node *Node) {
 		r.emphasis(index, node, "**", "strong")
 	case KindCodeSpan:
 		content := string(r.document.Text(node.Content))
-		marker := "`"
-		if strings.Contains(content, "`") {
-			marker = "``"
+		width := 1
+		for index := 0; index < len(content); {
+			if content[index] != '`' {
+				index++
+				continue
+			}
+			run := byteRun([]byte(content), index, len(content), '`')
+			if run >= width {
+				width = run + 1
+			}
+			index += run
 		}
+		marker := strings.Repeat("`", width)
+		pad := strings.HasPrefix(content, "`") || strings.HasSuffix(content, "`")
 		r.output.WriteString(marker)
+		if pad {
+			r.output.WriteByte(' ')
+		}
 		r.output.WriteString(content)
+		if pad {
+			r.output.WriteByte(' ')
+		}
 		r.output.WriteString(marker)
 	case KindLink, KindImage:
 		if node.Kind == KindImage {
@@ -174,6 +196,30 @@ func (r *markdownRenderer) inline(index uint32, node *Node) {
 	default:
 		r.output.Write(r.document.Text(node.Content))
 	}
+}
+
+// preserveEscapedText reports whether a text node carries an explicitly
+// escaped backtick that must survive serialization, so a literal ` in a table
+// cell cannot pair with a backtick in the next cell.
+func preserveEscapedText(source, content []byte) bool {
+	if len(source) <= len(content) {
+		return false
+	}
+	escapedBacktick := false
+	plain := 0
+	for index := 0; index < len(source); index++ {
+		if source[index] == '\\' && index+1 < len(source) && isASCIIPunctuation(source[index+1]) {
+			index++
+			if source[index] == '`' {
+				escapedBacktick = true
+			}
+		}
+		if plain >= len(content) || content[plain] != source[index] {
+			return false
+		}
+		plain++
+	}
+	return escapedBacktick && plain == len(content)
 }
 
 func (r *markdownRenderer) inlineRole(index uint32, name string) {

@@ -1137,15 +1137,14 @@ func markdownInlineToMPD(line string) string {
 			for index+run < len(line) && line[index+run] == '`' {
 				run++
 			}
-			marker := strings.Repeat("`", run)
-			end := strings.Index(line[index+run:], marker)
+			end := markdownCodeSpanCloseIndex(line, index+run, run)
 			if end < 0 {
 				output.WriteByte('\\')
-				output.WriteString(marker)
+				output.WriteString(line[index : index+run])
 				index += run
 				continue
 			}
-			end += index + run + run
+			end += run
 			output.WriteString(line[index:end])
 			index = end
 			continue
@@ -1449,6 +1448,24 @@ func markdownBacktickRun(line string, index int) int {
 		run++
 	}
 	return run
+}
+
+// markdownCodeSpanCloseIndex returns the index of the backtick run that closes
+// a span opened with width backticks, or -1 when the span is unclosed. Runs of
+// any other width are span content, not a closing delimiter.
+func markdownCodeSpanCloseIndex(line string, index, width int) int {
+	for index < len(line) {
+		if line[index] != '`' {
+			index++
+			continue
+		}
+		run := markdownBacktickRun(line, index)
+		if run == width {
+			return index
+		}
+		index += run
+	}
+	return -1
 }
 
 // markdownCodeSpanCloses reports whether a run of exactly width backticks

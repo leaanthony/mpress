@@ -29,7 +29,8 @@ import (
 // v24 refreshes pages cached before flat pricing/testimonial bodies were kept.
 // v26 refreshes pages whose inline code examples were cached after component
 // expansion had rewritten them.
-const parseCacheVersion = "mpress-parse-v26"
+// v27 refreshes MPD pages serialized with colliding code delimiters.
+const parseCacheVersion = "mpress-parse-v27"
 
 const maxParseWorkers = 8
 
