@@ -335,3 +335,79 @@ func TestAdvancedRegistryParity(t *testing.T) {
 		}
 	}
 }
+
+func TestNativeButtonBackslashEscapeParity(t *testing.T) {
+	tests := []struct {
+		name  string
+		input string
+		live  bool
+	}{
+		{"native odd one", `Read \@button[Demo](#){primary} before continuing.`, false},
+		{"native odd three", `Read \\\@button[Demo](#){primary} before continuing.`, false},
+		{"native even two", `Read \\@button[Demo](#){primary} before continuing.`, true},
+		{"legacy odd one", `Read \:::button[Demo](#){primary} before continuing.`, false},
+		{"legacy odd three", `Read \\\:::button[Demo](#){primary} before continuing.`, false},
+		{"legacy even two", `Read \\:::button[Demo](#){primary} before continuing.`, true},
+	}
+	for _, test := range tests {
+		t.Run(test.name, func(t *testing.T) {
+			got, warnings := ProcessWithLanguage(test.input, "en")
+			if len(warnings) != 0 {
+				t.Fatalf("warnings: %#v", warnings)
+			}
+			if strings.Contains(got, "&lt;a class=") {
+				t.Fatalf("generated button HTML was escaped into reader text:\n%s", got)
+			}
+			if test.live {
+				if !strings.Contains(got, "mpress-button-primary") {
+					t.Fatalf("even backslash run did not expand the component:\n%s", got)
+				}
+				if !strings.Contains(got, `href="#"`) {
+					t.Fatalf("live button lost its destination:\n%s", got)
+				}
+				if strings.Count(got, "mpress-button-primary") != 1 {
+					t.Fatalf("expected exactly one live button:\n%s", got)
+				}
+				return
+			}
+			if strings.Contains(got, "mpress-button") {
+				t.Fatalf("odd backslash run expanded the component:\n%s", got)
+			}
+			if !strings.Contains(got, "button[Demo](#)") {
+				t.Fatalf("escaped declaration text was not preserved:\n%s", got)
+			}
+		})
+	}
+}
+
+func TestEscapedButtonPrefixAdjacentLiveButton(t *testing.T) {
+	input := `Escaped \@button[Demo](#){primary} then live @button[Live](/live/){primary}.`
+	got, warnings := ProcessWithLanguage(input, "en")
+	if len(warnings) != 0 {
+		t.Fatalf("warnings: %#v", warnings)
+	}
+	if strings.Count(got, "mpress-button-primary") != 1 {
+		t.Fatalf("expected one live button beside the escaped prefix:\n%s", got)
+	}
+	if !strings.Contains(got, `href="/live/"`) {
+		t.Fatalf("adjacent live button lost its destination:\n%s", got)
+	}
+	if !strings.Contains(got, `\@button[Demo](#){primary}`) {
+		t.Fatalf("escaped prefix text changed beside the live button:\n%s", got)
+	}
+}
+
+func TestEscapedButtonPrefixInCodeControls(t *testing.T) {
+	input := "Use `\\@button[Demo](#){primary}` in prose.\n\n" +
+		"```md\n\\@button[Demo](#){primary}\n@button[Live](/live/){primary}\n```\n"
+	got, warnings := ProcessWithLanguage(input, "en")
+	if len(warnings) != 0 {
+		t.Fatalf("warnings: %#v", warnings)
+	}
+	if strings.Contains(got, "mpress-button") {
+		t.Fatalf("code example expanded a button declaration:\n%s", got)
+	}
+	if !strings.Contains(got, `\@button[Demo](#){primary}`) {
+		t.Fatalf("inline code example text changed:\n%s", got)
+	}
+}

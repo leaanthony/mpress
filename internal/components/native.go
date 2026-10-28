@@ -236,10 +236,10 @@ func isNativeLeafComponent(name string) bool {
 
 func processNativeInline(line string) string {
 	if strings.Contains(line, "@button[") {
-		line = nativeButtonRE.ReplaceAllStringFunc(line, renderButtonMatch)
+		line = expandNativeButtons(line, nativeButtonRE)
 	}
 	if strings.Contains(line, ":::button[") {
-		line = legacyButtonRE.ReplaceAllStringFunc(line, renderButtonMatch)
+		line = expandNativeButtons(line, legacyButtonRE)
 	}
 	if strings.Contains(line, "@image{") {
 		line = nativeImageRE.ReplaceAllStringFunc(line, func(match string) string {
@@ -272,6 +272,36 @@ func processNativeInline(line string) string {
 		}
 		return fmt.Sprintf(`<span class="mpress-badge mpress-badge-%s">%s</span>`, html.EscapeString(variant), html.EscapeString(strings.TrimSpace(parts[2])))
 	})
+}
+
+// expandNativeButtons leaves odd-backslash prefixes to ordinary Markdown,
+// including normal link handling for a following [label](url). Even runs
+// escape the backslashes and still expand the component.
+func expandNativeButtons(line string, re *regexp.Regexp) string {
+	matches := re.FindAllStringIndex(line, -1)
+	if len(matches) == 0 {
+		return line
+	}
+	var out strings.Builder
+	last := 0
+	for _, match := range matches {
+		start, end := match[0], match[1]
+		backslashes := 0
+		for i := start - 1; i >= 0 && line[i] == '\\'; i-- {
+			backslashes++
+		}
+		if backslashes%2 == 1 {
+			continue
+		}
+		out.WriteString(line[last:start])
+		out.WriteString(renderButtonMatch(line[start:end]))
+		last = end
+	}
+	if last == 0 {
+		return line
+	}
+	out.WriteString(line[last:])
+	return out.String()
 }
 
 func renderButtonMatch(match string) string {
