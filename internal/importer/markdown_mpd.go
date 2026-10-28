@@ -338,6 +338,8 @@ func isMPDLeafDirective(name string) bool {
 }
 
 func markdownFrontmatterToMPD(source string) (string, string, error) {
+	// Recognize frontmatter after an encoding marker without changing interior text.
+	source = strings.TrimPrefix(source, "\ufeff")
 	if !strings.HasPrefix(source, "---\n") {
 		return "", source, nil
 	}
