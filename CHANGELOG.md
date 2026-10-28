@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Make the default theme's tab strip the horizontal scroll owner so phone readers can swipe to and tap later platform tabs instead of losing them off-screen; tab labels keep their width, keyboard End/Home focus scrolls the selected tab into view, and short desktop groups are unchanged. Beads `mp-b52.2.18`.
+
 - Recognize YAML frontmatter in a Markdown file that starts with one UTF-8 byte-order mark when importing it as MPD, so metadata such as `title`, `layout`, `slug` and `draft: true` is converted instead of leaking into the body and accidentally publishing the page; interior U+FEFF characters and all accepted YAML are unchanged. Beads `mp-b52.3.12`.
 
 - Ignore one leading UTF-8 byte-order mark when reading Markdown so a BOM-prefixed page still recognizes its YAML frontmatter (title, layout) instead of rendering the header as body text; interior markers and all accepted YAML stay unchanged, and the parse cache version is bumped. Beads `mp-b52.3.7`.

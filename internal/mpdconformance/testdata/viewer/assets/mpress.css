@@ -635,8 +635,8 @@ code { font-family: "SFMono-Regular", Consolas, "Liberation Mono", monospace; }
 .mpress-admonition > strong { display: block; margin-bottom: .2rem; color: var(--notice); font-size: .79rem; letter-spacing: .07em; text-transform: uppercase; }
 .mpress-admonition > :last-child { margin-bottom: 0; }
 .mpress-tabs { display: block; margin: var(--component-space) 0; }
-.mpress-tabs [role="tablist"] { display: flex; gap: 1.25rem; padding: 0; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 13px; font-weight: 600; }
-.mpress-tabs [role="tab"] { padding: .55rem .1rem; border: 0; border-bottom: 2px solid transparent; background: none; color: inherit; cursor: pointer; font: inherit; }
+.mpress-tabs [role="tablist"] { display: flex; gap: 1.25rem; padding: 0; border-bottom: 1px solid var(--border); color: var(--muted); font-size: 13px; font-weight: 600; max-width: 100%; overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; -webkit-overflow-scrolling: touch; scrollbar-width: thin; }
+.mpress-tabs [role="tab"] { flex: 0 0 auto; white-space: nowrap; padding: .55rem .1rem; border: 0; border-bottom: 2px solid transparent; background: none; color: inherit; cursor: pointer; font: inherit; }
 .mpress-tabs [aria-selected="true"] { border-bottom-color: var(--accent); color: var(--text); }
 .mpress-tabs [role="tabpanel"] { padding: .8rem 0 0; }
 .mpress-file-tabs { overflow: hidden; border: 1px solid var(--border); border-radius: var(--component-radius); background: var(--panel); }

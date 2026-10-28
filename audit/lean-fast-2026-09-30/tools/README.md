@@ -199,3 +199,16 @@ MPRESS_DIALOG_BIN=/absolute/path/to/candidate go test -race -count=1 -run '^Test
 It distinguishes native keyboard/mouse/touch activation from script clicks and
 waits for focus restoration after all four supported closing methods. See
 [B05 report](https://github.com/taliesin-ai/mpress/blob/archive/audit-lean-fast-20260930-pre-squash-20261005/audit/lean-fast-2026-09-30/B05.md) for its no-change diagnosis and stale-oracle replay.
+
+The phone tab-strip regression builds its own 12-tab and 3-tab pages with the
+candidate CLI and dispatches real touch swipes:
+
+```sh
+MPRESS_HEADER_NAV_BIN=/absolute/path/to/candidate go test -count=1 -run '^TestPhoneTabsTouchScroll$' -v .
+```
+
+At 320x844 and 390x844 it requires the 12-tab strip to overflow, reachable by
+horizontal swipes, and tappable on the last tab with the document position
+unchanged; End/Home must focus the corresponding tab inside the visible strip.
+A 1280x900 short group must not scroll. Without `MPRESS_HEADER_NAV_BIN` the test
+skips; a skip does not qualify browser behaviour. Beads `mp-b52.2.18`.
