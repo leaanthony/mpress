@@ -18,6 +18,8 @@
 
 ### Fixed
 
+- Keep all testimonial quotes and attributions readable and accessible when scripts are blocked; hide inert navigation and initialise enhanced visibility correctly. Beads `mp-b52.2.11`.
+
 - Hide the calendar month navigation buttons when JavaScript is blocked, so script-blocked readers no longer see previous/next controls that cannot change the month. Authored month grids, titles and content stay readable, and enhanced calendars keep localised labels, keyboard navigation and independent instances. Beads `mp-b52.2.11`.
 
 - Show every authored carousel slide and hide its inert controls when JavaScript is blocked, so readers with scripts disabled keep all slide content and links; enhanced carousels keep their one-slide navigation. Beads `mp-b52.2.11`.

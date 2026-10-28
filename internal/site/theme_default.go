@@ -921,6 +921,8 @@ html:not(.js) .mpress-calendar-nav { display: none; }
 .mpress-testimonials { margin: 1.6rem 0; padding: 1.4rem; border: 1px solid var(--border); border-radius: 9px; background: var(--surface); text-align: center; }
 .mpress-testimonial { display: none; margin: 0; padding: 0; border: 0; }
 .mpress-testimonial.active { display: block; }
+html:not(.js) .mpress-testimonial { display: block; }
+html:not(.js) .mpress-testimonials-nav { display: none; }
 .mpress-testimonial-quote { margin: 0 auto .8rem; max-width: 42rem; color: var(--text); font-size: 1.18rem; }
 .mpress-testimonial-author cite { font-style: normal; font-weight: 750; }
 .mpress-testimonial-company { display: block; color: var(--muted); font-size: .83rem; }
@@ -2770,6 +2772,7 @@ const defaultThemeJS = `
       dots.forEach((dot, i) => i === index ? dot.setAttribute('aria-current', 'true') : dot.removeAttribute('aria-current'));
     };
     dots.forEach((dot, index) => dot.addEventListener('click', () => show(index)));
+    show(0);
     const delay = Number(carousel.dataset.autoplay);
     if (items.length > 1 && delay > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       let timer = null;

@@ -119,7 +119,7 @@ func (t *Testimonials) Render() (string, error) {
 		if i == 0 {
 			activeClass = " active"
 		}
-		b.WriteString(fmt.Sprintf("    <blockquote class=\"mpress-testimonial%s\" aria-hidden=\"%v\">\n", activeClass, i != 0))
+		fmt.Fprintf(&b, "    <blockquote class=\"mpress-testimonial%s\">\n", activeClass)
 		b.WriteString(fmt.Sprintf("      <p class=\"mpress-testimonial-quote\">\u201c%s\u201d</p>\n", html.EscapeString(item.Quote)))
 		if item.Author != "" {
 			b.WriteString("      <footer class=\"mpress-testimonial-author\">\n")

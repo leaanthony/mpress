@@ -998,6 +998,7 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
       dots.forEach((dot, i) => i === index ? dot.setAttribute('aria-current', 'true') : dot.removeAttribute('aria-current'));
     };
     dots.forEach((dot, index) => dot.addEventListener('click', () => show(index)));
+    show(0);
     const delay = Number(carousel.dataset.autoplay);
     if (items.length > 1 && delay > 0 && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
       let timer = null;

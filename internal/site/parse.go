@@ -35,7 +35,8 @@ import (
 // generated HTML instead of staying literal reader-facing text.
 // v30 refreshes pages whose leading UTF-8 BOM hid their YAML frontmatter.
 // v31 refreshes pages whose tab panels gain their no-script labels.
-const parseCacheVersion = "mpress-parse-v31"
+// v32 refreshes testimonials so unenhanced quotes remain accessible.
+const parseCacheVersion = "mpress-parse-v32"
 
 const maxParseWorkers = 8
 
