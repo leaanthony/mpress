@@ -715,3 +715,74 @@ func TestUnterminatedShellFenceAtEndOfFileStillGetsTerminalChrome(t *testing.T) 
 		t.Fatalf("unterminated shell fence did not render as a terminal:\n%s", page.HTML)
 	}
 }
+
+func TestUTF8BOMFrontmatterIsIgnoredOnce(t *testing.T) {
+	cases := []struct {
+		name   string
+		source string
+	}{
+		{"bom-lf", "\ufeff---\ntitle: Grüße 世界\nlayout: landing\ndraft: true\n---\n# Hi\n"},
+		{"bom-crlf", "\ufeff---\r\ntitle: Grüße 世界\r\nlayout: landing\r\ndraft: true\r\n---\r\n# Hi\r\n"},
+		{"no-bom", "---\ntitle: Grüße 世界\nlayout: landing\ndraft: true\n---\n# Hi\n"},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			page, diagnostics, err := NewRenderer().Parse("greeting.md", "en", tc.source)
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(diagnostics) != 0 {
+				t.Fatalf("unexpected diagnostics: %#v", diagnostics)
+			}
+			if page.Title != "Grüße 世界" {
+				t.Fatalf("title = %q, want Grüße 世界", page.Title)
+			}
+			if !page.Draft {
+				t.Fatal("draft metadata was ignored")
+			}
+			if page.Layout != "landing" {
+				t.Fatalf("layout = %q, want landing", page.Layout)
+			}
+			if strings.Contains(page.HTML, "title:") || strings.Contains(page.HTML, "layout:") || strings.Contains(page.HTML, "---") {
+				t.Fatalf("frontmatter leaked into the body: %s", page.HTML)
+			}
+			if !strings.Contains(page.HTML, "Hi") {
+				t.Fatalf("body heading missing: %s", page.HTML)
+			}
+		})
+	}
+}
+
+func TestUTF8BOMWithoutFrontmatterKeepsHeading(t *testing.T) {
+	page, diagnostics, err := NewRenderer().Parse("plain.md", "en", "\ufeff# Grüße 世界\n\nBody.\n")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(diagnostics) != 0 {
+		t.Fatalf("unexpected diagnostics: %#v", diagnostics)
+	}
+	if page.Title != "Grüße 世界" {
+		t.Fatalf("title = %q, want Grüße 世界", page.Title)
+	}
+	if !strings.Contains(page.HTML, "Body.") {
+		t.Fatalf("body missing: %s", page.HTML)
+	}
+}
+
+func TestInteriorUTF8BOMIsPreserved(t *testing.T) {
+	source := "---\ntitle: Interior\n---\n\nAlpha\ufeffBeta\n"
+	page, _, err := NewRenderer().Parse("interior.md", "en", source)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !strings.Contains(page.HTML, "Alpha\ufeffBeta") {
+		t.Fatalf("interior U+FEFF was not preserved: %q", page.HTML)
+	}
+}
+
+func TestUTF8BOMKeepsMalformedYAMLDiagnostic(t *testing.T) {
+	_, _, err := NewRenderer().Parse("broken.md", "en", "\ufeff---\ntitle: [unclosed\n---\n# Hi\n")
+	if err == nil || !strings.Contains(err.Error(), "invalid YAML frontmatter") {
+		t.Fatalf("err = %v, want invalid YAML frontmatter diagnostic", err)
+	}
+}

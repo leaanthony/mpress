@@ -33,7 +33,8 @@ import (
 // v28 refreshes MPD pages whose literal punctuation lost its escapes.
 // v29 refreshes pages whose escaped @button/:::button prefixes expanded into
 // generated HTML instead of staying literal reader-facing text.
-const parseCacheVersion = "mpress-parse-v29"
+// v30 refreshes pages whose leading UTF-8 BOM hid their YAML frontmatter.
+const parseCacheVersion = "mpress-parse-v30"
 
 const maxParseWorkers = 8
 

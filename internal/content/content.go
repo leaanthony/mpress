@@ -683,6 +683,9 @@ func parseCodeLineRanges(spec string) map[int]bool {
 
 func splitFrontmatter(source string) (Frontmatter, string, error) {
 	var meta Frontmatter
+	// A leading byte-order mark is encoding metadata, not content; drop one so
+	// opening frontmatter is recognized. Interior marks stay authored text.
+	source = strings.TrimPrefix(source, "\ufeff")
 	source = strings.ReplaceAll(source, "\r\n", "\n")
 	if !strings.HasPrefix(source, "---\n") {
 		return meta, source, nil

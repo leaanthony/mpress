@@ -4,6 +4,8 @@
 
 ### Fixed
 
+- Ignore one leading UTF-8 byte-order mark when reading Markdown so a BOM-prefixed page still recognizes its YAML frontmatter (title, layout) instead of rendering the header as body text; interior markers and all accepted YAML stay unchanged, and the parse cache version is bumped. Beads `mp-b52.3.7`.
+
 - Keep configured header links accessible on phones and tablets through a right-aligned navigation menu, including landing pages. Support keyboard focus, Escape and outside-click dismissal, and resizing back to desktop. Beads `mp-b52.2.17`.
 
 - Keep an odd run of backslashes immediately before `@button` or `:::button` from expanding into generated button HTML, so escaped examples stay literal in reader instructions while even runs still render live buttons (and adjacent buttons are unaffected); bump the parse cache version so cached pages pick up the fix. Beads `mp-b52.3.7`.
