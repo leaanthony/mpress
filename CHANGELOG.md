@@ -4,11 +4,15 @@
 
 ### Testing
 
+- Add a focused real-browser regression for the phone documentation sidebar with JavaScript blocked: the sidebar is in normal flow with 44px touch targets, the document still scrolls, a sidebar-only `/reference/` destination opens by tap and keyboard, and the enhanced menu and search still open on the same minified build. Beads `mp-b52.2.11`.
+
 - Add a focused real-touch browser regression for wide reader content: phone swipes inspect off-screen code, terminal, plain-table and data-table content without moving the document, after which a vertical body swipe still advances the page. Beads `mp-b52.2.4`.
 
 - Add a focused real-touch browser regression for the phone landing primary navigation: open the 44px trigger, focus the first link, swipe an overflowing 20-link dropdown to its last configured link while the document stays put, follow it, return, dismiss by Escape and outside tap, then keep scrolling the document. Beads `mp-b52.2.4`.
 
 ### Fixed
+
+- Keep the documentation sidebar readable in normal flow when JavaScript is blocked on phones: links, touch and keyboard stay usable, the document still scrolls, and the inert sidebar and search launchers are hidden. The enhanced phone menu, search and desktop sidebar keep their existing behaviour. Beads `mp-b52.2.11`.
 
 - Keep configured primary header links visible in normal flow when JavaScript is blocked on phones and tablets, so readers can still follow them from landing and documentation pages. The compact menu and toggle now appear only after the theme's enhancement marker runs, while the enhanced phone menu and desktop links keep their existing behaviour. Beads `mp-b52.2.19`.
 

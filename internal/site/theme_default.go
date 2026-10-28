@@ -456,6 +456,7 @@ body.mpress-search-open { overflow: hidden; }
 #mpress-primary-toggle .lucide { margin: auto; }
 #mpress-menu-toggle { display: none; flex: 0 0 44px; width: 44px; min-width: 44px; height: 44px; padding: 11px; }
 #mpress-menu-toggle .lucide { margin: auto; }
+html:not(.js) #mpress-menu-toggle, html:not(.js) .search { display: none; }
 
 .layout { display: grid; grid-template-columns: var(--layout-sidebar-width) minmax(0, 1fr); width: 100%; margin: 0; padding: 0; }
 .mpress-not-found { display: grid; min-height: calc(100dvh - 58px); padding: clamp(3rem, 10vw, 8rem) 1.25rem; place-items: center; text-align: center; }
@@ -1711,6 +1712,8 @@ body.mpress-quick-editing .mpress-edit-segment a, body.mpress-quick-editing .mpr
   .sidebar { position: fixed; z-index: 9; top: 58px; left: 0; bottom: 0; width: min(86vw, 320px); height: auto; padding: 1.25rem; transform: translateX(-105%); border-right: 1px solid var(--border); background: var(--surface-solid); box-shadow: var(--shadow); transition: transform .22s ease; }
   body.nav-open .sidebar { transform: translateX(0); }
   body.nav-open { overflow: hidden; }
+  html:not(.js) .sidebar { position: static; width: auto; height: auto; max-height: none; padding: 1rem 1.2rem; overflow: visible; transform: none; border-right: 0; border-bottom: 1px solid var(--border); background: var(--bg); box-shadow: none; }
+  html:not(.js) .sidebar a, html:not(.js) .sidebar summary { min-height: 44px; }
   .docs-stage, .docs-page-wide .docs-stage { width: 100%; padding: 0; }
   .docs-stage > main { padding: 2.2rem 1.2rem 5rem; }
   article h1 { font-size: clamp(2rem, 9vw, 2.375rem); overflow-wrap: break-word; }
