@@ -4,6 +4,8 @@
 
 ### Testing
 
+- Add a focused browser regression for reader tools on a strict build: with scripts blocked at phone and desktop widths the accessibility, theme and contribution launchers are absent while content and native utility links stay usable, and with scripts enabled the theme switch, accessibility preference and contribution dialog still work. Beads `mp-b52.2.11`.
+
 - Add a focused browser regression for the file-tab and preview-tab families on a strict build: with scripts blocked at phone and desktop widths every panel is readable under its visible label and no tab buttons are presented, while the enhanced groups keep one selected panel, click and Home/End behaviour and stay independent. Beads `mp-b52.2.11`.
 
 - Add a focused browser regression for ordinary tabs on a strict build: with scripts blocked every panel of two independent groups is readable under its visible label and no tab buttons are presented, while the enhanced tablist still selects exactly one panel by click and supports Home/End. Add a parse-cache upgrade check for the new panel labels. Beads `mp-b52.2.11`.
@@ -15,6 +17,8 @@
 - Add a focused real-touch browser regression for the phone landing primary navigation: open the 44px trigger, focus the first link, swipe an overflowing 20-link dropdown to its last configured link while the document stays put, follow it, return, dismiss by Escape and outside tap, then keep scrolling the document. Beads `mp-b52.2.4`.
 
 ### Fixed
+
+- Hide the accessibility selector, theme toggle and contribution trigger when JavaScript is blocked, so readers do not see controls that cannot change preferences or open their dialog. Native language and version popovers and the document stay unchanged; enhanced readers keep all three controls. Beads `mp-b52.2.11`.
 
 - Keep every file-tab and preview-tab panel readable under its own label when JavaScript is blocked, instead of leaving non-first panels hidden behind inert tab buttons. The fallback is scoped to each group's direct children so nested tab groups are unaffected; enhanced tabs are unchanged. Beads `mp-b52.2.11`.
 

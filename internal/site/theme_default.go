@@ -444,6 +444,7 @@ body.mpress-search-open { overflow: hidden; }
 .utility-version-label { line-height: 1.2; }
 .theme-toggle { display: grid; width: 34px; min-width: 34px; height: 34px; min-height: 34px; place-items: center; padding: 0; border: 0; border-radius: 6px; background: transparent; color: var(--muted); cursor: pointer; }
 .header-group.theme-toggle { width: 34px; min-width: 34px; }
+html:not(.js) :is(.accessibility-select, #mpress-theme-toggle, [data-mpress-contribute]) { display: none; }
 .theme-toggle:hover { background: var(--surface); color: var(--hover); }
 .theme-toggle:focus { outline: none; }
 .theme-toggle:focus-visible { background: var(--surface); color: var(--hover); box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--muted) 42%, transparent); }
