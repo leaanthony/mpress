@@ -10,6 +10,8 @@
 
 ### Fixed
 
+- Report a lexically invalid configured custom stylesheet during a minifying build with the configured filename and a byte offset relative to the authored file, instead of only an offset into the combined generated CSS, and label minify failures in generated CSS distinctly. A failed build still preserves the published site and authored bytes, non-minifying builds accept the same source unchanged, and correcting the stylesheet recovers the intended styles. Beads `mp-b52.3.11`.
+
 - Make the default theme's tab strip the horizontal scroll owner so phone readers can swipe to and tap later platform tabs instead of losing them off-screen; tab labels keep their width, keyboard End/Home focus scrolls the selected tab into view, and short desktop groups are unchanged. Beads `mp-b52.2.18`.
 
 - Recognize YAML frontmatter in a Markdown file that starts with one UTF-8 byte-order mark when importing it as MPD, so metadata such as `title`, `layout`, `slug` and `draft: true` is converted instead of leaking into the body and accidentally publishing the page; interior U+FEFF characters and all accepted YAML are unchanged. Beads `mp-b52.3.12`.

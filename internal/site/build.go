@@ -235,6 +235,12 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 			result.Diagnostics = append(result.Diagnostics, content.Diagnostic{Severity: "error", Code: "custom-css", Message: err.Error()})
 		} else {
 			customCSS = "\n/* Project custom CSS */\n" + string(projectCSS)
+			// Validate before combining so error positions refer to the configured source.
+			if opts.MinifyAssets {
+				if _, err := minifyStylesheet(string(projectCSS)); err != nil {
+					return result, fmt.Errorf("configured custom stylesheet %s: %w", cfg.Build.CustomCSS, err)
+				}
+			}
 		}
 	}
 	accessibilityBlock := ""
@@ -453,7 +459,7 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 		if opts.MinifyAssets {
 			cssAsset, err = minifyStylesheet(cssAsset)
 			if err != nil {
-				return result, err
+				return result, fmt.Errorf("generated stylesheet: %w", err)
 			}
 			jsAsset, err = minifyScript(jsAsset)
 			if err != nil {
