@@ -18,6 +18,8 @@
 
 ### Fixed
 
+- Preserve disabled option groups in enhanced select controls: unavailable choices are skipped by keyboard and cannot be selected by pointer, while opening with an unavailable current choice focuses an enabled option. Beads `mp-b52.2.8`.
+
 - Hide the accessibility selector, theme toggle and contribution trigger when JavaScript is blocked, so readers do not see controls that cannot change preferences or open their dialog. Native language and version popovers and the document stay unchanged; enhanced readers keep all three controls. Beads `mp-b52.2.11`.
 
 - Keep every file-tab and preview-tab panel readable under its own label when JavaScript is blocked, instead of leaving non-first panels hidden behind inert tab buttons. The fallback is scoped to each group's direct children so nested tab groups are unaffected; enhanced tabs are unchanged. Beads `mp-b52.2.11`.

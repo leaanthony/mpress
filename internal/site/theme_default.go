@@ -3178,7 +3178,7 @@ const defaultThemeJS = `
         optionButtons().forEach((button, index) => button.setAttribute('aria-selected', String(index === select.selectedIndex)));
       };
       const choose = index => {
-        if (select.options[index]?.disabled) return;
+        if (select.options[index]?.matches(':disabled')) return;
         select.selectedIndex = index;
         select.dispatchEvent(new Event('input', {bubbles: true}));
         select.dispatchEvent(new Event('change', {bubbles: true}));
@@ -3192,7 +3192,7 @@ const defaultThemeJS = `
         item.type = 'button';
         item.className = 'mpress-ddlb-option';
         item.setAttribute('role', 'option');
-        item.disabled = option.disabled;
+        item.disabled = option.matches(':disabled');
         const text = document.createElement('span');
         text.textContent = option.textContent;
         item.append(text);
@@ -3234,7 +3234,8 @@ const defaultThemeJS = `
         menu.showPopover();
         position();
         const items = optionButtons();
-        (items[select.selectedIndex] || items.find(item => !item.disabled))?.focus();
+        const selected = items[select.selectedIndex];
+        (selected && !selected.disabled ? selected : items.find(item => !item.disabled))?.focus();
       };
       trigger.addEventListener('click', event => {
         event.preventDefault();
