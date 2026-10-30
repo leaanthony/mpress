@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.0.26 — 2026-10-30
+
+### Security
+
+- Update the HTML parser dependency to fix excessive processing time on crafted HTML (GO-2026-6860), restoring the CI security gate.
+
 ### Testing
 
 - Add a focused browser regression for reader tools on a strict build: with scripts blocked at phone and desktop widths the accessibility, theme and contribution launchers are absent while content and native utility links stay usable, and with scripts enabled the theme switch, accessibility preference and contribution dialog still work. Beads `mp-b52.2.11`.

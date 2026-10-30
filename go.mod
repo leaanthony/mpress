@@ -4,9 +4,9 @@ go 1.26.10
 
 require (
 	github.com/yuin/goldmark v1.8.1
-	golang.org/x/net v0.60.0
-	golang.org/x/sys v0.48.0
-	golang.org/x/text v0.42.0
+	golang.org/x/net v0.62.0
+	golang.org/x/sys v0.49.0
+	golang.org/x/text v0.43.0
 	gopkg.in/yaml.v3 v3.0.1
 )
 
@@ -47,7 +47,7 @@ require (
 	golang.org/x/exp v0.0.0-20240909161429-701f63a606c0 // indirect
 	golang.org/x/image v0.20.0 // indirect
 	golang.org/x/oauth2 v0.35.0 // indirect
-	golang.org/x/sync v0.23.0 // indirect
+	golang.org/x/sync v0.24.0 // indirect
 	golang.org/x/time v0.15.0 // indirect
 	golang.org/x/xerrors v0.0.0-20240903120638-7835f813f4da // indirect
 	gopkg.in/check.v1 v1.0.0-20201130134442-10cb98267c6c // indirect
