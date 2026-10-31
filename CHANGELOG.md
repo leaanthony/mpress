@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v1.0.27 — 2026-10-31
+
+### Added
+
+- Opt-in `check external` audits generated HTTP(S) references across locales, deduplicates destinations and distinguishes missing pages from inconclusive network results.
+- Local `translate sync-links` previews or applies narrowly verified inline URL corrections while retaining translated prose, state and audit exceptions.
+
 ## v1.0.26 — 2026-10-30
 
 ### Security

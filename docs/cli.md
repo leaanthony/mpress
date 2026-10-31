@@ -19,6 +19,8 @@ Run `mpress help` to print the compact command summary.
 | `mpress clean` | Remove the configured output directory. |
 | `mpress check` | Check generated local links, fragments, and assets. |
 | `mpress check site [--output DIRECTORY] [--cloudflare-pages] [--json]` | Validate an existing build for publication. |
+| `mpress check external [--output DIRECTORY] [--host HOST] [--timeout 10s] [--retries 1] [--json]` | Opt into a network audit of generated external links. |
+| `mpress translate sync-links --lang CODE --file PAGE --previous-source FILE [--write]` | Preview or apply a verified URL-only source correction without retranslating prose. |
 | `mpress knowledge [directory] [--transport stdio\|http]` | Serve the generated documentation as a read-only MCP knowledge base. |
 | `mpress knowledge evaluate [directory] --suite FILE [--json]` | Measure retrieval recall, ranking, and citation coverage against a repeatable question suite. |
 | `mpress translate status [--lang CODE] [--file PAGE] [--json]` | Report missing, stale, manual, and conflicting translations without using an API. |
@@ -270,3 +272,71 @@ mpress knowledge --transport http --host 127.0.0.1 --port 3100
 The endpoint is `http://127.0.0.1:3100/mcp`. A non-loopback address requires a
 bearer token supplied with `--token`. Keep the endpoint private unless it sits
 behind a production authentication layer.
+
+## External link audit (network opt-in)
+
+Build once, then audit the existing generated HTML:
+
+```sh
+mpress build --strict
+mpress check
+mpress check external --json > external-links.json
+# Focus a scheduled audit on source/example links:
+mpress check external --host github.com --timeout 10s --retries 1 --json
+```
+
+`check external` is a separate, explicit network operation. `check`, `check site`,
+translation checks and normal builds retain their local validation contracts.
+Use `--output DIRECTORY` to select an existing build. The audit scans `href` and
+`src` in every generated HTML page, including translated pages and mounted
+snapshots. It excludes the configured site's own host and non-HTTP references.
+It does not rebuild or edit anything. Run local checks as well.
+
+The JSON report contains every unique destination, its sorted referencing page
+paths, status, attempts, HTTP status, final redirect URL and diagnostic detail.
+Repeated URLs share a probe sequence; fragments are removed for HTTP requests
+and deduplication, while query strings remain distinct. `--host HOST` is repeatable
+and matches the initial hostname exactly; redirects may leave that host.
+Use repeatable `--url-prefix https://github.com/owner/repo/tree/` and
+`--url-prefix https://github.com/owner/repo/blob/` to audit source/example links
+without probing every contributor profile or changelog PR. Prefixes are literal,
+absolute HTTP(S) URLs without credentials, query strings or fragments; they filter
+initial URLs only, and combine with the host filter.
+
+| Exit | Meaning | Action |
+| --- | --- | --- |
+| 0 | All selected destinations returned HTTP 2xx (possibly after redirects). | Inspect content separately when correcting examples. |
+| 1 | At least one HTTP 404/410, or an operational/usage error. | Read the JSON and stderr; correct confirmed missing destinations. |
+| 2 | No confirmed missing destination, but at least one inconclusive result. | Retry later or investigate access, rate limiting or connectivity. |
+
+Broken results take precedence over inconclusive ones in a mixed report. HTTP
+401/403, other unexpected status codes, timeouts, DNS/TLS errors, redirect loops
+and exhausted retries are **inconclusive**, never proof of a missing page.
+A failed audit to load the output/configuration is an operational error (exit 1)
+and may have no JSON report. Redirects to login/consent pages can return success;
+HTTP success does not establish correctness.
+
+Each URL uses GET, with a default 10-second timeout per attempt including
+redirects. Bodies are closed without interpreting content. The audit follows up
+to ten HTTP(S) redirects; use `--max-redirects 0` to disallow them. It makes one
+additional attempt by default for transport failures, HTTP 408/425/429 and 5xx,
+waiting one second between attempts. Configure `--retries 0..5` and
+`--retry-delay 1s`. A `Retry-After` header on a non-success response stops retries
+for that destination and defers it to a later audit. 404/410 and ordinary access
+denials are not retried. URLs with embedded credentials are not requested.
+Requests use the environment's normal HTTP proxy/TLS configuration and require
+network access to the initial and redirected hosts. Only audit trusted builds;
+their URLs determine where the command sends requests.
+
+This is an availability audit, not a content or security validator. It does not
+validate remote fragments, JavaScript/CSS-discovered links, `srcset`, spelling of
+examples, file-versus-directory semantics, or commands shown inside code blocks.
+For example, verify a GitHub `blob` file and `tree` directory against the actual
+tag contents before replacing a deleted branch URL. There is no automatic URL
+substitution or exception refresh.
+
+Run this in a separate scheduled CI job and after branch deletion, retaining the
+JSON report as an artifact. Failing that job makes broken or inconclusive
+results visible without blocking ordinary documentation builds or deployment.
+A pre-release-only audit cannot catch a link that breaks after its branch is
+deleted. No results or network failures are cached across runs.

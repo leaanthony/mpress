@@ -527,3 +527,45 @@ mpress check
 The local tool provides translation, state, glossary enforcement,
 and validation. A hosted product can add shared translation memory, assignments,
 budgets, pull requests, vendor workflows, and organisation audit history.
+
+## Correct links without retranslating prose
+
+A URL-only English correction is not automatically propagated to existing
+translations. The normal incremental translator hashes complete segments:
+changing a protected URL can make a segment stale, invoke the configured
+provider, or conflict with a human translation. `--scope missing` is not a
+URL synchronization command and can reject a reused segment whose URL differs.
+Do not use `--force` to fix links in human translations.
+
+For a revision that changes **only simple inline Markdown HTTP(S) link
+destinations**, provide the original English file explicitly:
+
+```sh
+# Save the English source from before the URL correction.
+git show BASE_REVISION:docs/guide.md > /tmp/guide-before.md
+# Update the English inline links, then preview one existing translation.
+mpress translate sync-links --lang fr --file guide.md \
+  --previous-source /tmp/guide-before.md
+# Apply after inspecting the English diff and the selected destinations.
+mpress translate sync-links --lang fr --file guide.md \
+  --previous-source /tmp/guide-before.md --write
+```
+
+Repeat for each language and page. The command is local and provider-free. It
+requires the entire English revision to reconstruct exactly from supported link
+changes. It validates the translation against the old source, applies only the
+matching destinations, and validates the result against the new source before
+writing. It preserves translated labels, prose and formatting byte for byte.
+
+It refuses changed prose/layout, ambiguous replacements, human-edited URLs that
+no longer match the old source, damaged structure and unsupported link syntax.
+Reference links, autolinks, HTML, code/clone commands and MPD files
+are outside this narrow helper's contract and need manual review. Link targets
+are **not** checked over the network by this command.
+
+Translation sidecars, manual/reviewed/final statuses, provider provenance and
+hash-pinned audit exceptions remain unchanged. The files may consequently be
+reported as stale/manual/conflicting; this command does not claim a fresh human
+review. Run `translate audit`/`translate check`, inspect the diff and handle
+remaining findings through the existing review/migration process. Never bulk
+refresh exception hashes just to obtain a clean check.

@@ -36,6 +36,10 @@ import (
 func main() {
 	if err := run(os.Args[1:]); err != nil {
 		fmt.Fprintln(os.Stderr, "Error:", err)
+		var audit *checkExitError
+		if errors.As(err, &audit) {
+			os.Exit(audit.code)
+		}
 		os.Exit(1)
 	}
 }
@@ -92,6 +96,7 @@ Usage:
   mpress clean
   mpress check
   mpress check site [--output DIRECTORY] [--cloudflare-pages] [--json]
+  mpress check external [--output DIRECTORY] [--host HOST] [--timeout 10s] [--retries 1] [--json]
   mpress import --from starlight <source> --output <directory>
 	  mpress convert [--to mpd|markdown] [--content DIRECTORY] --replace
   mpress deploy [--target name] [--production] [--json]
@@ -100,6 +105,7 @@ Usage:
   mpress versions capture|list|verify|remove
   mpress translate [status] [--lang CODE] [--add-language] [--label NAME] [--file PAGE] [--scope missing|stale|all] [--harness codex|claudecode] [--model MODEL] [--estimate] [--workers N]
   mpress translate audit --lang CODE [--file PAGE] [--json]
+  mpress translate sync-links --lang CODE --file PAGE --previous-source FILE [--write]
   mpress translate check [--lang CODE] [--exceptions FILE] [--exclude-audit PAGE] [--json]
   mpress translate review --lang CODE --file PAGE [--status reviewed|final]
   mpress translate --repo URL --checkout DIRECTORY [--branch NAME] [translation options]
@@ -111,6 +117,9 @@ Usage:
 }
 
 func translateSite(args []string) error {
+	if len(args) > 0 && args[0] == "sync-links" {
+		return syncTranslationLinks(args[1:])
+	}
 	if len(args) > 0 && args[0] == "migrate-state" {
 		return migrateTranslationState(args[1:])
 	}
