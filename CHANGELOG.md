@@ -2,6 +2,13 @@
 
 ## Unreleased
 
+## v1.0.29 — 2026-11-03
+
+### Added
+
+- `mpress translate adopt` creates tracking state for translations that were committed as plain content, without changing any translated text. With `--since <git rev>` it pairs each translated segment with the source it was made from, so segments whose source changed afterwards stay stale and inserted ones stay missing; misaligned pages are refused and listed. `--accept-drift` adopts against the current source. Adopted segments are recorded as `adopted` (provider `adopted`, with `adoptedFrom`), claim no review, and are not replaced by `--scope all` without `--force`.
+- `translate status` and `build` warn when `.gitignore` ignores the translation state directory.
+
 ## v1.0.28 — 2026-11-03
 
 ### Added
