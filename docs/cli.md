@@ -29,6 +29,7 @@ Run `mpress help` to print the compact command summary.
 | `mpress translate audit --lang CODE [--file PAGE] [--harness codex\|claudecode] [--model MODEL] [--json]` | Audit translated structure and prose locally, with an optional independent coding-agent review. |
 | `mpress translate check [--lang CODE] [--exceptions FILE] [--exclude-audit PAGE] [--json]` | Require complete translations and a clean local structural and linguistic audit. |
 | `mpress translate review --lang CODE --file PAGE [--status reviewed\|final]` | Record review state for a translated page. |
+| `mpress translate adopt (--since GIT_REV \| --accept-drift) [--lang CODE] [--file PAGE] [--dry-run] [--json]` | Create tracking state for existing translations without changing them. |
 | `mpress translate --repo URL --checkout DIRECTORY [--branch NAME] ...` | Clone a missing local checkout, then run translation in it. |
 | `mpress version` | Print the installed M-Press version. |
 
