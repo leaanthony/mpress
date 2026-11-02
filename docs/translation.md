@@ -269,11 +269,12 @@ intend to replace existing machine text and manual conflicts.
 
 If a translated file exists but its translation sidecar is missing or empty,
 status reports it as `untracked`. Updates stop instead of overwriting the
-existing text. Restore the matching
-sidecar from Git before continuing. If you deliberately want a new machine
-translation, select that single page with `--file` and use `--scope all --force`.
-Keep a copy of any human corrections for review. A deleted target file is
-reported as missing even when its old sidecar still exists.
+existing text. If the sidecar is in Git history, restore it. If translations
+were committed as plain content and never tracked, adopt them as described in
+[Adopt existing translations](#adopt-existing-translations). If you deliberately
+want a new machine translation, select that single page with `--file` and use
+`--scope all --force`. Keep a copy of any human corrections for review. A deleted
+target file is reported as missing even when its old sidecar still exists.
 
 Contributors can open the local translation workflow with
 `mpress contribute <page-url> --goal translate`. The generated contributor
@@ -394,6 +395,49 @@ migration requirements before continuing translation work.
 `translate audit` and `translate check` inspect document content independently
 of sidecar freshness. Their success does not approve migrated state.
 
+## Adopt existing translations
+
+Translations committed as plain content have no sidecar, so `status` reports
+every segment `untracked` and M-Press cannot update them incrementally.
+`mpress translate adopt` writes the missing sidecars without touching a single
+translated byte:
+
+```sh
+mpress translate adopt --since 0795c4709 --dry-run
+mpress translate adopt --since 0795c4709
+mpress translate status
+```
+
+`--since` is the Git revision the translations were made from (the last commit
+before the source changed that they do not reflect). Adopt reads the source page
+at that revision, pairs each translated segment with the source segment it came
+from, and records the result as the sidecar would have looked then. Segments
+whose source is unchanged since the revision become `adopted`. Segments whose
+source changed are recorded against their old text, so `status` shows them
+`stale` and the next `mpress translate` run retranslates only those. Paragraphs
+inserted after the revision are `missing`.
+
+Adoption uses the same extraction and structure checks as `translate review`.
+A page whose headings or protected structure do not align with the source at the
+revision is **refused**, listed in the output, and left untracked, and the
+command exits with an error. Fix or retranslate those pages; adopt does not
+guess. Pages that already have a sidecar are never overwritten, so repeating
+the command is safe. Use `--lang` and `--file` to narrow the run, and `--json`
+for machine-readable output.
+
+Adopted segments record `provider: adopted` and the revision in `adoptedFrom`.
+They are not marked reviewed. Default runs and `--scope all` without `--force`
+leave them alone; only `--force` regenerates them, and a later person edit
+turns them into `manual`.
+
+Without a known revision, `--accept-drift` adopts against the current source.
+Any source change made after the translation is then accepted silently and will
+never be reported stale. Prefer `--since`.
+
+Commit `.mpress/translations/` after adopting. `status` and `build` warn when
+`.gitignore` ignores the state directory, because sidecars that are never
+committed leave every fresh clone untracked.
+
 ## Track freshness and human edits
 
 Commit `.mpress/translations/` to the repository. Each sidecar file records
@@ -409,6 +453,7 @@ M-Press reports these states:
 | `migration-required` | The sidecar uses a different extractor; update it before translating. |
 | `migration-review` | Migration could not verify a segment; review the page before updating it. |
 | `machine-translated` | The target matches the last provider output. |
+| `adopted` | The target existed before tracking and was adopted with `mpress translate adopt`; no one has reviewed it. |
 | `stale` | The source changed after machine translation. |
 | `manual` | A person edited the target while the source stayed unchanged. |
 | `conflict` | Both the source and the manually edited target changed. |

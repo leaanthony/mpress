@@ -25,6 +25,10 @@ type SegmentState struct {
 	Model         string `json:"model,omitempty"`
 	PromptVersion string `json:"promptVersion,omitempty"`
 	UpdatedAt     string `json:"updatedAt,omitempty"`
+	// AdoptedFrom is the Git revision (or "working-tree") whose source text an
+	// adopted translation is assumed to have been made from. Set only by
+	// `mpress translate adopt`; cleared when the segment is machine translated.
+	AdoptedFrom string `json:"adoptedFrom,omitempty"`
 }
 
 type FileState struct {

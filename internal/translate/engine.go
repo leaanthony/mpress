@@ -726,6 +726,10 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 			return report, restoreErr
 		}
 		providerName, providerModel := item.Old.Provider, item.Old.Model
+		adoptedFrom := item.Old.AdoptedFrom
+		if newlyTranslated {
+			adoptedFrom = ""
+		}
 		if newlyTranslated && e.Provider != nil {
 			providerName, providerModel = e.Provider.Name(), providerModelForLanguage(e.Provider, language)
 		}
@@ -733,6 +737,7 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 			SourceHash: item.SourceHash, TargetHash: Hash(restored), MachineHash: machineHash,
 			MachineText: machineText, Status: status, SourcePreview: preview(item.Original),
 			Provider: providerName, Model: providerModel, PromptVersion: item.Old.PromptVersion, UpdatedAt: item.Old.UpdatedAt,
+			AdoptedFrom: adoptedFrom,
 		}
 		if !newlyTranslated && !item.Protected {
 			entry := newState.Segments[item.ID]
@@ -833,7 +838,7 @@ func (e *Engine) readTranslationTarget(files *projectfs.FS, sourceFile, targetPa
 		return nil, err
 	}
 	if len(target) > 0 && len(state.Segments) == 0 && !replaceAll {
-		return nil, fmt.Errorf("%s: %w; restore its sidecar from Git, or use --scope all --force only to deliberately replace this translation", targetPath, errUntrackedTranslation)
+		return nil, fmt.Errorf("%s: %w; run mpress translate adopt --since <git rev> to track it without changing the text, or use --scope all --force only to deliberately replace this translation", targetPath, errUntrackedTranslation)
 	}
 	document, err := extractTargetFile(sourceFile, e.Config.Build.NavFile, source, target)
 	if errors.Is(err, errTranslationHeadingStructure) && (len(state.Segments) == 0 || replaceAll) {
@@ -1276,7 +1281,7 @@ func segmentStatus(segment Segment, old SegmentState, exists bool, targetText st
 		return "migration-review"
 	case targetChanged:
 		return "manual"
-	case old.Status == "manual" || old.Status == "reviewed" || old.Status == "final":
+	case old.Status == "manual" || old.Status == "reviewed" || old.Status == "final" || old.Status == statusAdopted:
 		return old.Status
 	default:
 		return "machine-translated"

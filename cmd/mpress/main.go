@@ -109,6 +109,7 @@ Usage:
   mpress translate sync-links --lang CODE --file PAGE --previous-source FILE [--write]
   mpress translate check [--lang CODE] [--exceptions FILE] [--exclude-audit PAGE] [--json]
   mpress translate review --lang CODE --file PAGE [--status reviewed|final]
+  mpress translate adopt (--since GIT_REV | --accept-drift) [--lang CODE] [--file PAGE] [--dry-run] [--json]
   mpress translate --repo URL --checkout DIRECTORY [--branch NAME] [translation options]
   mpress knowledge [directory] [--transport stdio|http] [--host 127.0.0.1] [--port 3100]
   mpress knowledge evaluate [directory] --suite FILE [--json]
@@ -130,7 +131,8 @@ func translateSite(args []string) error {
 	statusOnly := len(args) > 0 && args[0] == "status"
 	reviewOnly := len(args) > 0 && args[0] == "review"
 	auditOnly := len(args) > 0 && args[0] == "audit"
-	if statusOnly || reviewOnly || auditOnly {
+	adoptOnly := len(args) > 0 && args[0] == "adopt"
+	if statusOnly || reviewOnly || auditOnly || adoptOnly {
 		args = args[1:]
 	}
 	fs := flag.NewFlagSet("translate", flag.ContinueOnError)
@@ -150,6 +152,8 @@ func translateSite(args []string) error {
 	repository := fs.String("repo", "", "Git repository to clone before translating")
 	checkout := fs.String("checkout", "", "local checkout directory for --repo")
 	branch := fs.String("branch", "", "Git branch for --repo")
+	since := fs.String("since", "", "adopt: Git revision the existing translations were made from")
+	acceptDrift := fs.Bool("accept-drift", false, "adopt: adopt against the current source without --since, accepting any drift silently")
 	if err := fs.Parse(args); err != nil {
 		return err
 	}
@@ -179,7 +183,10 @@ func translateSite(args []string) error {
 	if err != nil {
 		return err
 	}
-	if statusOnly || reviewOnly {
+	if (*since != "" || *acceptDrift) && !adoptOnly {
+		return errors.New("--since and --accept-drift are only valid with mpress translate adopt")
+	}
+	if statusOnly || reviewOnly || adoptOnly {
 		if strings.TrimSpace(*harness) != "" || strings.TrimSpace(*model) != "" {
 			return errors.New("--harness and --model are only valid when planning or running a translation")
 		}
@@ -209,7 +216,7 @@ func translateSite(args []string) error {
 			fmt.Printf("%s %s (%s) to site.languages.\n", verb, canonicalLanguage, cfg.Site.LanguageLabels[canonicalLanguage])
 		}
 	}
-	if !reviewOnly && !auditOnly && strings.TrimSpace(*harness) == "" && strings.TrimSpace(cfg.Translation.Command) == "" && (strings.TrimSpace(cfg.Translation.Model) == "" || strings.EqualFold(strings.TrimSpace(cfg.Translation.Model), "auto")) {
+	if !reviewOnly && !auditOnly && !adoptOnly && strings.TrimSpace(*harness) == "" && strings.TrimSpace(cfg.Translation.Command) == "" && (strings.TrimSpace(cfg.Translation.Model) == "" || strings.EqualFold(strings.TrimSpace(cfg.Translation.Model), "auto")) {
 		selection, ok := translate.SelectBestTranslationModel(translate.ModelSelectionRequest{
 			Task: translate.TaskDraft, TargetLanguage: *language, Capabilities: translate.DetectModelCapabilities(cfg),
 		})
@@ -220,6 +227,9 @@ func translateSite(args []string) error {
 		if !*jsonOut {
 			fmt.Printf("Selected %s via %s: %s.\n", selection.Model, selection.Provider, selection.Basis)
 		}
+	}
+	if adoptOnly {
+		return adoptTranslations(root, cfg, translate.AdoptOptions{Language: *language, File: *file, Since: *since, AcceptDrift: *acceptDrift, DryRun: *dryRun}, *jsonOut)
 	}
 	if reviewOnly {
 		if *language == "" || *file == "" {
@@ -275,6 +285,9 @@ func translateSite(args []string) error {
 		}
 		return nil
 	}
+	if statusOnly {
+		warnIgnoredStateDir(root, cfg)
+	}
 	options := translate.Options{Language: *language, File: *file, Scope: *scope, DryRun: *dryRun || *estimate || statusOnly, Force: *force, Workers: *workers}
 	var engine *translate.Engine
 	if options.DryRun {
@@ -297,7 +310,7 @@ func translateSite(args []string) error {
 		if migration := fileReport.States["migration-required"]; migration > 0 {
 			fmt.Printf("%s → %s: %d segments require state migration", fileReport.SourceFile, fileReport.TargetLanguage, migration)
 		} else if untracked := fileReport.States["untracked"]; untracked > 0 {
-			fmt.Printf("%s → %s: existing translation has no tracking state; restore its sidecar before updating", fileReport.SourceFile, fileReport.TargetLanguage)
+			fmt.Printf("%s → %s: existing translation has no tracking state; run mpress translate adopt --since <git rev> before updating", fileReport.SourceFile, fileReport.TargetLanguage)
 		} else if review := fileReport.States["migration-review"]; review > 0 {
 			fmt.Printf("%s → %s: %d migrated segments require review", fileReport.SourceFile, fileReport.TargetLanguage, review)
 		} else if fileReport.NeedsTranslation == 0 {
@@ -538,6 +551,9 @@ func build(args []string) error {
 			_ = cpuFile.Close()
 			return fmt.Errorf("start CPU profile: %w", err)
 		}
+	}
+	if cfg, cfgErr := config.Load(root); cfgErr == nil && len(cfg.Site.Languages) > 1 {
+		warnIgnoredStateDir(root, cfg)
 	}
 	result, buildErr := site.Build(root, site.BuildOptions{Strict: *strict, IncludeDrafts: *drafts, MinifyAssets: true, PurgeUnusedCSS: *purgeCSS && !*noPurgeCSS})
 	if cpuFile != nil {
@@ -1735,4 +1751,45 @@ Use **Run checks** in the status bar before you publish the site.
 func initNextSteps(dir string) string {
 	quoted := "'" + strings.ReplaceAll(filepath.Clean(dir), "'", "'\"'\"'") + "'"
 	return fmt.Sprintf("\nNext:\n  cd %s\n  mpress dev\n\nM-Press opens the project guide in your browser.\n", quoted)
+}
+
+// warnIgnoredStateDir warns on stderr when Git ignores the translation state
+// directory: sidecars would never be committed, so every clone starts untracked.
+func warnIgnoredStateDir(root string, cfg config.Config) {
+	if translate.StateDirIgnored(root, cfg.Translation.StateDir) {
+		fmt.Fprintf(os.Stderr, "WARNING: translation state directory %q is ignored by .gitignore; translation tracking state will not be committed and a fresh clone cannot update its translations incrementally. Remove the ignore rule for it.\n", cfg.Translation.StateDir)
+	}
+}
+
+func adoptTranslations(root string, cfg config.Config, options translate.AdoptOptions, jsonOut bool) error {
+	report, err := translate.NewEngine(root, cfg, nil).Adopt(options)
+	if err != nil {
+		return err
+	}
+	if jsonOut {
+		fmt.Println(report.JSON())
+	} else {
+		if options.AcceptDrift {
+			fmt.Fprintln(os.Stderr, "WARNING: --accept-drift adopts translations against the current source. Any source change made since they were translated is accepted silently and will not be marked stale.")
+		}
+		for _, item := range report.Files {
+			switch item.Outcome {
+			case translate.AdoptAdopted:
+				fmt.Printf("%s/%s: %d adopted, %d stale, %d missing\n", item.Language, item.SourceFile, item.Adopted, item.Drifted, item.New)
+			case translate.AdoptRefused:
+				fmt.Printf("%s/%s: REFUSED: %s\n", item.Language, item.SourceFile, item.Reason)
+			default:
+				fmt.Printf("%s/%s: skipped (%s): %s\n", item.Language, item.SourceFile, item.Outcome, item.Reason)
+			}
+		}
+		if options.DryRun {
+			fmt.Printf("Dry run. %d segment(s) would be adopted, %d recorded stale, %d missing. No files were written.\n", report.Adopted, report.Drifted, report.New)
+		} else {
+			fmt.Printf("Wrote %d sidecar(s) for revision %s. Translated content was not modified.\n", report.Written, report.Revision)
+		}
+	}
+	if report.Refused > 0 {
+		return fmt.Errorf("%d page(s) were refused because their structure does not align with the source", report.Refused)
+	}
+	return nil
 }
