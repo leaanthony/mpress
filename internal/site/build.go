@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"github.com/leaanthony/mpress/internal/media"
 	"io"
 	"io/fs"
 	"net/url"
@@ -521,6 +522,17 @@ func Build(projectDir string, opts BuildOptions) (result BuildResult, buildErr e
 	}
 	if opts.Strict && hasErrors(result.Diagnostics) {
 		return result, fmt.Errorf("strict build failed with %d error(s)", countSeverity(result.Diagnostics, "error"))
+	}
+	if findings, err := media.AuditTree(outputDir); err == nil {
+		added, remaining := media.Remediate(outputDir, findings, !opts.Development)
+		if opts.LinkCollector != nil {
+			for _, rel := range added {
+				opts.LinkCollector.AddFile(rel)
+			}
+		}
+		for _, f := range remaining {
+			result.Diagnostics = append(result.Diagnostics, content.Diagnostic{Severity: "warning", Code: "video-compat", File: f.Page, Message: f.Message})
+		}
 	}
 	warning, err := staged.finishBuild(opts.LinkCollector, cfg)
 	if err != nil {

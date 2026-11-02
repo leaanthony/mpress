@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
+	"github.com/leaanthony/mpress/internal/media"
 	"io/fs"
 	"net/url"
 	"os"
@@ -28,6 +29,7 @@ type RenderedReport struct {
 	Languages map[string]int `json:"languages"`
 	Redirects int            `json:"redirects"`
 	Errors    []string       `json:"errors"`
+	Warnings  []string       `json:"warnings"`
 }
 
 type renderedPage struct {
@@ -38,7 +40,7 @@ type renderedPage struct {
 
 // Rendered validates an existing build without rebuilding or making network requests.
 func Rendered(project string, cfg config.Config, options RenderedOptions) (RenderedReport, error) {
-	report := RenderedReport{Languages: map[string]int{}, Errors: []string{}}
+	report := RenderedReport{Languages: map[string]int{}, Errors: []string{}, Warnings: []string{}}
 	output := options.Output
 	if output == "" {
 		output = cfg.OutputPath(project)
@@ -71,6 +73,12 @@ func Rendered(project string, cfg config.Config, options RenderedOptions) (Rende
 			if reason := renderedLinkProblem(&current, base, href, aliases, &index); reason != "" {
 				report.Errors = append(report.Errors, rel+": "+reason+" "+href)
 			}
+		}
+	}
+	if findings, err := media.AuditTree(output); err == nil {
+		_, remaining := media.Remediate(output, findings, false)
+		for _, f := range remaining {
+			report.Warnings = append(report.Warnings, f.String())
 		}
 	}
 	for source, target := range aliases {

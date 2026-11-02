@@ -51,6 +51,11 @@ func checkCommand(args []string) error {
 		return err
 	}
 	summary := fmt.Sprintf("Checked %d file(s), %d HTML page(s), and %d redirect(s)", report.Files, report.HTMLPages, report.Redirects)
+	if !*jsonOut {
+		for _, w := range report.Warnings {
+			fmt.Println("warning: " + w)
+		}
+	}
 	return printValidationReport(report, report.Errors, summary, *jsonOut)
 }
 

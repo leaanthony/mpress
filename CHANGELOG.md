@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.0.28 — 2026-11-03
+
+### Added
+
+- Builds and `mpress check` warn when a `<video>` has no H.264 MP4 source (AV1-only, HEVC-only and VP9-only videos do not play on every iPad or iPhone). `mpress build` converts the first local source with ffmpeg to an H.264/AAC MP4 beside it and adds it as a fallback `<source>`; conversions are cached by content. Without ffmpeg the warning links to a platform-appropriate download. Development builds only warn.
+
 ## v1.0.27 — 2026-10-31
 
 ### Added

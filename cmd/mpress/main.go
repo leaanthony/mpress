@@ -25,6 +25,7 @@ import (
 	"github.com/leaanthony/mpress/internal/exportzip"
 	"github.com/leaanthony/mpress/internal/importer"
 	"github.com/leaanthony/mpress/internal/knowledge"
+	"github.com/leaanthony/mpress/internal/media"
 	"github.com/leaanthony/mpress/internal/operations"
 	"github.com/leaanthony/mpress/internal/projectconvert"
 	"github.com/leaanthony/mpress/internal/quickedit"
@@ -1054,6 +1055,12 @@ func checkSite() error {
 	items, err := check.Run(cfg.OutputPath(root))
 	if err != nil {
 		return err
+	}
+	if videos, err := media.AuditTree(cfg.OutputPath(root)); err == nil {
+		_, remaining := media.Remediate(cfg.OutputPath(root), videos, false)
+		for _, v := range remaining {
+			fmt.Println("warning: " + v.String())
+		}
 	}
 	if len(items) > 0 {
 		fmt.Print(check.Format(items))
