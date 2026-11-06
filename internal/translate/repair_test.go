@@ -79,3 +79,16 @@ func (alwaysBrokenProvider) Translate(_ context.Context, request TranslationRequ
 	}
 	return result, nil
 }
+
+func TestValidationHintExplainsEmphasisFailures(t *testing.T) {
+	if hint := validationHint(errString("segment b0043-text-01 changes parsed emphasis weight from 6 to 2")); !strings.Contains(hint, "closing marker") {
+		t.Fatalf("missing hint: %q", hint)
+	}
+	if hint := validationHint(errString("segment b1 did not preserve placeholder X")); hint != "" {
+		t.Fatalf("unexpected hint %q", hint)
+	}
+}
+
+type errString string
+
+func (e errString) Error() string { return string(e) }
