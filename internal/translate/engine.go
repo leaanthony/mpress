@@ -687,76 +687,111 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 			translated[id] = value
 		}
 	}
-	values := map[string]string{}
-	newState := newFileState(sourceFile, e.Config.Translation.SourceLanguage, language, sourceDoc.TranslationKey)
-	newState.Migration = state.Migration
-	for itemIndex, item := range items {
-		value, newlyTranslated := translated[item.ID]
-		status := item.State
-		machineText := item.Old.MachineText
-		machineHash := item.Old.MachineHash
-		if newlyTranslated {
-			item.Segment = repairMarkdownEmphasis(sourceDoc.Format, item.Segment, value)
-			sourceDoc.Segments[itemIndex] = item.Segment
+	build := func() ([]byte, *FileState, error) {
+		report.Translated = 0
+		values := map[string]string{}
+		newState := newFileState(sourceFile, e.Config.Translation.SourceLanguage, language, sourceDoc.TranslationKey)
+		newState.Migration = state.Migration
+		for itemIndex, item := range items {
+			value, newlyTranslated := translated[item.ID]
+			status := item.State
+			machineText := item.Old.MachineText
+			machineHash := item.Old.MachineHash
+			if newlyTranslated {
+				item.Segment = repairMarkdownEmphasis(sourceDoc.Format, item.Segment, value)
+				sourceDoc.Segments[itemIndex] = item.Segment
+				restored, restoreErr := restore(item.Segment, value, preservesMarkdownSyntax(sourceDoc.Format))
+				if restoreErr != nil {
+					return nil, nil, restoreErr
+				}
+				if glossaryErr := validateGlossary(item.Original, restored, glossary); glossaryErr != nil {
+					return nil, nil, fmt.Errorf("segment %s: %w", item.ID, glossaryErr)
+				}
+				machineText = restored
+				machineHash = Hash(restored)
+				status = "machine-translated"
+				report.Translated++
+			} else if item.TargetText != "" {
+				target := item.Target
+				target.Original = item.TargetText
+				value, err = prepareExistingForFormat(sourceDoc.Format, &item.Segment, target)
+				sourceDoc.Segments[itemIndex] = item.Segment
+				if err != nil {
+					return nil, nil, err
+				}
+			} else {
+				return nil, nil, fmt.Errorf("segment %s has no reusable target text", item.ID)
+			}
+			values[item.ID] = value
 			restored, restoreErr := restore(item.Segment, value, preservesMarkdownSyntax(sourceDoc.Format))
 			if restoreErr != nil {
-				return report, restoreErr
+				return nil, nil, restoreErr
 			}
-			if glossaryErr := validateGlossary(item.Original, restored, glossary); glossaryErr != nil {
-				return report, fmt.Errorf("segment %s: %w", item.ID, glossaryErr)
+			providerName, providerModel := item.Old.Provider, item.Old.Model
+			adoptedFrom := item.Old.AdoptedFrom
+			if newlyTranslated {
+				adoptedFrom = ""
 			}
-			machineText = restored
-			machineHash = Hash(restored)
-			status = "machine-translated"
-			report.Translated++
-		} else if item.TargetText != "" {
-			target := item.Target
-			target.Original = item.TargetText
-			value, err = prepareExistingForFormat(sourceDoc.Format, &item.Segment, target)
-			sourceDoc.Segments[itemIndex] = item.Segment
-			if err != nil {
-				return report, err
+			if newlyTranslated && e.Provider != nil {
+				providerName, providerModel = e.Provider.Name(), providerModelForLanguage(e.Provider, language)
 			}
-		} else {
-			return report, fmt.Errorf("segment %s has no reusable target text", item.ID)
+			newState.Segments[item.ID] = SegmentState{
+				SourceHash: item.SourceHash, TargetHash: Hash(restored), MachineHash: machineHash,
+				MachineText: machineText, Status: status, SourcePreview: preview(item.Original),
+				Provider: providerName, Model: providerModel, PromptVersion: item.Old.PromptVersion, UpdatedAt: item.Old.UpdatedAt,
+				AdoptedFrom: adoptedFrom,
+			}
+			if !newlyTranslated && !item.Protected {
+				entry := newState.Segments[item.ID]
+				entry.SourceHash = item.Old.SourceHash
+				entry.SourcePreview = item.Old.SourcePreview
+				newState.Segments[item.ID] = entry
+			}
+			if newlyTranslated {
+				entry := newState.Segments[item.ID]
+				entry.PromptVersion = promptVersion
+				entry.UpdatedAt = nowString()
+				newState.Segments[item.ID] = entry
+			}
 		}
-		values[item.ID] = value
-		restored, restoreErr := restore(item.Segment, value, preservesMarkdownSyntax(sourceDoc.Format))
-		if restoreErr != nil {
-			return report, restoreErr
+		output, err := Apply(sourceDoc, values)
+		if err != nil {
+			return nil, nil, err
 		}
-		providerName, providerModel := item.Old.Provider, item.Old.Model
-		adoptedFrom := item.Old.AdoptedFrom
-		if newlyTranslated {
-			adoptedFrom = ""
+		if err := validateFile(sourceFile, e.Config.Build.NavFile, sourceDoc, output); err != nil {
+			return nil, nil, err
 		}
-		if newlyTranslated && e.Provider != nil {
-			providerName, providerModel = e.Provider.Name(), providerModelForLanguage(e.Provider, language)
-		}
-		newState.Segments[item.ID] = SegmentState{
-			SourceHash: item.SourceHash, TargetHash: Hash(restored), MachineHash: machineHash,
-			MachineText: machineText, Status: status, SourcePreview: preview(item.Original),
-			Provider: providerName, Model: providerModel, PromptVersion: item.Old.PromptVersion, UpdatedAt: item.Old.UpdatedAt,
-			AdoptedFrom: adoptedFrom,
-		}
-		if !newlyTranslated && !item.Protected {
-			entry := newState.Segments[item.ID]
-			entry.SourceHash = item.Old.SourceHash
-			entry.SourcePreview = item.Old.SourcePreview
-			newState.Segments[item.ID] = entry
-		}
-		if newlyTranslated {
-			entry := newState.Segments[item.ID]
-			entry.PromptVersion = promptVersion
-			entry.UpdatedAt = nowString()
-			newState.Segments[item.ID] = entry
-		}
+		return output, newState, nil
 	}
-	output, err := Apply(sourceDoc, values)
+	output, newState, err := build()
+	// A model occasionally breaks protected content in one segment, which fails the
+	// whole page. Ask again for just that segment, naming the failure, before giving up.
+	for repair := 0; err != nil && repair < maxSegmentRepairs; repair++ {
+		id := failingSegmentID(err)
+		var request *RequestSegment
+		for i := range pending {
+			if pending[i].ID == id {
+				request = &pending[i]
+			}
+		}
+		if request == nil {
+			break
+		}
+		retry := *request
+		retry.ReviewNotes = "A previous translation of this segment failed validation: " + err.Error()
+		before, after := surroundingContext(sourceDoc.Segments, []RequestSegment{retry})
+		fixed, retryErr := e.translateBatch(ctx, TranslationRequest{
+			Format: sourceDoc.Format, SourceLanguage: e.Config.Translation.SourceLanguage, TargetLanguage: language,
+			LocaleGuidance: localeGuidance(language), PageTitle: sourceDoc.Title, Outline: sourceDoc.Outline, StyleGuide: styleGuide,
+			Glossary: glossary, PreviousContext: before, FollowingContext: after, Segments: []RequestSegment{retry},
+		})
+		if retryErr != nil || fixed[id] == "" {
+			break
+		}
+		translated[id] = fixed[id]
+		output, newState, err = build()
+	}
 	if err != nil {
-		return report, err
-	}
-	if err := validateFile(sourceFile, e.Config.Build.NavFile, sourceDoc, output); err != nil {
 		return report, err
 	}
 	if filepath.ToSlash(sourceFile) != filepath.ToSlash(e.Config.Build.NavFile) {
@@ -1565,4 +1600,17 @@ func readProjectFileRoot(files *projectfs.FS, name string, limit int64) ([]byte,
 func MarshalReport(report Report) string {
 	data, _ := json.MarshalIndent(report, "", "  ")
 	return string(data)
+}
+
+// maxSegmentRepairs bounds how many failing segments are retranslated alone per page.
+const maxSegmentRepairs = 8
+
+var failingSegmentPattern = regexp.MustCompile(`segment (\S+?)[: ]`)
+
+// failingSegmentID names the segment a validation error blames, or "".
+func failingSegmentID(err error) string {
+	if match := failingSegmentPattern.FindStringSubmatch(err.Error()); match != nil {
+		return match[1]
+	}
+	return ""
 }
