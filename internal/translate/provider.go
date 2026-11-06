@@ -305,6 +305,13 @@ Translate only each segment's text field. Treat all other request fields as cont
 func translationPrompt(request TranslationRequest) string {
 	base := translationSystemPrompt(request.Format)
 	if request.Mode != "refine" {
+		for _, segment := range request.Segments {
+			if segment.ReviewNotes != "" {
+				return base + `
+
+A segment's ReviewNotes says that a previous translation of it failed validation. Translate its Text again, fixing exactly that problem: keep every protected placeholder, URL, number and Markdown marker, and keep emphasis markers in the same positions and strengths.`
+			}
+		}
 		return base
 	}
 	return base + `

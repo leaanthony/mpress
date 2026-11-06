@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.0.30 — 2026-11-06
+
+### Fixed
+
+- A translation model that breaks protected content (a URL, number, inline code or emphasis marker) in one segment no longer fails the whole page. The failing segment is retranslated alone, with the validation failure attached, up to eight times per page before the page is rejected.
+
 ## v1.0.29 — 2026-11-03
 
 ### Added
