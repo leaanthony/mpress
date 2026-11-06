@@ -778,7 +778,7 @@ func (e *Engine) translateFile(ctx context.Context, files *projectfs.FS, languag
 			break
 		}
 		retry := *request
-		retry.ReviewNotes = "A previous translation of this segment failed validation: " + err.Error()
+		retry.ReviewNotes = "A previous translation of this segment failed validation: " + err.Error() + validationHint(err)
 		before, after := surroundingContext(sourceDoc.Segments, []RequestSegment{retry})
 		fixed, retryErr := e.translateBatch(ctx, TranslationRequest{
 			Format: sourceDoc.Format, SourceLanguage: e.Config.Translation.SourceLanguage, TargetLanguage: language,
@@ -1611,6 +1611,16 @@ var failingSegmentPattern = regexp.MustCompile(`segment (\S+?)[: ]`)
 func failingSegmentID(err error) string {
 	if match := failingSegmentPattern.FindStringSubmatch(err.Error()); match != nil {
 		return match[1]
+	}
+	return ""
+}
+
+// validationHint adds concrete advice for failures models repeat. A closing
+// emphasis marker that follows punctuation and precedes a letter is not a valid
+// closer in CommonMark, which is common in CJK text where no space follows it.
+func validationHint(err error) string {
+	if strings.Contains(err.Error(), "emphasis weight") {
+		return ". Emphasis markers (** and *) must still parse as emphasis: a closing marker directly after punctuation (including full-width punctuation such as ：，。）) and directly before a letter or CJK character does not close. Put the punctuation outside the markers, or put a space after the closing marker, and keep the same number of emphasized spans"
 	}
 	return ""
 }

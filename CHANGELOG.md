@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.0.31 — 2026-11-06
+
+### Fixed
+
+- The targeted retry of a segment that failed emphasis validation now explains the CommonMark rule behind most such failures (a closing marker after punctuation and before a letter or CJK character does not close), so Chinese, Japanese and Korean pages with bold lead-ins translate.
+
 ## v1.0.30 — 2026-11-06
 
 ### Fixed
