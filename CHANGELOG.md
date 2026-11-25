@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.0.32 — 2026-11-25
+
+### Fixed
+
+- Explained code (`@explained`) draws its code with the same syntax colours as a code block, and its explanations render inline Markdown, so `inline code`, emphasis and links in an explanation show as such instead of as raw Markdown. The text a code line shows for its explanation stays plain. Beads `mp-96f`.
+
 ## v1.0.31 — 2026-11-06
 
 ### Fixed

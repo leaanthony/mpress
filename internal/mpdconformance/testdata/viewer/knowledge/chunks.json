@@ -519,7 +519,7 @@
       "Code and API components",
       "Verify deployment"
     ],
-    "text": "Open the production site. mpress.yaml − search: false + search: true docs index.md Home page guide installation.md Install MPress deployment.md Publish the site reference configuration.md Configuration keys components.md Component catalogue assets logo.svg Site mark screenshots home.png Landing page blog index.md Blog landing page mpress.yaml Configuration func main() { site.Build() } 1 Start with the entry point. 2 Build the static site. Components · top"
+    "text": "Open the production site. mpress.yaml − search: false + search: true docs index.md Home page guide installation.md Install MPress deployment.md Publish the site reference configuration.md Configuration keys components.md Component catalogue assets logo.svg Site mark screenshots home.png Landing page blog index.md Blog landing page mpress.yaml Configuration func main () { site. Build () } 1 Start with the entry point. 2 Build the static site. Components · top"
   },
   {
     "id": "b62778f09ef20c8744cdaad5",

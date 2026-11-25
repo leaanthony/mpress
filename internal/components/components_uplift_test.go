@@ -96,7 +96,7 @@ func main() { // (1)
 	if len(warnings) != 0 {
 		t.Fatalf("unexpected warnings: %#v", warnings)
 	}
-	for _, want := range []string{`class="language-go"`, `data-ref="1" data-explanation="Start the program." tabindex="0"`, `data-ref="2" data-explanation="Build the site." tabindex="0"`, `class="mpress-explained-copy"`, "    site.Build()", "Start the program.", "Build the site."} {
+	for _, want := range []string{`class="language-go"`, `data-ref="1" data-explanation="Start the program." tabindex="0"`, `data-ref="2" data-explanation="Build the site." tabindex="0"`, `class="mpress-explained-copy"`, `tabindex="0">    site.`, "Start the program.", "Build the site."} {
 		if !strings.Contains(got, want) {
 			t.Errorf("explained code output missing %q:\n%s", want, got)
 		}
@@ -484,5 +484,25 @@ func TestNoteRendersCautionAsLabelledAside(t *testing.T) {
 		if strings.Contains(got, unwanted) {
 			t.Fatalf("rendered caution note kept old ARIA/container markup %q:\n%s", unwanted, got)
 		}
+	}
+}
+
+func TestExplainedHighlightsCodeAndRendersInlineMarkdown(t *testing.T) {
+	got, warnings := Process("@explained\n```go\nfunc main() { // (1)\n\treturn \"done\"\n}\n```\n\n(1) `main` is **where it starts**, see [Go](https://go.dev).\n@end\n")
+	if len(warnings) != 0 {
+		t.Fatalf("unexpected warnings: %#v", warnings)
+	}
+	for _, want := range []string{
+		`<span class="mpress-token-keyword">func</span>`,
+		`<span class="mpress-token-string">&#34;done&#34;</span>`,
+		`<code>main</code> is <strong>where it starts</strong>, see <a href="https://go.dev">Go</a>.`,
+		`data-explanation="main is where it starts, see Go."`,
+	} {
+		if !strings.Contains(got, want) {
+			t.Errorf("explained output missing %q:\n%s", want, got)
+		}
+	}
+	if strings.Contains(got, "**") || strings.Contains(got, "`main`") {
+		t.Fatalf("explained output kept raw Markdown:\n%s", got)
 	}
 }
