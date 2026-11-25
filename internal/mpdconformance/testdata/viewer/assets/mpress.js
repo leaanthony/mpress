@@ -1210,7 +1210,10 @@ const mpressUIHTML = (message, ...values) => mpressUI(message, ...values).replac
       lines.forEach(item => item.classList.toggle('mpress-explained-active', item === line));
       activeLine = line;
       tooltipRef.textContent = line.dataset.ref;
-      tooltipCopy.textContent = explanationText(line, explanation);
+      // The note's own formatting, its inline code and links, comes with it.
+      const copy = explanation.querySelector('.mpress-explained-copy');
+      if (copy) tooltipCopy.replaceChildren(...[...copy.childNodes].map(node => node.cloneNode(true)));
+      else tooltipCopy.textContent = explanationText(line, explanation);
       tooltip.hidden = false;
       tooltip.classList.add('mpress-explained-tooltip-visible');
       place(x, y);
