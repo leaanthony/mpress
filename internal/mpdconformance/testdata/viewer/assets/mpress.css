@@ -986,9 +986,11 @@ html:not(.js) :is(.mpress-tutorial-progress, .mpress-tutorial-count, .mpress-tut
 .mpress-explained { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(220px, .8fr); margin: var(--component-space) 0; overflow: hidden; border: 1px solid var(--border); border-radius: var(--component-radius); background: var(--code); }
 .mpress-explained-code { min-width: 0; overflow: auto; }
 .mpress-explained-code pre { height: 100%; margin: 0; border: 0; border-radius: 0; }
-.mpress-explained-line { display: block; min-height: 1.75em; margin: 0 -1.1rem; padding: 0 1.1rem; cursor: default; white-space: pre; }
-.mpress-explained-line[data-ref] { position: relative; padding-right: 3.2rem; cursor: help; transition: background-color .16s ease, color .16s ease; }
-.mpress-explained-line[data-ref]::after { content: attr(data-ref); position: absolute; top: .14rem; right: 1.1rem; display: grid; width: 1.2rem; height: 1.2rem; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--border)); border-radius: 50%; background: color-mix(in srgb, var(--accent) 14%, var(--code)); color: color-mix(in srgb, var(--accent) 78%, var(--code-text)); font: 750 .66rem/1 ui-sans-serif, system-ui, sans-serif; }
+/* Every line leaves a gutter at its start, where a numbered line shows its marker: always
+   in view, and never over the code, however long the line. */
+.mpress-explained-line { display: block; box-sizing: border-box; width: max-content; min-width: calc(100% + 2.2rem); min-height: 1.75em; margin: 0 -1.1rem; padding: 0 1.1rem 0 2.75rem; cursor: default; white-space: pre; }
+.mpress-explained-line[data-ref] { position: relative; cursor: help; transition: background-color .16s ease, color .16s ease; }
+.mpress-explained-line[data-ref]::after { content: attr(data-ref); position: absolute; top: .14rem; left: .8rem; display: grid; width: 1.2rem; height: 1.2rem; place-items: center; border: 1px solid color-mix(in srgb, var(--accent) 46%, var(--border)); border-radius: 50%; background: color-mix(in srgb, var(--accent) 14%, var(--code)); color: color-mix(in srgb, var(--accent) 78%, var(--code-text)); font: 750 .66rem/1 ui-sans-serif, system-ui, sans-serif; }
 .mpress-explained-line[data-ref]:focus-visible { outline: 0; background: var(--accent-soft); box-shadow: inset 3px 0 var(--accent); }
 .mpress-explained-prose { display: grid; align-content: center; gap: .55rem; padding: 1rem; border-left: 1px solid var(--border); background: var(--surface); }
 .mpress-explained-prose p { margin: 0; }

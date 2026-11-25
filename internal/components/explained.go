@@ -5,6 +5,8 @@ import (
 	"html"
 	"regexp"
 	"strings"
+
+	"github.com/leaanthony/mpress/internal/highlight"
 )
 
 // Explained renders a bidirectional code-explanation panel.
@@ -81,9 +83,9 @@ func (e *Explained) Render() (string, error) {
 			// Line has annotation. Preserve its authored indentation.
 			ref := m[1]
 			cleanLine := strings.TrimRight(annotationRe.ReplaceAllString(line, ""), " \t")
-			codeHTML.WriteString(fmt.Sprintf(`<span class="mpress-explained-line" data-ref="%s" data-explanation="%s" tabindex="0">%s</span>`, ref, html.EscapeString(explanationByRef[ref]), html.EscapeString(cleanLine)))
+			codeHTML.WriteString(fmt.Sprintf(`<span class="mpress-explained-line" data-ref="%s" data-explanation="%s" tabindex="0">%s</span>`, ref, html.EscapeString(plainText(explanationByRef[ref])), highlightedLine(lang, cleanLine)))
 		} else {
-			codeHTML.WriteString(fmt.Sprintf(`<span class="mpress-explained-line">%s</span>`, html.EscapeString(line)))
+			codeHTML.WriteString(fmt.Sprintf(`<span class="mpress-explained-line">%s</span>`, highlightedLine(lang, line)))
 		}
 	}
 	codeHTML.WriteString("</code></pre></div>")
@@ -103,9 +105,9 @@ func (e *Explained) Render() (string, error) {
 			ref := m[1]
 			text := proseRefRe.ReplaceAllString(para, "")
 			proseHTML.WriteString(fmt.Sprintf(`<p class="mpress-explained-para" data-ref="%s"><span class="mpress-explained-ref">%s</span><span class="mpress-explained-copy">%s</span></p>`,
-				ref, ref, html.EscapeString(text)))
+				ref, ref, renderInlineMarkdown(text)))
 		} else {
-			proseHTML.WriteString(fmt.Sprintf(`<p>%s</p>`, html.EscapeString(para)))
+			proseHTML.WriteString(fmt.Sprintf(`<p>%s</p>`, renderInlineMarkdown(para)))
 		}
 	}
 	proseHTML.WriteString("</div>")
@@ -118,6 +120,23 @@ func (e *Explained) Render() (string, error) {
 	b.WriteString("</div>")
 
 	return b.String(), nil
+}
+
+// highlightedLine is one line of code with the same syntax colours as a code block.
+func highlightedLine(language, line string) string {
+	var b strings.Builder
+	highlight.WriteLine(&b, language, line)
+	return b.String()
+}
+
+var markupTagRe = regexp.MustCompile(`<[^>]*>`)
+
+// plainText is an explanation's Markdown as plain text, for an attribute.
+func plainText(markdown string) string {
+	if strings.TrimSpace(markdown) == "" {
+		return ""
+	}
+	return strings.TrimSpace(html.UnescapeString(markupTagRe.ReplaceAllString(renderInlineMarkdown(markdown), "")))
 }
 
 // splitParagraphs splits text by blank lines into paragraphs. A numbered
