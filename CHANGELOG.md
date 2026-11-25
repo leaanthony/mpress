@@ -8,6 +8,10 @@
 
 - Explained code (`@explained`) draws its code with the same syntax colours as a code block, and its explanations render inline Markdown, so `inline code`, emphasis and links in an explanation show as such instead of as raw Markdown. Its tooltip keeps that formatting. Numbered lines show their marker in a gutter at the start of the line, so a long line no longer runs under its marker. Beads `mp-96f`.
 
+### Security
+
+- Builds use Go 1.26.11, which fixes GO-2026-6859 in `net/http`.
+
 ## v1.0.31 — 2026-11-06
 
 ### Fixed
