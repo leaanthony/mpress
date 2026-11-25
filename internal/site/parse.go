@@ -117,6 +117,8 @@ func (c *parseCache) key(job parseJob, source []byte) string {
 	h := sha256.New()
 	h.Write([]byte(parseCacheVersion))
 	h.Write([]byte{0})
+	h.Write([]byte(parseCacheBuild()))
+	h.Write([]byte{0})
 	h.Write([]byte(job.lang))
 	h.Write([]byte{0})
 	h.Write([]byte(job.rel))
