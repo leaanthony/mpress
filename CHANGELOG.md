@@ -2,6 +2,12 @@
 
 ## Unreleased
 
+## v1.0.33 — 2026-11-26
+
+### Fixed
+
+- Pages cached by one mpress binary are no longer served by another. The parse cache now names the mpress build (its version and commit, and for a build with uncommitted changes its executable), so after an upgrade every page renders with the new version instead of showing what the old one wrote, such as `@explained` code without its colours.
+
 ## v1.0.32 — 2026-11-25
 
 ### Fixed

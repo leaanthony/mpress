@@ -267,3 +267,26 @@ func TestBuildRefreshesTabsCachedBeforeFallbackLabels(t *testing.T) {
 		}
 	}
 }
+
+// TestParseCacheKeyNamesTheMpressBuild holds that pages cached by one mpress
+// binary are not served by another, so an upgrade re-renders every page even
+// when parseCacheVersion was not bumped.
+func TestParseCacheKeyNamesTheMpressBuild(t *testing.T) {
+	if parseCacheBuild() == "" {
+		t.Fatal("the running test binary has no build identity")
+	}
+	saved := parseCacheBuild
+	t.Cleanup(func() { parseCacheBuild = saved })
+	job := parseJob{lang: "en", rel: "guide.md"}
+	source := []byte("# Guide\n")
+	var cache *parseCache
+	parseCacheBuild = func() string { return "v1.0.32 aaaa" }
+	before := cache.key(job, source)
+	if again := cache.key(job, source); again != before {
+		t.Fatalf("the same build gave two keys: %s and %s", before, again)
+	}
+	parseCacheBuild = func() string { return "v1.0.33 bbbb" }
+	if after := cache.key(job, source); after == before {
+		t.Fatal("a different mpress build reuses the cached page")
+	}
+}
